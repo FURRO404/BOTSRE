@@ -70,9 +70,6 @@ load_snapshot()
 compare_snapshots()
 A helper script to count lines of code in the project, excluding certain directories and files. Defines the function:
 
-count_lines_of_code()
-Contains the project's metadata and dependencies for Poetry and various tools like Pyright and Ruff.
-
 Includes functionality for parsing game logs and events. Defines the EventType class.
 
 ### Features
