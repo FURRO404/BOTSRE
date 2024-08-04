@@ -1,0 +1,19 @@
+entrypoint = "BotScript.py"
+modules = ["python-3.10:v18-20230807-322e88b"]
+
+[nix]
+channel = "stable-23_05"
+
+[unitTest]
+language = "python3"
+
+[gitHubImport]
+requiredFiles = [".replit", "replit.nix"]
+
+[deployment]
+run = ["sh", "-c", "python3 BotScript.py"]
+deploymentTarget = "gce"
+ignorePorts = true
+
+[objectStorage]
+defaultBucketID = "replit-objstore-b5261a8a-c768-4543-975e-dfce1cd7077d"
