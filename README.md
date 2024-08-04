@@ -39,7 +39,7 @@ poetry run python BotScript.py
 ```
 
 
-#Commands Overview
+### Commands Overview
 
 /grant [target] [permission_type] - Grant a user or role permission.
 /revoke [target] [permission_type] - Revoke a user or role's permission.
@@ -75,7 +75,7 @@ Contains the project's metadata and dependencies for Poetry and various tools li
 
 Includes functionality for parsing game logs and events. Defines the EventType class.
 
-#Features
+### Features
 Meta Management
 Allows users to add, remove, and view vehicles in the Meta list based on their Battle Ratings (BR).
 
@@ -88,6 +88,6 @@ Log game outcomes (wins, losses) along with details like the enemy team name, ve
 Interactive Commands
 Use Discord's UI components like modals and dropdowns to interact with the bot.
 
-#License
+### License
 This project is licensed under the MIT License. See the LICENSE file for details.
 
