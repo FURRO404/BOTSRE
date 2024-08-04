@@ -89,3 +89,4 @@ Use Discord's UI components like modals and dropdowns to interact with the bot.
 
 #License
 This project is licensed under the MIT License. See the LICENSE file for details.
+
