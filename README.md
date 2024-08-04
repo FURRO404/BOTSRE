@@ -27,7 +27,7 @@ This is a Discord bot designed for War Thunder, providing various features such 
 3. Set your Discord bot token in the environment variable `TEST_DISCORD_KEY`.
 
     ```sh
-    export TEST_DISCORD_KEY=your_discord_bot_token
+    export DISCORD_KEY=your_discord_bot_token
     ```
 
 ### Running the Bot
