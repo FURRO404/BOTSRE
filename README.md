@@ -40,6 +40,7 @@ poetry run python BotScript.py
 
 
 #Commands Overview
+
 /grant [target] [permission_type] - Grant a user or role permission.
 /revoke [target] [permission_type] - Revoke a user or role's permission.
 /clear - Clear the entire Meta list (Owner only).
