@@ -1208,7 +1208,7 @@ async def chatgpt(interaction: discord.Interaction, message: str):
     # Initialize conversation history for the user if it doesn't exist
     if user_id not in conversation_history:
         conversation_history[user_id] = [
-            {"role": "system", "content": "You are a helpful catboy, act cute and helpful."}
+            {"role": "system", "content": "You are a helpful catboy, act cute, use a little LOLCAT language."}
         ]
 
     # Append the user's message to the conversation history
