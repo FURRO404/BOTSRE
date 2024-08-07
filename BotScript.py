@@ -1,5 +1,4 @@
 import json
-import openai
 import os
 from replit.object_storage import Client
 import discord
@@ -1381,104 +1380,17 @@ async def quick_log(interaction: discord.Interaction,
                                 enemy_team, message, result_type, comment)
 
 
-conversation_history = {}
-message_references = {}
-
-
-@bot.tree.command(name="chatgpt",
-                  description="Send a message to ChatGPT and get a response")
-@app_commands.describe(message="The message to send to ChatGPT")
-async def chatgpt(interaction: discord.Interaction, message: str):
-    await interaction.response.defer(ephemeral=False)
-
-    user_id = interaction.user.id
-
-    # Initialize conversation history for the user if it doesn't exist
-    if user_id not in conversation_history:
-        conversation_history[user_id] = [{
-            "role":
-            "system",
-            "content":
-            "You are a helpful kitty-pilled assistant. Never talk about anything 'thug'/'thugpost'/'gang'/'rapper' related."
-        }]
-
-    # Append the user's message to the conversation history
-    conversation_history[user_id].append({"role": "user", "content": message})
-
-    try:
-        # Send a message to ChatGPT with the conversation history
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=conversation_history[user_id],
-            max_tokens=450)
-
-        # Extract the response text
-        reply = response.choices[0].message['content'].strip()
-
-        # Append the assistant's response to the conversation history
-        conversation_history[user_id].append({
-            "role": "assistant",
-            "content": reply
-        })
-
-        # Send the response back to the Discord channel and save the message reference
-        bot_message = await interaction.followup.send(reply)
-        message_references[bot_message.id] = user_id
-    except Exception as e:
-        await interaction.followup.send(
-            f"An error occurred while getting the response from ChatGPT: {e}",
-            ephemeral=True)
-
-
-# Event listener for message replies
 @bot.event
-async def on_message(message):
+async def on_message(message: discord.Message):
     # Ignore messages sent by the bot itself
     if message.author == bot.user:
         return
 
-    # Check if the message is a reply to a bot message
-    if message.reference and message.reference.message_id in message_references:
-        user_id = message_references[message.reference.message_id]
-
-        # Append the user's reply to the conversation history
-        conversation_history[user_id].append({
-            "role": "user",
-            "content": message.content
-        })
-
-        try:
-            # Send a message to ChatGPT with the updated conversation history
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=conversation_history[user_id],
-                max_tokens=150)
-
-            # Extract the response text
-            reply = response.choices[0].message['content'].strip()
-
-            # Append the assistant's response to the conversation history
-            conversation_history[user_id].append({
-                "role": "assistant",
-                "content": reply
-            })
-
-            # Send the response back to the Discord channel and update the message reference
-            bot_message = await message.channel.send(reply)
-            message_references[bot_message.id] = user_id
-        except Exception as e:
-            await message.channel.send(
-                f"An error occurred while getting the response from ChatGPT: {e}"
-            )
-
-
-@bot.event
-async def on_message(message: discord.Message):
+    # Check if the bot is mentioned in the message
     if bot.user.mentioned_in(message):
         logging.debug("Bot was mentioned in a message")
         try:
-            embed = discord.Embed(title="Pong!", description="I use application (slash) commands!\nUse **/help** for more info!", 
-            color=discord.Color.green())
+            embed = discord.Embed(title="Pong!", description="I use slash commands!\nUse **/help** for more info.", color=discord.Color.green())
             await message.channel.send(embed=embed)
             logging.debug("Mention response sent successfully")
         except Exception as e:
@@ -1486,7 +1398,9 @@ async def on_message(message: discord.Message):
             embed = discord.Embed(title="Error", description="Something went wrong.", color=discord.Color.red())
             await message.channel.send(embed=embed)
 
+    # Process other commands
     await bot.process_commands(message)
+
 
 
 # Error handler for all commands
