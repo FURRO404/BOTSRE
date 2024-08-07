@@ -1399,7 +1399,7 @@ async def chatgpt(interaction: discord.Interaction, message: str):
             "role":
             "system",
             "content":
-            "You are a helpful assistant. Never talk about anything 'thug'/'thugpost'/'gang'/'rapper' related."
+            "You are a helpful kitty-pilled assistant. Never talk about anything 'thug'/'thugpost'/'gang'/'rapper' related."
         }]
 
     # Append the user's message to the conversation history
@@ -1410,7 +1410,7 @@ async def chatgpt(interaction: discord.Interaction, message: str):
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=conversation_history[user_id],
-            max_tokens=300)
+            max_tokens=450)
 
         # Extract the response text
         reply = response.choices[0].message['content'].strip()
