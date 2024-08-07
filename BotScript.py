@@ -1399,7 +1399,7 @@ async def chatgpt(interaction: discord.Interaction, message: str):
             "role":
             "system",
             "content":
-            "You are a helpful assistant. Never talk about anything 'thug' or 'thugpost' related."
+            "You are a helpful assistant. Never talk about anything 'thug'/'thugpost'/'gang'/'rapper' related."
         }]
 
     # Append the user's message to the conversation history
@@ -1470,6 +1470,23 @@ async def on_message(message):
             await message.channel.send(
                 f"An error occurred while getting the response from ChatGPT: {e}"
             )
+
+
+@bot.event
+async def on_message(message: discord.Message):
+    if bot.user.mentioned_in(message):
+        logging.debug("Bot was mentioned in a message")
+        try:
+            embed = discord.Embed(title="Pong!", description="I use application (slash) commands!\nUse **/help** for more info!", 
+            color=discord.Color.green())
+            await message.channel.send(embed=embed)
+            logging.debug("Mention response sent successfully")
+        except Exception as e:
+            logging.error(f"Error in on_message: {e}")
+            embed = discord.Embed(title="Error", description="Something went wrong.", color=discord.Color.red())
+            await message.channel.send(embed=embed)
+
+    await bot.process_commands(message)
 
 
 # Error handler for all commands
