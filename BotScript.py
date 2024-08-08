@@ -1401,6 +1401,10 @@ async def on_message(message: discord.Message):
     # Process other commands
     await bot.process_commands(message)
 
+@bot.tree.command(name="baley", description="Replies with 'meow'")
+async def baley(interaction: discord.Interaction):
+    await interaction.response.send_message("https://cdn.discordapp.com/attachments/1248819562972057763/1267280639120510996/Snapchat-1412399103.mp4")
+
 
 
 # Error handler for all commands
