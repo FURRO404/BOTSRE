@@ -79,7 +79,7 @@ async def snapshot_task():
                             if channel:
                                 for member, points in left_members.items():
                                     await channel.send(
-                                        f"Member {member} left with {points} points"
+                                        f"Member {member} left {squadron_name} with {points} points"
                                     )
                             else:
                                 logging.error(
@@ -123,7 +123,7 @@ async def on_guild_join(guild):
     try:
         data = client.download_as_text(key)
         guilds = json.loads(data)
-    except FileNotFoundError:
+    except ObjectNotFoundError:
         guilds = []
 
     if guild_id not in guilds:
