@@ -5,46 +5,18 @@ from SQ_Info import fetch_squadron_info
 
 client = Client()
 # Function to take a snapshot of the members and their scores
-def take_snapshot(squadron_name, guild_id):
-    """
-    Fetches the squadron information and returns a snapshot.
-
-    Args:
-        squadron_name (str): The name of the squadron.
-        guild_id (int): The guild ID.
-
-    Returns:
-        discord.Embed: The snapshot of the squadron members and their scores.
-    """
+def take_snapshot(squadron_name):
     snapshot = fetch_squadron_info(squadron_name, embed_type="members")
     return snapshot
 
 # Function to save the snapshot using Replit object storage
 def save_snapshot(snapshot, guild_id, squadron_name):
-    """
-    Saves the snapshot to Replit object storage.
-
-    Args:
-        snapshot (discord.Embed): The snapshot to save.
-        guild_id (int): The guild ID.
-        squadron_name (str): The name of the squadron.
-    """
     key = f"{guild_id}-{squadron_name}-snapshot"
     client.upload_from_text(key, json.dumps(snapshot.to_dict()))
     print(f"Snapshot saved for {squadron_name} in guild {guild_id}")
 
 # Function to load the snapshot using Replit object storage
 def load_snapshot(guild_id, squadron_name):
-    """
-    Loads a snapshot from Replit object storage.
-
-    Args:
-        guild_id (int): The guild ID.
-        squadron_name (str): The name of the squadron.
-
-    Returns:
-        discord.Embed or None: The loaded snapshot or None if not found.
-    """
     key = f"{guild_id}-{squadron_name}-snapshot"
     try:
         snapshot_dict = json.loads(client.download_as_text(key))
@@ -54,16 +26,6 @@ def load_snapshot(guild_id, squadron_name):
         return None
 
 def compare_snapshots(old_snapshot, new_snapshot):
-    """
-    Compares old and new snapshots to identify members who left with points.
-
-    Args:
-        old_snapshot (discord.Embed): The old snapshot.
-        new_snapshot (discord.Embed): The new snapshot.
-
-    Returns:
-        dict: A dictionary of members who left with their points.
-    """
     old_members = {}
     new_members = {}
 

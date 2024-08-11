@@ -63,7 +63,7 @@ async def snapshot_task():
 
         for squadron_name, squadron_preferences in preferences.items():
             old_snapshot = Alarms.load_snapshot(guild_id, squadron_name)
-            new_snapshot = Alarms.take_snapshot(squadron_name, guild_id)
+            new_snapshot = Alarms.take_snapshot(squadron_name)
 
             if old_snapshot:
                 left_members = Alarms.compare_snapshots(
