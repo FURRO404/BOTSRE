@@ -7,7 +7,8 @@ from discord import app_commands, ui, Interaction, SelectOption
 from Meta_Add import add_to_metas
 from Meta_Remove import remove_from_metas, find_vehicles_in_meta
 from Scoreboard import Scoreboard
-from datetime import *
+import datetime
+from datetime import datetime as dt
 from permissions import grant_permission, revoke_permission, has_permission
 from Img_Utils import download_image, create_gif_from_image, find_image_url, add_speech_bubble
 import logging
@@ -26,7 +27,7 @@ import sys
 logging.basicConfig(level=logging.DEBUG)
 client = Client()
 
-TOKEN = os.environ.get('DISCORD_KEY')
+TOKEN = os.environ.get('TEST_DISCORD_KEY')
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -1414,8 +1415,8 @@ async def baley(interaction: discord.Interaction):
 
 @bot.tree.command(name='time', description='Get the current UTC time')
 async def time(interaction: discord.Interaction):
-    utc_time = datetime.utcnow().strftime('%I:%M %p')
-    timestamp = int(datetime.utcnow().timestamp())
+    utc_time = dt.utcnow().strftime('%I:%M %p')
+    timestamp = int(dt.utcnow().timestamp())
 
     embed = discord.Embed(
         title="Current UTC Time",
