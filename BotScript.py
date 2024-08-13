@@ -334,7 +334,7 @@ def view_metalist(br: str, server_id: int) -> discord.Embed:
             embed.add_field(name=category,
                             value="\n".join(vehicles),
                             inline=False)
-
+    embed.set_footer(text="Meow :3")
     return embed
 
 
@@ -693,6 +693,7 @@ async def clear(interaction: discord.Interaction):
         embed = discord.Embed(title="Meta List Cleared",
                               description="The Meta list has been cleared.",
                               color=discord.Color.yellow())
+        embed.set_footer(text="Meow :3")
         await interaction.response.send_message(embed=embed)
     except Exception as e:
         logging.error(f"Error clearing Meta list: {e}")
@@ -899,6 +900,7 @@ async def sq_info(interaction: discord.Interaction,
     try:
         embed = fetch_squadron_info(squadron, type)
         if embed:
+            embed.set_footer(text="Meow :3")
             await interaction.followup.send(embed=embed)
         else:
             await interaction.followup.send("Failed to fetch squadron info.")
@@ -1059,7 +1061,7 @@ async def leaderboard_command(interaction: discord.Interaction):
     except:
         embed.description = "No leaderboard found for this server."
         color = discord.Color.red()
-
+    embed.set_footer(text="Meow :3")
     await interaction.response.send_message(embed=embed)
 
 
@@ -1154,6 +1156,7 @@ class TriviaDropdown(ui.Select):
                 description=
                 f"Correct {interaction.user.mention}! You found all the fake vehicles.",
                 color=discord.Color.green())
+            embed.set_footer(text="Meow :3")
             await interaction.response.send_message(embed=embed)
         else:
             remaining_fakes = self.fake_count - correct_count
@@ -1229,7 +1232,8 @@ async def help(interaction: discord.Interaction):
         "15. **/trivia [difficulty]** - Play a War Thunder vehicle trivia game. A higher difficulty means more points.\n"
         "16. **/leaderboard** - Show the leaderboard.\n"
         "17. **/console** - Choose an action (Add or Remove vehicles).\n"
-        "18. **/help** - Get a guide on how to use the bot.\n\n"
+        "18. **/time** - Get the current UTC time and your local time.\n"
+        "19. **/help** - Get a guide on how to use the bot.\n\n"
         "*For detailed information on each command, please refer to the respective command descriptions.*"
     )
 
@@ -1240,7 +1244,6 @@ async def help(interaction: discord.Interaction):
     )
     embed.set_footer(text="Meow :3")
     await interaction.response.send_message(embed=embed, ephemeral=False)
-
 
 
 def categorize_vehicle(vehicle_type):
@@ -1257,7 +1260,6 @@ def categorize_vehicle(vehicle_type):
         else:
             return 'Air Forces'
     return 'Unknown'
-
 
 async def handle_attachment(interaction: discord.Interaction,
                             attachment: discord.Attachment, enemy_team: str,
@@ -1395,6 +1397,7 @@ async def on_message(message: discord.Message):
         logging.debug("Bot was mentioned in a message")
         try:
             embed = discord.Embed(title="Pong!", description="I use slash commands!\nUse **/help** for more info.", color=discord.Color.green())
+            embed.set_footer(text="Meow :3")
             await message.channel.send(embed=embed)
             logging.debug("Mention response sent successfully")
         except Exception as e:
@@ -1405,7 +1408,7 @@ async def on_message(message: discord.Message):
     # Process other commands
     await bot.process_commands(message)
 
-@bot.tree.command(name="baley", description="Replies with 'meow'")
+@bot.tree.command(name="baley", description="Replies with 'the baley video'")
 async def baley(interaction: discord.Interaction):
     await interaction.response.send_message("https://cdn.discordapp.com/attachments/1248819562972057763/1267280639120510996/Snapchat-1412399103.mp4")
 
@@ -1420,8 +1423,8 @@ async def time(interaction: discord.Interaction):
         color=discord.Color.blue()
     )
     embed.set_footer(text="Meow :3")
-    await interaction.response.send_message(embed=embed, ephemeral=False)
 
+    await interaction.response.send_message(embed=embed, ephemeral=False)
 
 # Error handler for all commands
 @clear.error
@@ -1439,6 +1442,5 @@ async def command_error(interaction: discord.Interaction,
     else:
         await interaction.response.send_message(f"An error occurred: {error}",
                                                 ephemeral=True)
-
 
 bot.run(TOKEN)
