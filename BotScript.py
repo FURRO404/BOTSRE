@@ -27,7 +27,7 @@ import sys
 logging.basicConfig(level=logging.DEBUG)
 client = Client()
 
-TOKEN = os.environ.get('TEST_DISCORD_KEY')
+TOKEN = os.environ.get('DISCORD_KEY')
 
 intents = discord.Intents.default()
 intents.message_content = True
