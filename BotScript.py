@@ -7,7 +7,7 @@ from discord import app_commands, ui, Interaction, SelectOption
 from Meta_Add import add_to_metas
 from Meta_Remove import remove_from_metas, find_vehicles_in_meta
 from Scoreboard import Scoreboard
-import datetime
+from datetime import *
 from permissions import grant_permission, revoke_permission, has_permission
 from Img_Utils import download_image, create_gif_from_image, find_image_url, add_speech_bubble
 import logging
@@ -106,7 +106,7 @@ async def on_ready():
     for guild in bot.guilds:
         print(f' - {guild.name} (id: {guild.id})')
     await bot.change_presence(activity=discord.Activity(
-        type=discord.ActivityType.watching, name="Preed"))
+        type=discord.ActivityType.watching, name="R3IGN Throw"))
     if not bot.synced:
         await bot.tree.sync()
         bot.synced = True
@@ -948,8 +948,7 @@ async def stat(interaction: discord.Interaction, username: str):
     await interaction.response.send_message(url, ephemeral=False)
 
 
-active_guessing_games = {
-}  # Dictionary to keep track of active guessing games by channel ID
+active_guessing_games = {}  # Dictionary to keep track of active guessing games by channel ID
 
 
 def update_leaderboard(guild_id, user_id, points):
@@ -1231,12 +1230,17 @@ async def help(interaction: discord.Interaction):
         "16. **/leaderboard** - Show the leaderboard.\n"
         "17. **/console** - Choose an action (Add or Remove vehicles).\n"
         "18. **/help** - Get a guide on how to use the bot.\n\n"
-        "For detailed information on each command, please refer to the respective command descriptions."
+        "*For detailed information on each command, please refer to the respective command descriptions.*"
     )
-    embed = discord.Embed(title="Bot Guide",
-                          description=guide_text,
-                          color=discord.Color.blue())
-    await interaction.response.send_message(embed=embed)
+
+    embed = discord.Embed(
+        title="Bot Guide",
+        description=guide_text,
+        color=discord.Color.blue()
+    )
+    embed.set_footer(text="Meow :3")
+    await interaction.response.send_message(embed=embed, ephemeral=False)
+
 
 
 def categorize_vehicle(vehicle_type):
@@ -1405,6 +1409,18 @@ async def on_message(message: discord.Message):
 async def baley(interaction: discord.Interaction):
     await interaction.response.send_message("https://cdn.discordapp.com/attachments/1248819562972057763/1267280639120510996/Snapchat-1412399103.mp4")
 
+@bot.tree.command(name='time', description='Get the current UTC time')
+async def time(interaction: discord.Interaction):
+    utc_time = datetime.utcnow().strftime('%I:%M %p')
+    timestamp = int(datetime.utcnow().timestamp())
+
+    embed = discord.Embed(
+        title="Current UTC Time",
+        description=f"**UTC Time:** {utc_time}\n**Your Local Time:** <t:{timestamp}:t>",
+        color=discord.Color.blue()
+    )
+    embed.set_footer(text="Meow :3")
+    await interaction.response.send_message(embed=embed, ephemeral=False)
 
 
 # Error handler for all commands
