@@ -3,6 +3,7 @@ import os
 import re
 import requests
 from bs4 import BeautifulSoup
+from Searcher import get_vehicle_country
 import logging
 
 # Configure logging
@@ -104,3 +105,39 @@ def guessing_game():
 
     logging.warning("No images found.")
     return "No images found.", None, None
+
+
+def get_country_flag(country):
+    flags = {
+        "USSR": "🇷🇺",
+        "Germany": "🇩🇪",
+        "USA": "🇺🇸",
+        "Great Britain": "🇬🇧",
+        "Japan": "🇯🇵",
+        "Italy": "🇮🇹",
+        "France": "🇫🇷",
+        "China": "🇨🇳",
+        "Sweden": "🇸🇪",
+        "Israel": "🇮🇱"
+    }
+    return flags.get(country, "")
+
+def randomizer_game():
+    logging.debug("Choosing random stuff")
+    file_path = get_random_vehicle_file()
+    vehicles = choose_random_vehicle(file_path)
+    random.shuffle(vehicles)
+
+    if vehicles:
+        # Choose a random vehicle
+        selected_vehicle, normalized_name, selected_br = vehicles[0]
+
+        # Get the country of the vehicle
+        vehicle_country = get_vehicle_country(normalized_name)
+        country_flag = get_country_flag(vehicle_country)
+
+        # Print the chosen vehicle details with the flag
+        return (f"Chosen vehicle: **{normalized_name}** ({country_flag}) @ BR: **{selected_br}**.\nGood luck!")
+    else:
+        return ("No vehicles available for selection.")
+

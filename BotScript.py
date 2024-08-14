@@ -18,7 +18,7 @@ import random
 from SQ_Info import fetch_squadron_info
 import Alarms
 from replit.object_storage.errors import ObjectNotFoundError
-from Games import guessing_game, choose_random_vehicle, get_random_vehicle_file, normalize_name
+from Games import guessing_game, choose_random_vehicle, get_random_vehicle_file, normalize_name, randomizer_game
 import requests
 from Searcher import normalize_name, get_vehicle_type, get_vehicle_country, autofill_search
 from SQB_Parser import parse_logs, separate_games, read_logs_from_file
@@ -1420,12 +1420,29 @@ async def time(interaction: discord.Interaction):
 
     embed = discord.Embed(
         title="Current UTC Time",
-        description=f"**UTC Time:** {utc_time}\n**Your Local Time:** <t:{timestamp}:t>",
+        description=f"**UTC Time:** {utc_time}\n**Local Time:** <t:{timestamp}:t>",
         color=discord.Color.blue()
     )
     embed.set_footer(text="Meow :3")
 
     await interaction.response.send_message(embed=embed, ephemeral=False)
+
+@bot.tree.command(name="random", description="Choose a random vehicle and its BR.")
+async def random(interaction: discord.Interaction):
+    # Run the randomizer_game function to get the vehicle details
+    result = randomizer_game()
+
+    # Create a Discord embed to display the result nicely
+    embed = discord.Embed(
+        title="Random Vehicle",
+        description=result,
+        color=discord.Color.purple()  # You can change the color as needed
+    )
+
+    # Send the embed as the response
+    embed.set_footer(text="Meow :3")
+    await interaction.response.send_message(embed=embed)
+
 
 # Error handler for all commands
 @clear.error
