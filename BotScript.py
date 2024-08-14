@@ -31,7 +31,7 @@ from SQB_Parser import parse_logs, separate_games, read_logs_from_file
 logging.basicConfig(level=logging.DEBUG)
 client = Client()
 
-TOKEN = os.environ.get('TEST_DISCORD_KEY')
+TOKEN = os.environ.get('DISCORD_KEY')
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -1071,8 +1071,8 @@ async def leaderboard_command(interaction: discord.Interaction):
 
 
 def choose_vehicles_from_both_files():
-    air_file_path = get_random_vehicle_file()
-    ground_file_path = get_random_vehicle_file()
+    air_file_path = "DATA/Air.txt"
+    ground_file_path = "DATA/Ground.txt"
 
     air_vehicles = choose_random_vehicle(air_file_path)
     ground_vehicles = choose_random_vehicle(ground_file_path)
@@ -1431,8 +1431,8 @@ async def time(interaction: discord.Interaction):
 
     await interaction.response.send_message(embed=embed, ephemeral=False)
 
-@bot.tree.command(name="random", description="Choose a random vehicle and its BR.")
-async def random(interaction: discord.Interaction):
+@bot.tree.command(name="randomizer", description="Choose a random vehicle and its BR.")
+async def randomizer(interaction: discord.Interaction):
     # Run the randomizer_game function to get the vehicle details
     result = randomizer_game()
 
