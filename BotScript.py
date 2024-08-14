@@ -1,33 +1,37 @@
-import json
+# Standard Library Imports
 import os
-from replit.object_storage import Client
+import sys
+import json
+import logging
+import asyncio
+import random
+import datetime
+from io import StringIO
+
+# Third-Party Library Imports
 import discord
 from discord.ext import commands, tasks
 from discord import app_commands, ui, Interaction, SelectOption
+from replit.object_storage import Client
+from replit.object_storage.errors import ObjectNotFoundError
+import requests
+
+# Local Module Imports
 from Meta_Add import add_to_metas
 from Meta_Remove import remove_from_metas, find_vehicles_in_meta
 from Scoreboard import Scoreboard
-import datetime
-from datetime import datetime as dt
 from permissions import grant_permission, revoke_permission, has_permission
 from Img_Utils import download_image, create_gif_from_image, find_image_url, add_speech_bubble
-import logging
-import asyncio
-from io import StringIO
-import random
-from SQ_Info import fetch_squadron_info
 import Alarms
-from replit.object_storage.errors import ObjectNotFoundError
 from Games import guessing_game, choose_random_vehicle, get_random_vehicle_file, normalize_name, randomizer_game
-import requests
+from SQ_Info import fetch_squadron_info
 from Searcher import normalize_name, get_vehicle_type, get_vehicle_country, autofill_search
 from SQB_Parser import parse_logs, separate_games, read_logs_from_file
-import sys
 
 logging.basicConfig(level=logging.DEBUG)
 client = Client()
 
-TOKEN = os.environ.get('DISCORD_KEY')
+TOKEN = os.environ.get('TEST_DISCORD_KEY')
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -1415,8 +1419,8 @@ async def baley(interaction: discord.Interaction):
 
 @bot.tree.command(name='time', description='Get the current UTC time')
 async def time(interaction: discord.Interaction):
-    utc_time = dt.utcnow().strftime('%I:%M %p')
-    timestamp = int(dt.utcnow().timestamp())
+    utc_time = datetime.datetime.utcnow().strftime('%I:%M %p')
+    timestamp = int(datetime.datetime.utcnow().timestamp())
 
     embed = discord.Embed(
         title="Current UTC Time",
