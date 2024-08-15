@@ -54,6 +54,7 @@ bot = MyBot()
 
 @tasks.loop(minutes=30)
 async def snapshot_task():
+    logging.info(f"Running member-leave alarm")
     for guild in bot.guilds:
         guild_id = guild.id
         key = f"{guild_id}-preferences.json"
@@ -117,6 +118,7 @@ async def points_alarm_task():
 
     # Check if the current time matches any of the alarm times
     if any(now_utc.hour == alarm_time.hour and now_utc.minute == alarm_time.minute for alarm_time in alarm_times_utc):
+        logging.info(f"Running points alarm")
         await execute_points_alarm_task()
 
 async def execute_points_alarm_task():
