@@ -1011,7 +1011,7 @@ async def guessing_game_command(interaction: discord.Interaction):
     )
     embed = discord.Embed(title="Guess the Vehicle!")
     embed.set_image(url=image_url)
-    embed.set_footer(text="Can you identify this vehicle?")
+    embed.set_footer(text="Meow :3")
     await interaction.response.send_message(embed=embed)
 
     # Mark the game as active in the current channel
