@@ -63,4 +63,43 @@ def compare_snapshots(old_snapshot, new_snapshot):
 
     return left_members
 
+def compare_points(old_snapshot, new_snapshot):
+    old_members = {}
+    new_members = {}
+
+    # Extract old members' points
+    for field in old_snapshot.fields:
+        if field.name == "\u00A0":
+            values = field.value.split("\n")
+            for value in values:
+                try:
+                    member_name = value.split(": ")[0].replace('\\_', '_')
+                    points = int(value.split(": ")[1].split()[0])
+                    old_members[member_name] = points
+                except (IndexError, ValueError) as e:
+                    print(f"Error parsing old snapshot field: {value}, error: {e}")
+
+    # Extract new members' points
+    for field in new_snapshot.fields:
+        if field.name == "\u00A0":
+            values = field.value.split("\n")
+            for value in values:
+                try:
+                    member_name = value.split(": ")[0].replace('\\_', '_')
+                    points = int(value.split(": ")[1].split()[0])
+                    new_members[member_name] = points
+                except (IndexError, ValueError) as e:
+                    print(f"Error parsing new snapshot field: {value}, error: {e}")
+
+    print(f"Old members: {old_members}")
+    print(f"New members: {new_members}")
+
+    points_changes = {}
+    for member, old_points in old_members.items():
+        if member in new_members:
+            new_points = new_members[member]
+            if new_points != old_points:
+                points_changes[member] = (new_points - old_points, new_points)
+
+    return points_changes
 

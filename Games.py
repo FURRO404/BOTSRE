@@ -13,7 +13,7 @@ def normalize_name(name):
     return re.sub(r'[^\w\s\(\)\-/.]', '', name).strip()
 
 def get_random_vehicle_file():
-    files = ["Air.txt", "Ground.txt"]
+    files = ["Air.txt", "Ground.txt", "Naval.txt"]
     selected_file = random.choice(files)
     logging.debug(f"Selected file: {selected_file}")
     return os.path.join(os.path.dirname(__file__), "DATA", selected_file)

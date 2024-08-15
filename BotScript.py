@@ -6,6 +6,7 @@ import logging
 import asyncio
 import random
 import datetime
+from datetime import datetime, time, timedelta, timezone
 from io import StringIO
 
 # Third-Party Library Imports
@@ -21,9 +22,8 @@ from Meta_Add import add_to_metas
 from Meta_Remove import remove_from_metas, find_vehicles_in_meta
 from Scoreboard import Scoreboard
 from permissions import grant_permission, revoke_permission, has_permission
-from Img_Utils import download_image, create_gif_from_image, find_image_url, add_speech_bubble
 import Alarms
-from Games import guessing_game, choose_random_vehicle, get_random_vehicle_file, normalize_name, randomizer_game
+from Games import guessing_game, choose_random_vehicle, normalize_name, randomizer_game
 from SQ_Info import fetch_squadron_info
 from Searcher import normalize_name, get_vehicle_type, get_vehicle_country, autofill_search
 from SQB_Parser import parse_logs, separate_games, read_logs_from_file
@@ -105,6 +105,101 @@ async def before_snapshot_task():
     await bot.wait_until_ready()
 
 
+# Define the specific times for the alarm in UTC
+alarm_times_utc = [
+    time(23, 30, tzinfo=timezone.utc),  # 3:30 PM PST is 11:30 PM UTC
+    time(7, 30, tzinfo=timezone.utc)    # 12:30 AM PST is 7:30 AM UTC
+]
+
+@tasks.loop(minutes=1)
+async def points_alarm_task():
+    now_utc = datetime.now(timezone.utc).time()
+
+    # Check if the current time matches any of the alarm times
+    if any(now_utc.hour == alarm_time.hour and now_utc.minute == alarm_time.minute for alarm_time in alarm_times_utc):
+        await execute_points_alarm_task()
+
+async def execute_points_alarm_task():
+    for guild in bot.guilds:
+        guild_id = guild.id
+        key = f"{guild_id}-preferences.json"
+
+        try:
+            data = client.download_as_text(key)
+            preferences = json.loads(data)
+        except ObjectNotFoundError:
+            preferences = {}
+        except FileNotFoundError:
+            preferences = {}
+
+        for squadron_name, squadron_preferences in preferences.items():
+            if "Points" in squadron_preferences:
+                old_snapshot = Alarms.load_snapshot(guild_id, squadron_name)
+                new_snapshot = Alarms.take_snapshot(squadron_name)
+
+                if old_snapshot:
+                    points_changes = Alarms.compare_points(old_snapshot, new_snapshot)
+                    
+                    if points_changes:
+                        channel_id = squadron_preferences.get("Points")
+                        if channel_id:
+                            channel_id = ''.join(filter(str.isdigit, channel_id))
+                            if channel_id.isdigit():
+                                channel = bot.get_channel(int(channel_id))
+                                if channel:
+                                    for member, (points_change, current_points) in points_changes.items():
+                                        change_type = "gained" if points_change > 0 else "lost"
+                                        await channel.send(
+                                            f"Member {member} {change_type} {abs(points_change)} points, now at {current_points} points."
+                                        )
+                                else:
+                                    logging.error(f"Channel ID {channel_id} not found")
+                            else:
+                                logging.error(f"Invalid channel ID format: {channel_id}")
+                        else:
+                            logging.info(f"No channel set for 'Points' type Alarms for squadron {squadron_name}")
+
+                Alarms.save_snapshot(new_snapshot, guild_id, squadron_name)
+
+@points_alarm_task.before_loop
+async def before_points_alarm_task():
+    await bot.wait_until_ready()
+
+
+@bot.tree.command(name="alarm",
+      description="Set an alarm to monitor squadron changes")
+@app_commands.describe(
+    type="The type of alarm (e.g., Leave, Points)",
+    channel_id="The ID of the channel to send alarm messages to",
+    squadron_name="The name of the squadron to monitor")
+@commands.has_permissions(administrator=True)
+async def alarm(interaction: discord.Interaction, type: str, channel_id: str,
+        squadron_name: str):
+    guild_id = interaction.guild.id
+    key = f"{guild_id}-preferences.json"
+    
+    try:
+        data = client.download_as_text(key)
+        preferences = json.loads(data)
+    except ObjectNotFoundError:
+        preferences = {}
+    except FileNotFoundError:
+        preferences = {}
+    
+    if squadron_name not in preferences:
+        preferences[squadron_name] = {}
+    
+    preferences[squadron_name][type] = channel_id
+    
+    client.upload_from_text(key, json.dumps(preferences))
+    
+    await interaction.response.send_message(
+        f"Alarm of type '{type}' set for squadron '{squadron_name}' to send messages in channel ID {channel_id}.",
+        ephemeral=True)
+
+
+
+
 @bot.event
 async def on_ready():
     print(f'We have logged in as {bot.user} in the following guilds:')
@@ -116,6 +211,7 @@ async def on_ready():
         await bot.tree.sync()
         bot.synced = True
     snapshot_task.start()
+    points_alarm_task.start()
 
 
 @bot.event
@@ -830,66 +926,6 @@ async def edit(interaction: discord.Interaction,
                                                 ephemeral=True)
 
 
-@bot.tree.command(
-    name="loop",
-    description="Create a GIF from the last image posted or a provided URL")
-@app_commands.describe(
-    url="The URL of the image to turn into a GIF (optional)")
-async def loop(interaction: discord.Interaction, url: str = None):
-    await interaction.response.defer(ephemeral=False)
-    try:
-        if not url:
-            url = await find_image_url(interaction.channel, interaction.user)
-            if not url:
-                await interaction.followup.send(
-                    "No image found in recent messages and no URL provided.",
-                    ephemeral=True)
-                return
-
-        image = download_image(url)
-        gif = create_gif_from_image(image)
-
-        gif_file = discord.File(fp=gif, filename="loop.gif")
-        await interaction.followup.send("Here is your GIF:", file=gif_file)
-    except Exception as e:
-        logging.error(f"Error creating GIF: {e}")
-        await interaction.followup.send(
-            f"An error occurred while creating the GIF: {e}", ephemeral=True)
-
-
-@bot.tree.command(
-    name="bubble",
-    description=
-    "Create a GIF with an empty speech bubble from the last image posted or a provided URL"
-)
-@app_commands.describe(
-    url=
-    "The URL of the image to add an empty speech bubble to and turn into a GIF (optional)"
-)
-async def bubble(interaction: discord.Interaction, url: str = None):
-    await interaction.response.defer(ephemeral=False)
-    try:
-        if not url:
-            url = await find_image_url(interaction.channel, interaction.user)
-            if not url:
-                await interaction.followup.send(
-                    "No image found in recent messages and no URL provided.",
-                    ephemeral=True)
-                return
-
-        image = download_image(url)
-        image_with_bubble = add_speech_bubble(image, bubble_position=(0, 0))
-        gif = create_gif_from_image(image_with_bubble)
-
-        gif_file = discord.File(fp=gif, filename="bubble.gif")
-        await interaction.followup.send("Speech Bubble Gif:", file=gif_file)
-
-    except Exception as e:
-        logging.error(f"Error creating GIF with speech bubble: {e}")
-        await interaction.followup.send(
-            f"An error occurred while creating the GIF with speech bubble: {e}",
-            ephemeral=True)
-
 
 @bot.tree.command(name="sq-info",
                   description="Fetch information about a squadron")
@@ -914,37 +950,6 @@ async def sq_info(interaction: discord.Interaction,
         await interaction.followup.send(
             f"An error occurred while fetching the squadron info: {e}")
 
-
-@bot.tree.command(name="alarm",
-                  description="Set an alarm to monitor squadron changes")
-@app_commands.describe(
-    type="The type of alarm (e.g., Leave)",
-    channel_id="The ID of the channel to send alarm messages to",
-    squadron_name="The name of the squadron to monitor")
-@commands.has_permissions(administrator=True)
-async def alarm(interaction: discord.Interaction, type: str, channel_id: str,
-                squadron_name: str):
-    guild_id = interaction.guild.id
-    key = f"{guild_id}-preferences.json"
-
-    try:
-        data = client.download_as_text(key)
-        preferences = json.loads(data)
-    except ObjectNotFoundError:
-        preferences = {}
-    except FileNotFoundError:
-        preferences = {}
-
-    if squadron_name not in preferences:
-        preferences[squadron_name] = {}
-
-    preferences[squadron_name][type] = channel_id
-
-    client.upload_from_text(key, json.dumps(preferences))
-
-    await interaction.response.send_message(
-        f"Alarm of type '{type}' set for squadron '{squadron_name}' to send messages in channel ID {channel_id}.",
-        ephemeral=True)
 
 
 @bot.tree.command(name='stat',
@@ -1229,16 +1234,15 @@ async def help(interaction: discord.Interaction):
         "7. **/end** - End the current session.\n"
         "8. **/edit [status] [team_name] [bombers] [fighters] [helis] [tanks] [spaa] [comment]** - Edit the details of the last logged game.\n"
         "9. **/quick-log [status] [enemy team name]** - Quickly log a game using vehicle data from the game log.\n"
-        "10. **/loop [url]** - Create a GIF from the last image posted or a provided URL.\n"
-        "11. **/bubble [url]** - Create a GIF with an empty speech bubble from the last image posted or a provided URL.\n"
-        "12. **/alarm [type] [channel_id] [squadron_name]** - Set an alarm to monitor squadron changes.\n"
-        "13. **/stat [username]** - Get the ThunderSkill stats URL for a user.\n"
-        "14. **/guessing-game** - Start a guessing game.\n"
-        "15. **/trivia [difficulty]** - Play a War Thunder vehicle trivia game. A higher difficulty means more points.\n"
-        "16. **/leaderboard** - Show the leaderboard.\n"
-        "17. **/console** - Choose an action (Add or Remove vehicles).\n"
-        "18. **/time** - Get the current UTC time and your local time.\n"
-        "19. **/help** - Get a guide on how to use the bot.\n\n"
+        "10. **/randomizer** - returns a random vehicle at its BR.\n"
+        "11. **/alarm [type] [channel_id] [squadron_name]** - Set an alarm to monitor squadron changes.\n"
+        "12. **/stat [username]** - Get the ThunderSkill stats URL for a user.\n"
+        "13. **/guessing-game** - Start a guessing game.\n"
+        "14. **/trivia [difficulty]** - Play a War Thunder vehicle trivia game. A higher difficulty means more points.\n"
+        "15. **/leaderboard** - Show the leaderboard.\n"
+        "16. **/console** - Choose an action (Add or Remove vehicles).\n"
+        "17. **/time** - Get the current UTC time and your local time.\n"
+        "18. **/help** - Get a guide on how to use the bot.\n\n"
         "*For detailed information on each command, please refer to the respective command descriptions.*"
     )
 

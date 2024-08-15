@@ -1,0 +1,1212 @@
+Germany	Heavy cruiser	
+Admiral Graf Spee
+5.7	5.7	5.7
+Germany	Heavy cruiser	
+Admiral Hipper
+5.7	5.7	5.7
+Germany	Naval ferry barge	
+AF D1
+2.7	2.7	2.7
+Germany	Naval ferry barge	
+AF D3
+3.3	3.3	3.3
+France	Destroyer	
+Aigle
+4.3	4.3	4.3
+Japan	Frigate	
+Akebono
+3.3	3.3	3.3
+Germany	Motor torpedo gun boat	
+Albatros
+3.7	3.7	3.7
+Italy	Gunboat	
+Albatros
+4.0	4.0	4.0
+USSR	Destroyer	
+Besposhchadny
+4.0	4.0	4.0
+USSR	Destroyer	
+Bezuprechny
+4.3	4.3	4.3
+USSR	Destroyer	
+Blagorodnyy
+5.3	5.3	5.3
+USSR	Armored gun boat	
+BMO
+3.0	3.0	3.0
+France	Destroyer	
+Bourrasque
+3.7	3.7	3.7
+Great Britain	Motor torpedo boat	
+Brave Borderer
+3.3	3.3	3.3
+USSR	Destroyer	
+Bravy
+5.3	5.3	5.3
+Germany	Motor torpedo gun boat	
+Bussard
+3.7	3.7	3.7
+USA	Sub-chaser	
+Carmi (PC-466)
+2.3	2.3	2.3
+France	Destroyer	
+Chacal
+4.0	4.0	4.0
+USSR	Light cruiser	
+Chapayev
+6.0	6.0	6.0
+Japan	Gunboat	
+Chidori
+3.7	3.7	3.7
+Japan	Frigate	
+Chikugo
+3.3	3.3	3.3
+France	Heavy cruiser	
+Colbert
+5.3	5.3	5.3
+USSR	Motor torpedo boat	
+D-3
+1.3	1.3	1.3
+Great Britain	Motor gun boat	
+Dark Adventurer
+2.0	2.0	2.0
+Great Britain	Motor torpedo boat	
+Dark Aggressor
+2.3	2.3	2.3
+Great Britain	Motor torpedo boat	
+Dark Aggressor TD
+2.3	2.3	2.3
+Germany	Sub-chaser	
+Drache
+3.3	3.3	3.3
+France	Light cruiser	
+Duguay-Trouin
+4.7	4.7	4.7
+France	Heavy cruiser	
+Dupleix
+5.7	5.7	5.7
+Germany	Light cruiser	
+Emden
+5.0	5.0	5.0
+France	Light cruiser	
+Emile Bertin
+5.3	5.3	5.3
+Great Britain	Motor gun boat	
+Fairmile A (ML100)
+1.0	1.0	1.0
+Great Britain	Motor gun boat	
+Fairmile B (ML345)
+2.0	2.0	2.0
+Great Britain	Motor gun boat	
+Fairmile C (312)
+2.3	2.3	2.3
+Great Britain	Motor gun boat	
+Fairmile C (332)
+3.0	3.0	3.0
+Great Britain	Motor gun boat	
+Fairmile D (601)
+2.3	2.3	2.3
+Great Britain	Motor torpedo boat	
+Fairmile D (617)
+2.3	2.3	2.3
+Great Britain	Motor torpedo boat	
+Fairmile D (697)
+2.7	2.7	2.7
+Great Britain	Motor torpedo boat	
+Fairmile D (5001)
+2.7	2.7	2.7
+Great Britain	Motor gun boat	
+Fairmile H LCS(L)(2)
+2.3	2.3	2.3
+Italy	Sub-chaser	
+Folaga
+3.7	3.7	3.7
+Italy	Motor torpedo boat	
+Freccia P-493
+4.7	4.7	4.7
+USSR	Destroyer	
+Frunze
+3.3	3.3	3.3
+USSR	Motor torpedo boat	
+G-5
+1.0	1.0	1.0
+USSR	Motor torpedo boat	
+G-5 (ShVAK)
+1.0	1.0	1.0
+Italy	Destroyer	
+Geniere
+4.3	4.3	4.3
+Italy	Motor torpedo boat	
+GIS 811
+2.3	2.3	2.3
+USSR	Gunboat	
+Groza
+3.0	3.0	3.0
+Japan	Motor gun boat	
+Ha-Go (mod. 1)
+1.7	1.7	1.7
+Great Britain	Motor gun boat	
+HMAS Arrow
+2.7	2.7	2.7
+Great Britain	Destroyer	
+HMAS Nepal
+4.3	4.3	4.3
+Great Britain	Destroyer	
+HMAS Tobruk
+4.7	4.7	4.7
+Great Britain	Sub-chaser	
+HMCS Brantford
+2.3	2.3	2.3
+Great Britain	Destroyer	
+HMCS Haida
+4.3	4.3	4.3
+Great Britain	Frigate	
+HMCS Terra Nova
+4.0	4.0	4.0
+Great Britain	Light cruiser	
+HMNZS Leander
+5.3	5.3	5.3
+Great Britain	Light cruiser	
+HMS Abdiel
+4.0	4.3	4.3
+Great Britain	Light cruiser	
+HMS Arethusa
+5.0	5.3	5.3
+Great Britain	Destroyer	
+HMS Armada
+4.7	4.7	4.7
+Great Britain	Light cruiser	
+HMS Belfast
+5.7	5.7	5.7
+Great Britain	Frigate	
+HMS Blackpool
+3.7	3.7	3.7
+Great Britain	Destroyer	
+HMS Brissenden
+4.0	4.3	4.3
+Great Britain	Destroyer	
+HMS Cadiz
+4.7	4.7	4.7
+Great Britain	Destroyer	
+HMS Calpe
+4.0	4.3	4.3
+Great Britain	Destroyer	
+HMS Churchill
+3.3	3.3	3.3
+Great Britain	Battleship	
+HMS Colossus
+6.3	6.3	6.3
+Great Britain	Destroyer	
+HMS Daring
+4.7	4.7	4.7
+Great Britain	Destroyer	
+HMS Diana
+4.7	4.7	4.7
+Great Britain	Light cruiser	
+HMS Dido
+5.3	5.3	5.3
+Great Britain	Battleship	
+HMS Dreadnought
+6.3	6.3	6.3
+Great Britain	Light cruiser	
+HMS Enterprise
+5.0	5.0	5.0
+Great Britain	Destroyer	
+HMS Eskimo
+4.3	4.3	4.3
+Great Britain	Battlecruiser	
+HMS Glorious
+5.7	6.0	6.0
+Great Britain	Destroyer	
+HMS Grafton
+3.7	3.7	3.7
+Great Britain	Heavy cruiser	
+HMS Hawkins
+5.0	5.3	5.3
+Great Britain	Battlecruiser	
+HMS Hood
+7.0	7.0	7.0
+Great Britain	Battlecruiser	
+HMS Invincible
+6.0	6.0	6.0
+Great Britain	Destroyer	
+HMS Jervis
+4.3	4.3	4.3
+Great Britain	Destroyer	
+HMS Kelvin
+4.3	4.3	4.3
+Great Britain	Heavy cruiser	
+HMS Kent
+5.7	5.7	5.7
+Great Britain	Frigate	
+HMS Leopard
+4.0	4.0	4.0
+Great Britain	Sub-chaser	
+HMS Liscomb
+2.0	2.3	2.3
+Great Britain	Light cruiser	
+HMS Liverpool
+5.3	5.7	5.7
+Great Britain	Heavy cruiser	
+HMS London
+5.7	5.7	5.7
+Great Britain	Battleship	
+HMS Marlborough
+6.7	6.7	6.7
+Great Britain	Destroyer	
+HMS Mohawk
+4.7	4.7	4.7
+Great Britain	Destroyer	
+HMS Montgomery
+3.3	3.3	3.3
+Great Britain	Heavy cruiser	
+HMS Norfolk
+5.7	5.7	5.7
+Great Britain	Sub-chaser	
+HMS Peacock
+4.0	4.0	4.0
+Great Britain	Battlecruiser	
+HMS Renown
+7.0	7.0	7.0
+Great Britain	Light cruiser	
+HMS Southampton
+5.7	5.7	5.7
+Great Britain	Gunboat	
+HMS Spey
+3.3	3.3	3.3
+Great Britain	Light cruiser	
+HMS Tiger
+5.7	5.7	5.7
+Great Britain	Destroyer	
+HMS Valhalla
+3.3	3.3	3.3
+Great Britain	Destroyer	
+HMS Vega
+3.7	3.7	3.7
+Great Britain	Destroyer	
+HMS Verdun
+3.7	3.7	3.7
+Great Britain	Frigate	
+HMS Whitby
+3.7	3.7	3.7
+Great Britain	Heavy cruiser	
+HMS York
+5.7	5.7	5.7
+Germany	Motor torpedo boat	
+Hugin
+4.3	4.0	4.0
+Japan	Light cruiser	
+IJN Agano
+5.3	5.3	5.3
+Japan	Destroyer	
+IJN Akizuki
+4.7	4.7	4.7
+Japan	Heavy cruiser	
+IJN Aoba
+5.7	5.7	5.7
+Japan	Destroyer	
+IJN Ayanami
+4.0	4.0	4.0
+Japan	Heavy cruiser	
+IJN Furutaka
+5.7	5.7	5.7
+Japan	Battleship	
+IJN Fuso
+7.0	7.0	7.0
+Japan	Battleship	
+IJN Haruna
+7.0	7.0	7.0
+Japan	Destroyer	
+IJN Hatsuharu
+4.3	4.3	4.3
+Japan	Destroyer	
+IJN Hatsuzuki
+4.7	4.7	4.7
+Japan	Destroyer	
+IJN Hayanami
+4.3	4.3	4.3
+Japan	Battleship	
+IJN Hyuga
+7.0	7.0	7.0
+Japan	Battlecruiser	
+IJN Ikoma
+5.7	5.7	5.7
+Japan	Battleship	
+IJN Ise
+7.0	7.0	7.0
+Japan	Light cruiser	
+IJN Isuzu
+4.7	4.7	4.7
+Japan	Heavy cruiser	
+IJN Kako
+4.7	4.7	4.7
+Japan	Destroyer	
+IJN Kiyoshimo
+4.7	4.7	4.7
+Japan	Battleship	
+IJN Kongo
+7.0	7.0	7.0
+Japan	Light cruiser	
+IJN Kuma
+5.0	5.0	5.0
+Japan	Battlecruiser	
+IJN Kurama
+5.7	5.7	5.7
+Japan	Light cruiser	
+IJN Mikuma
+6.0	6.0	6.0
+Japan	Heavy cruiser	
+IJN Mogami
+6.0	6.0	6.0
+Japan	Destroyer	
+IJN Momi
+3.3	3.3	3.3
+Japan	Destroyer	
+IJN Mutsuki
+3.3	3.3	3.3
+Japan	Heavy cruiser	
+IJN Myoko
+5.7	5.7	5.7
+Japan	Destroyer	
+IJN Nenohi
+4.3	4.3	4.3
+Japan	Destroyer	
+IJN Satsuki
+3.3	3.3	3.3
+Japan	Light cruiser	
+IJN Sendai
+5.0	5.0	5.0
+Japan	Battleship	
+IJN Settsu
+6.3	6.3	6.3
+Japan	Destroyer	
+IJN Shimakaze
+5.0	5.0	5.0
+Japan	Light cruiser	
+IJN Suzuya
+6.0	6.0	6.0
+Japan	Heavy cruiser	
+IJN Tone
+6.0	6.0	6.0
+Japan	Light cruiser	
+IJN Yubari
+4.7	4.7	4.7
+Japan	Destroyer	
+IJN Yugumo
+4.3	4.3	4.3
+Japan	Destroyer	
+IJN Yuudachi
+4.7	4.7	4.7
+Japan	Frigate	
+Ikazuchi
+3.3	3.3	3.3
+USSR	Battleship	
+Imperatritsa Mariya
+6.7	6.7	6.7
+Italy	Destroyer	
+Impetuoso
+4.0	4.0	4.0
+Japan	Frigate	
+Isuzu
+3.7	3.7	3.7
+Germany	Destroyer	
+Jaguar
+3.7	3.7	3.7
+Germany	Motor torpedo boat	
+Jaguar
+4.3	4.0	4.0
+Japan	Frigate	
+JDS Ayanami (DD-103)
+4.0	4.0	4.0
+Japan	Destroyer	
+JDS Harukaze (DD-101)
+4.0	4.0	4.0
+Japan	Destroyer	
+JDS Yūgure (DD-184)
+4.3	4.3	4.3
+France	Light cruiser	
+Jeanne d'Arc
+4.7	4.7	4.7
+Germany	Destroyer	
+K2
+4.3	4.3	4.3
+Germany	Frigate	
+Karl Marx
+4.0	4.0	4.0
+Germany	Light cruiser	
+Karlsruhe
+5.7	5.7	5.7
+USSR	Light cruiser	
+Kerch
+5.3	5.7	5.7
+USSR	Destroyer	
+Kerch
+3.3	3.3	3.3
+USA	Motor gun boat	
+Kim Qui
+3.3	3.3	3.3
+USSR	Light cruiser	
+Kirov
+5.7	5.7	5.7
+Germany	Motor torpedo boat	
+KM-5
+1.7	1.7	1.7
+Germany	Light cruiser	
+Köln
+5.3	5.3	5.3
+Germany	Frigate	
+Köln
+4.3	4.3	4.3
+USSR	Light cruiser	
+Krasny Kavkaz
+5.0	5.0	5.0
+USSR	Light cruiser	
+Krasny Krym
+5.3	5.3	5.3
+Germany	Motor gun boat	
+Krischan der Große
+2.7	2.7	2.7
+USSR	Battlecruiser	
+Kronshtadt
+7.0	7.0	7.0
+USA	Armored gun boat	
+LCM(6) Zippo
+2.3	2.3	2.3
+USA	Motor gun boat	
+LCS(L)(3)
+3.7	3.7	3.7
+France	Destroyer	
+Le Malin
+4.7	4.7	4.7
+Germany	Light cruiser	
+Leipzig
+5.3	5.3	5.3
+USSR	Destroyer	
+Leningrad
+4.3	4.3	4.3
+Germany	Destroyer	
+Leopard
+3.7	3.7	3.7
+France	Destroyer	
+Leopard
+3.7	3.7	3.7
+USSR	Destroyer	
+Letuchiy
+4.0	4.0	4.0
+Great Britain	Sub-chaser	
+LÉ Orla
+4.0	4.0	4.0
+France	Battleship	
+Lorraine
+6.7	6.7	6.7
+Germany	Motor torpedo boat	
+LS 3
+1.0	1.0	1.0
+Germany	Motor torpedo boat	
+LS 4 Esau
+1.0	1.0	1.0
+Germany	Destroyer	
+Luchs
+3.7	3.7	3.7
+Germany	Frigate	
+Lübeck
+4.3	4.3	4.3
+Germany	Sub-chaser	
+M-17
+4.0	4.0	4.0
+Germany	Sub-chaser	
+M-802
+4.0	4.0	4.0
+USSR	Battleship	
+Marat
+6.7	6.7	6.7
+France	Destroyer	
+Marceau
+4.3	4.3	4.3
+Italy	Motor torpedo boat	
+MAS 555
+1.0	1.0	1.0
+Italy	Motor torpedo boat	
+MAS 561
+1.0	1.0	1.0
+Italy	Motor torpedo boat	
+MAS 569
+1.0	1.0	1.0
+USSR	Light cruiser	
+Maxim Gorky
+5.7	5.7	5.7
+USSR	Armored gun boat	
+MBK pr.186
+3.3	3.3	3.3
+USSR	Armored gun boat	
+MBK pr.186 (MK 85)
+3.3	3.3	3.3
+USSR	Armored gun boat	
+MBK-161 early
+3.3	3.3	3.3
+USSR	Armored gun boat	
+MBK-161 late
+3.7	3.7	3.7
+Italy	Motor torpedo boat	
+MC 485
+2.7	2.7	2.7
+Italy	Motor torpedo boat	
+MC-490
+3.3	3.3	3.3
+Great Britain	Motor gun boat	
+MGB-61
+1.7	1.7	1.7
+Great Britain	Motor gun boat	
+MGB-75
+2.0	2.0	2.0
+USSR	Light cruiser	
+Mikhail Kutuzov
+6.3	6.0	6.0
+France	Destroyer	
+Milan
+4.3	4.3	4.3
+Great Britain	Motor gun boat	
+ML 1383
+1.7	1.7	1.7
+USSR	Motor gun boat	
+MO-4
+1.0	1.0	1.0
+USSR	Destroyer	
+Moskva
+4.3	4.3	4.3
+USSR	Sub-chaser	
+MPK pr.122A
+2.0	2.0	2.0
+USSR	Sub-chaser	
+MPK Pr.122bis
+2.3	2.3	2.3
+USSR	Sub-chaser	
+MPK Pr.201K
+3.3	3.3	3.3
+USSR	Sub-chaser	
+MPK Pr.201M
+3.7	3.7	3.7
+USSR	Sub-chaser	
+MPK Pr.204
+3.7	3.7	3.7
+USSR	Frigate	
+MPK Pr.1331M
+4.0	4.0	4.0
+USSR	Motor torpedo gun boat	
+MPK Pr.12412
+4.3	4.3	4.3
+USSR	Motor torpedo gun boat	
+MPK Pr.12412P
+4.3	4.3	4.3
+USSR	Sub-chaser	
+MPK-163
+2.0	2.0	2.0
+Italy	Motor torpedo boat	
+MS-15
+1.3	1.3	1.3
+Italy	Motor torpedo boat	
+MS-53
+1.7	1.7	1.7
+Italy	Motor torpedo boat	
+MS-472
+2.3	2.3	2.3
+Italy	Motor gun boat	
+MS-473
+3.0	3.0	3.0
+Great Britain	Motor torpedo boat	
+MTB Vosper
+1.0	1.0	1.0
+Great Britain	Motor torpedo boat	
+MTB Vosper(2)
+1.7	1.7	1.7
+Great Britain	Motor torpedo boat	
+MTB-1(1)
+1.0	1.0	1.0
+Great Britain	Motor torpedo boat	
+MTB-1(2)
+1.0	1.0	1.0
+Great Britain	Motor torpedo boat	
+MTB-422
+2.3	2.3	2.3
+Italy	Motor gun boat	
+MV-611
+2.3	2.3	2.3
+Germany	Motor torpedo gun boat	
+MZ1
+3.0	3.0	3.0
+USSR	Destroyer	
+Neustrashimy
+5.3	5.3	5.3
+Germany	Light cruiser	
+Nürnberg
+5.7	5.7	5.7
+USSR	Motor gun boat	
+OD-200
+1.7	1.7	1.7
+USSR	Destroyer	
+Ognevoy
+4.0	4.0	4.0
+Great Britain	Destroyer	
+ORP Garland
+3.7	3.7	3.7
+France	Destroyer	
+Panthere
+3.7	3.7	3.7
+France	Battleship	
+Paris
+6.3	6.3	6.3
+USSR	Battleship	
+Parizhskaya Kommuna
+7.0	7.0	7.0
+USA	Sub-chaser	
+PC-451
+2.0	2.0	2.0
+Germany	Motor torpedo boat	
+Pfeil
+4.3	4.3	4.3
+Japan	Motor gun boat	
+PG 02
+3.3	3.3	3.3
+USSR	Battleship	
+Poltava
+6.7	6.7	6.7
+USSR	Motor torpedo boat	
+Pr.123-bis
+2.3	2.3	2.3
+USSR	Motor torpedo boat	
+Pr.123K
+2.3	2.3	2.3
+USSR	Motor torpedo boat	
+Pr.123K (A-11)
+2.3	2.3	2.3
+USSR	Motor torpedo boat	
+Pr.183
+3.3	3.3	3.3
+USSR	Motor gun boat	
+Pr.183 BM-21
+3.0	3.0	3.0
+USSR	Armored gun boat	
+Pr.191
+2.7	2.7	2.7
+USSR	Armored gun boat	
+Pr.191M
+3.0	3.0	3.0
+USSR	Motor torpedo gun boat	
+Pr.206-M
+4.3	4.3	4.3
+USSR	Armored gun boat	
+Pr.1124 early
+2.0	2.0	2.0
+USSR	Armored gun boat	
+Pr.1124 late
+2.3	2.3	2.3
+USSR	Armored gun boat	
+Pr.1124 MLRS
+2.0	2.0	2.0
+USSR	Armored gun boat	
+Pr.1204
+2.3	2.3	2.3
+USSR	Armored gun boat	
+Pr.1204 late
+2.7	2.7	2.7
+USSR	Motor torpedo gun boat	
+Pr. 206
+4.3	4.3	4.3
+Germany	Motor torpedo gun boat	
+Pr. 206
+4.3	4.3	4.3
+France	Light cruiser	
+Primauguet
+5.0	5.0	5.0
+Germany	Heavy cruiser	
+Prinz Eugen
+5.7	5.7	5.7
+USA	Motor torpedo boat	
+PT-3
+1.0	1.0	1.0
+USA	Motor torpedo boat	
+PT-6
+1.0	1.0	1.0
+Japan	Motor torpedo boat	
+PT-15
+3.3	3.3	3.3
+USA	Motor torpedo boat	
+PT-20
+1.7	1.7	1.7
+USA	Motor gun boat	
+PT-59
+3.0	3.0	3.0
+USA	Motor torpedo boat	
+PT-71
+2.0	2.0	2.0
+USA	Motor torpedo boat	
+PT-103
+1.7	1.7	1.7
+USA	Motor torpedo boat	
+PT-109
+1.7	1.7	1.7
+USA	Motor torpedo boat	
+PT-174
+2.3	2.3	2.3
+USA	Motor torpedo boat	
+PT-200
+2.7	2.7	2.7
+USA	Motor torpedo boat	
+PT-314
+2.3	2.3	2.3
+USA	Motor torpedo boat	
+PT-565
+3.0	3.0	3.0
+USA	Motor torpedo boat	
+PT-658
+2.7	2.7	2.7
+Japan	Motor torpedo boat	
+PT-808
+3.3	3.3	3.3
+USA	Motor torpedo boat	
+PT-810
+3.3	3.3	3.3
+USA	Motor torpedo boat	
+PT-811
+3.7	3.7	3.7
+USA	Motor gun boat	
+PT-812
+3.0	3.0	3.0
+USA	Motor gun boat	
+PTF-7
+1.7	1.7	1.7
+Germany	Motor gun boat	
+R-41
+1.0	1.0	1.0
+Germany	Motor gun boat	
+R-130
+1.7	2.0	1.7
+Germany	Motor torpedo boat	
+R-301
+2.3	2.3	2.3
+Italy	Battleship	
+RN Andrea Doria
+6.3	6.3	6.3
+Italy	Destroyer	
+RN Aquila
+3.3	3.3	3.3
+Italy	Destroyer	
+RN Aquilone
+3.3	3.3	3.3
+Italy	Light cruiser	
+RN Attilio Regolo
+4.7	4.7	4.7
+Italy	Destroyer	
+RN Aviere
+4.0	4.0	4.0
+Italy	Light cruiser	
+RN Bartolomeo Colleoni
+5.0	5.0	5.0
+Italy	Destroyer	
+RN Comandante Margottini
+4.0	4.0	4.0
+Italy	Destroyer	
+RN Corazziere
+4.3	4.3	4.3
+Italy	Destroyer	
+RN Da Verazzano
+4.3	4.3	4.3
+Italy	Battleship	
+RN Dante Alighieri
+6.3	6.3	6.3
+Italy	Destroyer	
+RN Dardo
+3.7	3.7	3.7
+Italy	Light cruiser	
+RN Duca degli Abruzzi
+5.7	5.7	5.7
+Italy	Battleship	
+RN Duilio
+6.7	6.7	6.7
+Italy	Light cruiser	
+RN Etna
+4.7	4.7	4.7
+Italy	Light cruiser	
+RN Eugenio di Savoia
+5.3	5.7	5.7
+Italy	Sub-chaser	
+RN Gabbiano
+3.7	3.7	3.7
+Italy	Destroyer	
+RN Geniere
+4.3	4.3	4.3
+Italy	Destroyer	
+RN Leone
+4.3	4.3	4.3
+Italy	Heavy cruiser	
+RN Pola
+5.7	5.7	5.7
+Italy	Light cruiser	
+RN Raimondo Montecuccoli
+5.3	5.7	5.7
+Italy	Destroyer	
+RN Tigre
+4.3	4.3	4.3
+Italy	Heavy cruiser	
+RN Trento
+5.0	5.3	5.3
+Italy	Destroyer	
+RN Turbine
+3.3	3.3	3.3
+Italy	Heavy cruiser	
+RN Zara
+5.7	5.7	5.7
+USSR	Frigate	
+Rosomacha
+4.0	4.0	4.0
+USSR	Destroyer	
+Ryany
+4.0	4.0	4.0
+Germany	Motor torpedo boat	
+S-38
+1.3	1.7	1.7
+Germany	Motor torpedo boat	
+S-38b
+1.7	1.7	1.7
+Germany	Motor torpedo boat	
+S-100
+2.3	2.3	2.3
+Germany	Motor torpedo boat	
+S-147
+2.7	2.7	2.7
+Germany	Motor torpedo boat	
+S-204 Lang
+2.3	2.3	2.3
+Germany	Motor torpedo boat	
+S-701
+2.7	2.7	2.7
+Italy	Motor torpedo gun boat	
+Saetta P-494
+4.7	4.7	4.7
+USA	Sub-chaser	
+SC-497
+2.3	2.3	2.3
+Germany	Battlecruiser	
+Scharnhorst
+7.0	7.0	7.0
+Germany	Anti-air ferry	
+SF40 Heavy
+2.7	2.7	2.7
+Germany	Anti-air ferry	
+SF40 Light
+2.7	2.7	2.7
+Great Britain	Motor gun boat	
+SGB Grey Fox
+3.0	3.0	3.0
+Great Britain	Motor gun boat	
+SGB Grey Goose
+3.0	3.0	3.0
+USSR	Light cruiser	
+Shcherbakov
+6.3	6.0	6.0
+USSR	Frigate	
+SKR-1
+4.3	4.3	4.3
+USSR	Frigate	
+SKR-7
+4.3	4.3	4.3
+USSR	Destroyer	
+Smelyi
+4.3	4.3	4.3
+Germany	Battleship	
+SMS Bayern
+7.0	7.0	7.0
+Germany	Light cruiser	
+SMS Elbing
+4.7	4.7	4.7
+Germany	Battleship	
+SMS Helgoland
+6.3	6.3	6.3
+Germany	Battleship	
+SMS Kaiser
+6.3	6.3	6.3
+Germany	Battleship	
+SMS Nassau
+6.3	6.3	6.3
+Germany	Battleship	
+SMS Ostfriesland
+6.3	6.3	6.3
+Germany	Battlecruiser	
+SMS Von der Tann
+6.3	6.3	6.3
+Germany	Battleship	
+SMS Westfalen
+6.3	6.3	6.3
+USSR	Destroyer	
+Soobrazitelny
+4.3	4.3	4.3
+Japan	Armored gun boat	
+Soukou-Tei
+1.0	1.0	1.0
+Japan	Armored gun boat	
+Soukou-Tei No.4
+1.3	1.3	1.3
+Italy	Motor gun boat	
+Sparviero
+3.7	3.7	3.7
+USSR	Destroyer	
+Spokoinyy
+5.3	5.3	5.3
+Italy	Motor torpedo boat	
+Stefano Turr
+1.7	1.7	1.7
+USSR	Destroyer	
+Stroyny
+4.3	4.3	4.3
+USSR	Light cruiser	
+Sverdlov
+6.0	6.0	6.0
+Japan	Frigate	
+Syonan
+3.3	3.3	3.3
+Germany	Destroyer	
+T22
+3.7	3.7	3.7
+Germany	Destroyer	
+T31
+4.0	4.0	4.0
+USSR	Destroyer	
+Tashkent
+4.7	4.7	4.7
+USA	Motor torpedo boat	
+Thunderbolt (PT-556)
+3.0	3.0	3.0
+USSR	Motor gun boat	
+TKA-106
+1.7	1.7	1.7
+Japan	Motor gun boat	
+Type 4 (Mod 4)
+1.7	1.7	1.7
+Japan	Motor gun boat	
+Type 4 (mod. 2)
+1.7	1.7	1.7
+Japan	Sub-chaser	
+Type 5
+1.7	1.7	1.7
+Japan	Sub-chaser	
+Type K-3 No.1
+3.0	3.0	3.0
+Japan	Sub-chaser	
+Type K-7 No.4
+3.0	3.0	3.0
+Japan	Sub-chaser	
+Type K-8 No.13
+2.0	2.0	2.0
+Japan	Sub-chaser	
+Type K-8 No.13 late
+2.3	2.3	2.3
+Japan	Motor torpedo boat	
+Type T-1
+1.0	1.0	1.0
+Japan	Motor torpedo boat	
+Type T-14
+1.0	1.0	1.0
+Japan	Motor torpedo boat	
+Type T-14 (mod. 1)
+1.0	1.0	1.0
+Japan	Motor torpedo boat	
+Type T-38
+1.7	1.7	1.7
+Japan	Motor torpedo boat	
+Type T-51a
+2.3	2.3	2.3
+Japan	Motor torpedo boat	
+Type T-51b
+2.3	2.3	2.3
+USA	Battlecruiser	
+USS Alaska
+7.0	7.0	7.0
+USA	Battleship	
+USS Arizona
+7.0	7.0	7.0
+USA	Battleship	
+USS Arkansas
+6.7	6.7	6.7
+USA	Motor gun boat	
+USS Asheville
+3.3	3.3	3.3
+USA	Light cruiser	
+USS Atlanta
+5.3	5.3	5.3
+USA	Destroyer	
+USS Aylwin
+4.0	4.0	4.0
+USA	Heavy cruiser	
+USS Baltimore
+6.0	6.0	6.0
+USA	Destroyer	
+USS Barker
+3.3	3.3	3.3
+USA	Destroyer	
+USS Bennion
+4.7	4.7	4.7
+USA	Light cruiser	
+USS Brooklyn
+6.0	6.0	6.0
+USA	Motor gun boat	
+USS Candid
+3.3	3.3	3.0
+USA	Light cruiser	
+USS Cleveland
+6.0	6.0	6.0
+USA	Destroyer	
+USS Cowell
+4.7	4.7	4.7
+USA	Motor gun boat	
+USS Cyclone
+3.7	3.7	3.7
+USA	Destroyer	
+USS Davis
+5.0	5.0	5.0
+USA	Heavy cruiser	
+USS Des Moines
+6.3	6.3	6.3
+USA	Light cruiser	
+USS Detroit
+5.0	5.0	5.0
+USA	Motor gun boat	
+USS Douglas
+4.0	4.0	4.0
+USA	Light cruiser	
+USS Fargo
+6.0	6.0	6.0
+USA	Destroyer	
+USS Fletcher
+4.7	4.7	4.7
+USA	Destroyer	
+USS Frank Knox
+4.7	4.7	4.7
+USA	Destroyer	
+USS Gearing
+4.7	4.7	4.7
+USA	Light cruiser	
+USS Helena
+6.0	6.0	6.0
+USA	Frigate	
+USS Hoquiam
+3.3	3.3	3.3
+USA	Destroyer	
+USS Litchfield
+3.3	3.3	3.3
+USA	Destroyer	
+USS Mitscher
+4.7	4.7	4.7
+USA	Destroyer	
+USS Moffett
+5.0	5.0	5.0
+USA	Battleship	
+USS Nevada
+6.7	6.7	6.7
+USA	Heavy cruiser	
+USS New Orleans
+5.7	5.7	5.7
+USA	Heavy cruiser	
+USS Newport News
+6.3	6.3	6.3
+USA	Battleship	
+USS North Dakota
+6.3	6.3	6.3
+USA	Heavy cruiser	
+USS Northampton
+5.3	5.3	5.3
+USA	Heavy cruiser	
+USS Pensacola
+5.3	5.3	5.3
+USA	Destroyer	
+USS Phelps
+5.0	5.0	5.0
+USA	Heavy cruiser	
+USS Pittsburgh
+6.0	6.0	6.0
+USA	Destroyer	
+USS Porter
+5.0	5.0	5.0
+USA	Heavy cruiser	
+USS Portland
+5.3	5.3	5.3
+USA	Light cruiser	
+USS Raleigh
+5.0	5.0	5.0
+USA	Destroyer	
+USS Somers
+5.0	5.0	5.0
+USA	Destroyer	
+USS Sumner
+4.7	4.7	4.7
+USA	Battleship	
+USS Texas
+6.7	6.7	6.7
+USA	Light cruiser	
+USS Trenton
+5.0	5.0	5.0
+USA	Motor gun boat	
+USS Tucumcari
+3.0	3.0	3.0
+USA	Destroyer	
+USS Welborn C. Wood
+3.3	3.3	3.3
+USA	Destroyer	
+USS Wilkinson
+4.7	4.7	4.7
+USA	Battleship	
+USS Wyoming
+6.7	6.7	6.7
+Germany	Motor torpedo boat	
+V-990
+3.0	3.0	3.0
+Italy	Motor torpedo boat	
+VAS 201
+1.3	1.3	1.3
+France	Destroyer	
+Vautour
+4.3	4.3	4.3
+USSR	Light cruiser	
+Voroshilov
+5.7	5.7	5.7
+Germany	Minelayer	
+VS-8
+2.7	2.7	2.7
+Germany	Motor torpedo boat	
+VS-10
+3.0	3.0	3.0
+USSR	Motor gun boat	
+Ya-5M
+1.3	1.3	1.3
+USSR	Frigate	
+Yenot
+4.0	4.0	4.0
+Germany	Destroyer	
+Z12 Erich Giese
+4.3	4.3	4.3
+Germany	Destroyer	
+Z15 Erich Steinbrinck
+4.0	4.0	4.0
+Germany	Destroyer	
+Z20 Karl Galster
+4.7	4.7	4.7
+Germany	Destroyer	
+Z22 Anton Schmitt
+4.3	4.3	4.3
+Germany	Destroyer	
+Z25
+4.3	4.3	4.3
+Germany	Destroyer	
+Z32
+4.7	4.7	4.7
+Germany	Destroyer	
+Z43
+4.7	4.7	4.7
+Germany	Destroyer	
+Z46
+4.7	4.7	4.7
+Germany	Destroyer	
+Z47
+4.7	4.7	4.7
+USSR	Light cruiser	
+Zheleznyakov
+6.0	6.0	6.0
