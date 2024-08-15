@@ -14,7 +14,8 @@ def normalize_name(name):
 
 def get_random_vehicle_file():
     files = ["Air.txt", "Ground.txt", "Naval.txt"]
-    selected_file = random.choice(files)
+    weights = [0.4, 0.4, 0.2]  # 40% chance each for Air and Ground, 20% for Naval
+    selected_file = random.choices(files, weights)[0]
     logging.debug(f"Selected file: {selected_file}")
     return os.path.join(os.path.dirname(__file__), "DATA", selected_file)
 
