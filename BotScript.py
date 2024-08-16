@@ -5,8 +5,8 @@ import json
 import logging
 import asyncio
 import random
-import datetime
-from datetime import datetime, time, timedelta, timezone
+import datetime as DT
+from datetime import datetime, time, timezone
 from io import StringIO
 
 # Third-Party Library Imports
@@ -808,11 +808,11 @@ async def clear(interaction: discord.Interaction):
 @bot.tree.command(name="session", description="Start a new session")
 @has_roles_or_admin("Session")
 async def session(interaction: discord.Interaction):
-    current_time = datetime.datetime.utcnow().time()
-    if current_time >= datetime.time(14, 0) and current_time <= datetime.time(
+    current_time = DT.datetime.utcnow().time()
+    if current_time >= DT.time(14, 0) and current_time <= DT.time(
             22, 0):
         region = "EU"
-    elif current_time >= datetime.time(1, 0) and current_time <= datetime.time(
+    elif current_time >= DT.time(1, 0) and current_time <= DT.time(
             7, 0):
         region = "US"
     else:
@@ -1425,8 +1425,8 @@ async def baley(interaction: discord.Interaction):
 
 @bot.tree.command(name='time', description='Get the current UTC time')
 async def time(interaction: discord.Interaction):
-    utc_time = datetime.datetime.utcnow().strftime('%I:%M %p')
-    timestamp = int(datetime.datetime.utcnow().timestamp())
+    utc_time = DT.datetime.utcnow().strftime('%I:%M %p')
+    timestamp = int(DT.datetime.utcnow().timestamp())
 
     embed = discord.Embed(
         title="Current UTC Time",
