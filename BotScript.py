@@ -106,22 +106,21 @@ async def before_snapshot_task():
     await bot.wait_until_ready()
 
 
-# Define the specific times for the alarm in UTC
-alarm_times_utc = [
-    time(23, 30, tzinfo=timezone.utc),  # 3:30 PM PST is 11:30 PM UTC
-    time(7, 30, tzinfo=timezone.utc)    # 12:30 AM PST is 7:30 AM UTC
-]
-
 @tasks.loop(minutes=1)
 async def points_alarm_task():
     now_utc = datetime.now(timezone.utc).time()
 
-    # Check if the current time matches any of the alarm times
-    if any(now_utc.hour == alarm_time.hour and now_utc.minute == alarm_time.minute for alarm_time in alarm_times_utc):
-        logging.info(f"Running points alarm")
-        await execute_points_alarm_task()
+    # Define the region based on the current time
+    if now_utc.hour == 23 and now_utc.minute == 30:
+        region = "US"
+    elif now_utc.hour == 7 and now_utc.minute == 30:
+        region = "EU"
+    else:
+        return  # Not a scheduled time
 
-async def execute_points_alarm_task():
+    await execute_points_alarm_task(region)
+
+async def execute_points_alarm_task(region):
     for guild in bot.guilds:
         guild_id = guild.id
         key = f"{guild_id}-preferences.json"
@@ -136,12 +135,12 @@ async def execute_points_alarm_task():
 
         for squadron_name, squadron_preferences in preferences.items():
             if "Points" in squadron_preferences:
-                old_snapshot = Alarms.load_snapshot(guild_id, squadron_name)
+                old_snapshot = Alarms.load_snapshot(guild_id, squadron_name, region)
                 new_snapshot = Alarms.take_snapshot(squadron_name)
 
                 if old_snapshot:
                     points_changes = Alarms.compare_points(old_snapshot, new_snapshot)
-                    
+
                     if points_changes:
                         channel_id = squadron_preferences.get("Points")
                         if channel_id:
@@ -161,7 +160,9 @@ async def execute_points_alarm_task():
                         else:
                             logging.info(f"No channel set for 'Points' type Alarms for squadron {squadron_name}")
 
-                Alarms.save_snapshot(new_snapshot, guild_id, squadron_name)
+                # Save the new snapshot with the region specified
+                Alarms.save_snapshot(new_snapshot, guild_id, squadron_name, region)
+
 
 @points_alarm_task.before_loop
 async def before_points_alarm_task():

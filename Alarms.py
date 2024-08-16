@@ -10,20 +10,28 @@ def take_snapshot(squadron_name):
     return snapshot
 
 # Function to save the snapshot using Replit object storage
-def save_snapshot(snapshot, guild_id, squadron_name):
-    key = f"{guild_id}-{squadron_name}-snapshot"
+def save_snapshot(snapshot, guild_id, squadron_name, region=None):
+    if region:
+        key = f"{guild_id}-{squadron_name}-{region}-snapshot"
+    else:
+        key = f"{guild_id}-{squadron_name}-snapshot"
     client.upload_from_text(key, json.dumps(snapshot.to_dict()))
-    print(f"Snapshot saved for {squadron_name} in guild {guild_id}")
+    print(f"Snapshot saved for {squadron_name} in guild {guild_id} under {region or 'default'} region")
+
 
 # Function to load the snapshot using Replit object storage
-def load_snapshot(guild_id, squadron_name):
-    key = f"{guild_id}-{squadron_name}-snapshot"
+def load_snapshot(guild_id, squadron_name, region=None):
+    if region:
+        key = f"{guild_id}-{squadron_name}-{region}-snapshot"
+    else:
+        key = f"{guild_id}-{squadron_name}-snapshot"
     try:
         snapshot_dict = json.loads(client.download_as_text(key))
         return discord.Embed.from_dict(snapshot_dict)
     except Exception as e:
-        print(f"Error loading snapshot for {squadron_name} in guild {guild_id}: {e}")
+        print(f"Error loading snapshot for {squadron_name} in guild {guild_id} under {region or 'default'} region: {e}")
         return None
+
 
 def compare_snapshots(old_snapshot, new_snapshot):
     old_members = {}
