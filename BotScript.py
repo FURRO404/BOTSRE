@@ -810,26 +810,22 @@ async def clear(interaction: discord.Interaction):
 @has_roles_or_admin("Session")
 async def session(interaction: discord.Interaction):
     current_time = DT.datetime.utcnow().time()
-    if current_time >= DT.time(14, 0) and current_time <= DT.time(
-            22, 0):
+    if current_time >= DT.time(14, 0) and current_time <= DT.time(22, 0):
         region = "EU"
-    elif current_time >= DT.time(1, 0) and current_time <= DT.time(
-            7, 0):
+    elif current_time >= DT.time(1, 0) and current_time <= DT.time(7, 0):
         region = "US"
     else:
         region = "TEST"
     try:
         logging.debug(f"Starting session in region: {region}")
         await Scoreboard.start_session(interaction, region)
-        await interaction.response.send_message("Session started.",
-                                                ephemeral=True)
+        await interaction.response.send_message("Session started.", ephemeral=True)
     except discord.errors.InteractionResponded:
         logging.error("Interaction has already been responded to")
     except Exception as e:
         logging.error(f"Error starting session: {e}")
         if not interaction.response.is_done():
-            await interaction.response.send_message(f"An error occurred: {e}",
-                                                    ephemeral=True)
+            await interaction.response.send_message(f"An error occurred: {e}", ephemeral=True)
 
 
 @bot.tree.command(name="win", description="Log a win for a team")
@@ -853,8 +849,13 @@ async def win(interaction: discord.Interaction,
         await Scoreboard.log_win(interaction, team_name, bombers, fighters,
                                  helis, tanks, spaa, comment)
         await interaction.response.send_message("Win logged.", ephemeral=True)
+    except discord.errors.InteractionResponded:
+        logging.error("Interaction has already been responded to")
     except Exception as e:
-        await interaction.response.send_message(f"An error occurred: {e}")
+        logging.error(f"Error logging win: {e}")
+        if not interaction.response.is_done():
+            await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
+
 
 
 @bot.tree.command(name="loss", description="Log a loss for a team")
@@ -875,8 +876,7 @@ async def loss(interaction: discord.Interaction,
                spaa: int,
                comment: str = ""):
     try:
-        await Scoreboard.log_loss(interaction, team_name, bombers, fighters,
-                                  helis, tanks, spaa, comment)
+        await Scoreboard.log_loss(interaction, team_name, bombers, fighters, helis, tanks, spaa, comment)
         await interaction.response.send_message("Loss logged.", ephemeral=True)
     except Exception as e:
         await interaction.response.send_message(f"An error occurred: {e}")
@@ -887,19 +887,16 @@ async def loss(interaction: discord.Interaction,
 async def end(interaction: discord.Interaction):
     try:
         await Scoreboard.end_session(interaction, bot)
-        await interaction.response.send_message("Session ended.",
-                                                ephemeral=True)
+        await interaction.response.send_message("Session ended.", ephemeral=True)
     except discord.errors.InteractionResponded:
         logging.error("Interaction has already been responded to")
     except Exception as e:
         logging.error(f"Error ending session: {e}")
         if not interaction.response.is_done():
-            await interaction.response.send_message(f"An error occurred: {e}",
-                                                    ephemeral=True)
+            await interaction.response.send_message(f"An error occurred: {e}", ephemeral=True)
 
 
-@bot.tree.command(name="edit",
-                  description="Edit the details of the last logged game")
+@bot.tree.command(name="edit", description="Edit the details of the last logged game")
 @app_commands.describe(status="The status of the game (W for win, L for loss)",
                        team_name="The name of the team",
                        bombers="Number of bombers",
@@ -919,14 +916,11 @@ async def edit(interaction: discord.Interaction,
                spaa: int,
                comment: str = ""):
     try:
-        await Scoreboard.edit_game(interaction, status, team_name, bombers,
-                                   fighters, helis, tanks, spaa, comment)
-        await interaction.response.send_message("Last game edited.",
-                                                ephemeral=True)
+        await Scoreboard.edit_game(interaction, status, team_name, bombers, fighters, helis, tanks, spaa, comment)
+        await interaction.response.send_message("Last game edited.", ephemeral=True)
     except Exception as e:
         logging.error(f"Error editing game: {e}")
-        await interaction.response.send_message(f"An error occurred: {e}",
-                                                ephemeral=True)
+        await interaction.response.send_message(f"An error occurred: {e}", ephemeral=True)
 
 
 
@@ -1277,6 +1271,17 @@ async def handle_attachment(interaction: discord.Interaction,
                             attachment: discord.Attachment, enemy_team: str,
                             message: discord.Message, result_type: str,
                             comment: str):
+    guild_id = interaction.guild.id
+    user_id = interaction.user.id
+
+    # Load the user's session
+    Scoreboard.load_session(guild_id, user_id)
+    session = Scoreboard.sessions.get((guild_id, user_id))
+
+    if session is None or not session["started"]:
+        await interaction.followup.send("No active session found. Please start a session first.", ephemeral=True)
+        return
+
     if attachment.filename.endswith('.txt'):
         logs_text = await attachment.read()
         logs_text = logs_text.decode('utf-8')
@@ -1285,8 +1290,7 @@ async def handle_attachment(interaction: discord.Interaction,
         try:
             logs = json.loads(logs_text)
         except json.JSONDecodeError as e:
-            await interaction.followup.send(f"Invalid JSON format: {e}",
-                                            ephemeral=True)
+            await interaction.followup.send(f"Invalid JSON format: {e}", ephemeral=True)
             return
 
         # Save logs to a file
@@ -1320,14 +1324,11 @@ async def handle_attachment(interaction: discord.Interaction,
                 for member in clan_members:
                     vehicle_name = member.split(': ')[1].strip('()')
                     normalized_vehicle_name = normalize_name(vehicle_name)
-                    autofilled_vehicle_name = autofill_search(
-                        normalized_vehicle_name)
+                    autofilled_vehicle_name = autofill_search(normalized_vehicle_name)
                     vehicle_type = get_vehicle_type(autofilled_vehicle_name)
                     category = categorize_vehicle(vehicle_type)
                     categorized_vehicles[category] += 1
-                    print(
-                        f"{member} - Autofilled: {autofilled_vehicle_name} - Type: {vehicle_type}"
-                    )
+                    print(f"{member} - Autofilled: {autofilled_vehicle_name} - Type: {vehicle_type}")
 
                 # Prepare counts for each category
                 bombers = categorized_vehicles['Bombers']
@@ -1337,17 +1338,11 @@ async def handle_attachment(interaction: discord.Interaction,
                 spaa = categorized_vehicles['Anti-Aircraft']
 
                 if result_type == 'win':
-                    await Scoreboard.log_win(interaction, enemy_team, bombers,
-                                             fighters, helis, tanks, spaa,
-                                             comment)
-                    await interaction.followup.send("Win logged.",
-                                                    ephemeral=True)
+                    await Scoreboard.log_win(interaction, enemy_team, bombers, fighters, helis, tanks, spaa, comment)
+                    await interaction.followup.send("Win logged.", ephemeral=True)
                 elif result_type == 'loss':
-                    await Scoreboard.log_loss(interaction, enemy_team, bombers,
-                                              fighters, helis, tanks, spaa,
-                                              comment)
-                    await interaction.followup.send("Loss logged.",
-                                                    ephemeral=True)
+                    await Scoreboard.log_loss(interaction, enemy_team, bombers, fighters, helis, tanks, spaa, comment)
+                    await interaction.followup.send("Loss logged.", ephemeral=True)
             else:
                 print("No games found.")
 
@@ -1363,8 +1358,7 @@ async def handle_attachment(interaction: discord.Interaction,
         # Delete the user's message containing the attachment
         await message.delete()
     else:
-        await interaction.followup.send("Please upload a valid .txt file.",
-                                        ephemeral=True)
+        await interaction.followup.send("Please upload a valid .txt file.", ephemeral=True)
 
 
 @bot.tree.command(name='quick-log',

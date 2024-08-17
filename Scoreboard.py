@@ -31,212 +31,274 @@ class Scoreboard:
     permissions = {}
 
     @classmethod
-    def get_session_key(cls, guild_id):
-        return f"{guild_id}_session.json"
+    def get_session_key(cls, guild_id, user_id):
+        return f"{guild_id}_{user_id}_session.json"
 
     @classmethod
-    def get_permissions_key(cls, guild_id):
-        return f"{guild_id}_permissions.json"
-
-    @classmethod
-    def load_session(cls, guild_id):
-        key = cls.get_session_key(guild_id)
+    def load_session(cls, guild_id, user_id):
+        key = cls.get_session_key(guild_id, user_id)
         try:
-            logging.debug(f"Attempting to download session data for guild {guild_id}")
+            logging.debug(f"Attempting to download session data for guild {guild_id} and user {user_id}")
             data = client.download_as_text(key)
-            cls.sessions[guild_id] = json.loads(data)
-            logging.debug(f"Loaded session data for guild {guild_id}: {cls.sessions[guild_id]}")
+            cls.sessions[(guild_id, user_id)] = json.loads(data)
+            logging.debug(f"Loaded session data for guild {guild_id} and user {user_id}: {cls.sessions[(guild_id, user_id)]}")
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 404:
-                logging.debug(f"Session data for guild {guild_id} not found, initializing new session")
-                cls.sessions[guild_id] = SESSION_TEMPLATE.copy()
+                logging.debug(f"Session data for guild {guild_id} and user {user_id} not found, initializing new session")
+                cls.sessions[(guild_id, user_id)] = SESSION_TEMPLATE.copy()
             else:
-                logging.error(f"Error loading session data for guild {guild_id}: {e}")
+                logging.error(f"Error loading session data for guild {guild_id} and user {user_id}: {e}")
                 raise
         except Exception as e:
-            logging.error(f"Error loading session data for guild {guild_id}: {e}")
-            cls.sessions[guild_id] = SESSION_TEMPLATE.copy()
+            logging.error(f"Error loading session data for guild {guild_id} and user {user_id}: {e}")
+            cls.sessions[(guild_id, user_id)] = SESSION_TEMPLATE.copy()
 
     @classmethod
-    def save_session(cls, guild_id):
-        key = cls.get_session_key(guild_id)
-        data = json.dumps(cls.sessions[guild_id])
-        logging.debug(f"Saving session data for guild {guild_id}: {data}")
-        try:
-            client.upload_from_text(key, data)
-        except Exception as e:
-            logging.error(f"Error saving session data for guild {guild_id}: {e}")
-
-    @classmethod
-    def load_permissions(cls, guild_id):
-        key = cls.get_permissions_key(guild_id)
-        try:
-            logging.debug(f"Attempting to download permissions data for guild {guild_id}")
-            data = client.download_as_text(key)
-            cls.permissions[guild_id] = json.loads(data)
-            logging.debug(f"Loaded permissions data for guild {guild_id}: {cls.permissions[guild_id]}")
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 404:
-                logging.debug(f"Permissions data for guild {guild_id} not found, using default permissions")
-                cls.permissions[guild_id] = DEFAULT_PERMISSIONS.copy()
-            else:
-                logging.error(f"Error loading permissions data for guild {guild_id}: {e}")
-                cls.permissions[guild_id] = DEFAULT_PERMISSIONS.copy()
-        except Exception as e:
-            logging.error(f"Error loading permissions data for guild {guild_id}: {e}")
-            cls.permissions[guild_id] = DEFAULT_PERMISSIONS.copy()
-
-    @classmethod
-    def save_permissions(cls, guild_id):
-        key = cls.get_permissions_key(guild_id)
-        data = json.dumps(cls.permissions[guild_id])
-        logging.debug(f"Saving permissions data for guild {guild_id}: {data}")
-        try:
-            client.upload_from_text(key, data)
-        except Exception as e:
-            logging.error(f"Error saving permissions data for guild {guild_id}: {e}")
+    def save_session(cls, guild_id, user_id):
+        key = cls.get_session_key(guild_id, user_id)
+        data = json.dumps(cls.sessions[(guild_id, user_id)])
+        logging.debug(f"Saving session data for guild {guild_id} and user {user_id}: {data}")
+        client.upload_from_text(key, data)
 
     @classmethod
     async def start_session(cls, interaction: discord.Interaction, region: str):
         guild_id = interaction.guild.id
-        cls.load_session(guild_id)
-        cls.load_permissions(guild_id)
+        user_id = interaction.user.id
+        cls.load_session(guild_id, user_id)
 
-        if cls.sessions[guild_id]["started"]:
-            await interaction.response.send_message("A session is already active.", ephemeral=True)
+        session = cls.sessions[(guild_id, user_id)]
+        if session["started"]:
+            await interaction.response.send_message("You already have an active session.", ephemeral=True)
             return
 
-        cls.sessions[guild_id] = {
-            "started": True,
-            "user": interaction.user.id,
-            "region": region,
-            "wins": 0,
-            "losses": 0,
-            "log_entries": [],
-            "last_message_id": None,
-            "log": f"{datetime.datetime.utcnow().strftime('%m/%d')}\n{LOG_HEADER}"
-        }
-        session_start_message = f"**{region} SESSION START - <@{cls.sessions[guild_id]['user']}>**"
-        message = await interaction.channel.send(f"{session_start_message}\n```diff\n{cls.sessions[guild_id]['log']}\n```")
-        cls.sessions[guild_id]["last_message_id"] = message.id
+        # Initialize a new session
+        session["started"] = True
+        session["user"] = user_id
+        session["region"] = region
+        session["log"] = f"{datetime.datetime.utcnow().strftime('%m/%d')}\n{LOG_HEADER}"
+        cls.save_session(guild_id, user_id)
 
-        cls.save_session(guild_id)
-        cls.save_permissions(guild_id)
+        # Send session start message in the channel
+        try:
+            session_start_message = f"**{session['region']} SESSION START - <@{session['user']}>**"
+            message = await interaction.channel.send(f"{session_start_message}\n```diff\n{session['log']}\n```")
+            session["last_message_id"] = message.id
+            cls.save_session(guild_id, user_id)
+            logging.debug(f"Session started message sent: {session_start_message}")
+        except Exception as e:
+            logging.error(f"Error sending session start message: {e}")
+            if not interaction.response.is_done():
+                await interaction.response.send_message(f"An error occurred while starting the session: {e}", ephemeral=True)
+
+        await interaction.response.send_message("Session started.", ephemeral=True)
+
+    @classmethod
+    async def log_win(cls, interaction: discord.Interaction, team_name: str, bombers: int, fighters: int,
+                      helis: int, tanks: int, spaa: int, comment: str = ""):
+        guild_id = interaction.guild.id
+        user_id = interaction.user.id
+        cls.load_session(guild_id, user_id)
+
+        session = cls.sessions[(guild_id, user_id)]
+        if not session["started"]:
+            await interaction.response.send_message("No active session found. Please start a session first.", ephemeral=True)
+            return
+
+        # Update session data
+        session["wins"] += 1
+        new_game_number = session["wins"] + session["losses"]
+        new_log_entry = cls.format_log_entry("+", session["wins"], session["losses"], new_game_number, team_name, bombers, fighters, helis, tanks, spaa, comment)
+        session["log_entries"].append(new_log_entry)
+        session["log"] = f"{datetime.datetime.utcnow().strftime('%m/%d')}\n{LOG_HEADER}" + "".join(session["log_entries"])
+
+        # Attempt to delete the last message and send the updated session log
+        try:
+            if session["last_message_id"]:
+                last_message = await interaction.channel.fetch_message(session["last_message_id"])
+                await last_message.delete()
+
+            session_start_message = f"**{session['region']} SESSION START - <@{session['user']}>**"
+            message = await interaction.channel.send(f"{session_start_message}\n```diff\n{session['log']}\n```")
+            session["last_message_id"] = message.id
+            cls.save_session(guild_id, user_id)
+
+            await interaction.response.send_message("Win logged.", ephemeral=True)
+
+        except discord.errors.InteractionResponded:
+            logging.error("Interaction has already been responded to")
+        except Exception as e:
+            logging.error(f"Error logging win: {e}")
+            if not interaction.response.is_done():
+                await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
+
+    @classmethod
+    async def log_loss(cls, interaction: discord.Interaction, team_name: str, bombers: int, fighters: int,
+                       helis: int, tanks: int, spaa: int, comment: str = ""):
+        guild_id = interaction.guild.id
+        user_id = interaction.user.id
+        cls.load_session(guild_id, user_id)
+
+        session = cls.sessions[(guild_id, user_id)]
+        if not session["started"]:
+            await interaction.response.send_message("No active session found. Please start a session first.", ephemeral=True)
+            return
+
+        # Update session data
+        session["losses"] += 1
+        new_game_number = session["wins"] + session["losses"]
+        new_log_entry = cls.format_log_entry("-", session["wins"], session["losses"], new_game_number, team_name, bombers, fighters, helis, tanks, spaa, comment)
+        session["log_entries"].append(new_log_entry)
+        session["log"] = f"{datetime.datetime.utcnow().strftime('%m/%d')}\n{LOG_HEADER}" + "".join(session["log_entries"])
+
+        # Attempt to delete the last message and send the updated session log
+        try:
+            if session["last_message_id"]:
+                last_message = await interaction.channel.fetch_message(session["last_message_id"])
+                await last_message.delete()
+
+            session_start_message = f"**{session['region']} SESSION START - <@{session['user']}>**"
+            message = await interaction.channel.send(f"{session_start_message}\n```diff\n{session['log']}\n```")
+            session["last_message_id"] = message.id
+            cls.save_session(guild_id, user_id)
+
+            await interaction.response.send_message("Loss logged.", ephemeral=True)
+
+        except discord.errors.InteractionResponded:
+            logging.error("Interaction has already been responded to")
+        except Exception as e:
+            logging.error(f"Error logging loss: {e}")
+            if not interaction.response.is_done():
+                await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
+
+    @classmethod
+    async def end_session(cls, interaction: discord.Interaction, bot: discord.Client):
+        guild_id = interaction.guild.id
+        user_id = interaction.user.id
+        session_key = cls.get_session_key(guild_id, user_id)
+
+        try:
+            logging.debug(f"Checking for session file: {session_key}")
+            # Attempt to download the session data
+            try:
+                data = client.download_as_text(session_key)
+                session = json.loads(data)
+                logging.debug(f"Loaded session data: {session}")
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 404:
+                    logging.warning(f"No active session file found for {session_key}")
+                    await interaction.response.send_message("No active session found to end.", ephemeral=True)
+                    return
+                else:
+                    raise
+
+            # Calculate win rate
+            total_games = session["wins"] + session["losses"]
+            win_rate = (session["wins"] / total_games) * 100 if total_games > 0 else 0
+
+            # Finalize the session log
+            session["log"] += f"\n--------------------------\nCALLED - WR: {win_rate:.2f}%\n"
+            session_start_message = f"**{session['region']} SESSION START - <@{session['user']}>**"
+
+            # Delete the previous session message
+            if session["last_message_id"]:
+                try:
+                    logging.debug(f"Attempting to delete last session message for guild {guild_id} and user {user_id}")
+                    last_message = await interaction.channel.fetch_message(session["last_message_id"])
+                    await last_message.delete()
+                except discord.errors.NotFound:
+                    logging.warning(f"Last message for guild {guild_id} and user {user_id} not found, it might have already been deleted.")
+                except Exception as e:
+                    logging.error(f"Error deleting last message for guild {guild_id} and user {user_id}: {e}")
+
+            # Send the final session log
+            try:
+                message = await interaction.channel.send(f"{session_start_message}\n```diff\n{session['log']}\n```")
+            except discord.errors.HTTPException as e:
+                logging.error(f"Error sending session end message in guild {guild_id}: {e}")
+                if not interaction.response.is_done():
+                    await interaction.followup.send(f"An error occurred while ending the session: {e}", ephemeral=True)
+                return
+
+            # Update the last message ID with the new message
+            session["last_message_id"] = message.id
+
+            # Delete the session file
+            try:
+                client.delete(session_key)
+                logging.debug(f"Deleted session file: {session_key}")
+            except Exception as e:
+                logging.error(f"Error deleting session file {session_key}: {e}")
+
+            if not interaction.response.is_done():
+                await interaction.response.send_message("Session ended and file deleted.", ephemeral=True)
+
+        except Exception as e:
+            logging.error(f"Unhandled exception while ending session for {session_key}: {e}")
+            if not interaction.response.is_done():
+                await interaction.followup.send(f"An error occurred while ending the session: {e}", ephemeral=True)
+
+    @classmethod
+    async def edit_game(cls, interaction: discord.Interaction, status: str, team_name: str, bombers: int,
+                        fighters: int, helis: int, tanks: int, spaa: int, comment: str = ""):
+        guild_id = interaction.guild.id
+        user_id = interaction.user.id
+        cls.load_session(guild_id, user_id)
+
+        session = cls.sessions.get((guild_id, user_id))
+        if session is None or not session["started"] or interaction.user.id != session["user"]:
+            await interaction.response.send_message("You are not authorized to edit a game or no session is active.", ephemeral=True)
+            return
+
+        # Ensure that there are log entries to edit
+        if not session["log_entries"]:
+            await interaction.response.send_message("No games have been logged yet.", ephemeral=True)
+            return
+
+        # Edit the last game entry
+        try:
+            last_game_index = len(session["log_entries"]) - 1
+            last_game_entry = session["log_entries"][last_game_index]
+
+            # Determine the old status and adjust win/loss counts accordingly
+            old_status = last_game_entry[0]  # '+' for win, '-' for loss
+            new_status = '+' if status.upper() == 'W' else '-'
+
+            if new_status != old_status:
+                if new_status == '+':
+                    session["wins"] += 1
+                    session["losses"] -= 1
+                elif new_status == '-':
+                    session["wins"] -= 1
+                    session["losses"] += 1
+
+            # Create the new log entry
+            new_game_number = session["wins"] + session["losses"]
+            new_log_entry = cls.format_log_entry(new_status, session["wins"], session["losses"], new_game_number, team_name, bombers, fighters, helis, tanks, spaa, comment)
+            session["log_entries"][last_game_index] = new_log_entry
+
+            # Rebuild the log
+            session["log"] = f"{datetime.datetime.utcnow().strftime('%m/%d')}\n{LOG_HEADER}" + "".join(session["log_entries"])
+
+            # Delete the previous session message and send the updated log
+            if session["last_message_id"]:
+                last_message = await interaction.channel.fetch_message(session["last_message_id"])
+                await last_message.delete()
+
+            session_start_message = f"**{session['region']} SESSION START - <@{session['user']}>**"
+            message = await interaction.channel.send(f"{session_start_message}\n```diff\n{session['log']}\n```")
+            session["last_message_id"] = message.id
+
+            cls.save_session(guild_id, user_id)
+
+            await interaction.response.send_message("Last game edited.", ephemeral=True)
+
+        except Exception as e:
+            logging.error(f"Error editing game: {e}")
+            if not interaction.response.is_done():
+                await interaction.followup.send(f"An error occurred while editing the game: {e}", ephemeral=True)
+
 
     @classmethod
     def format_log_entry(cls, status, wins, losses, game_number, team_name, bombers, fighters, helis, tanks, spaa, comment=''):
         spacing = "   " if len(str(wins)) == 1 and len(str(losses)) == 1 else "  " if len(str(wins)) > 1 and len(str(losses)) == 1 else "  " if len(str(wins)) == 1 and len(str(losses)) > 1 else " "
         return f"{status}{wins}-{losses}{spacing}#{game_number:<2} {team_name:<5} {bombers} {fighters} {helis} {tanks} {spaa} {comment}\n"
-
-    @classmethod
-    async def log_win(cls, interaction: discord.Interaction, team_name: str, bombers: int, fighters: int, helis: int, tanks: int, spaa: int, comment: str = ""):
-        guild_id = interaction.guild.id
-        cls.load_session(guild_id)
-
-        if not cls.sessions[guild_id]["started"] or interaction.user.id != cls.sessions[guild_id]["user"]:
-            await interaction.response.send_message("You are not authorized to log this win or no session is active.", ephemeral=True)
-            return
-
-        session = cls.sessions[guild_id]
-        session["wins"] += 1
-        game_number = session["wins"] + session["losses"]
-        log_entry = cls.format_log_entry("+", session["wins"], session["losses"], game_number, team_name, bombers, fighters, helis, tanks, spaa, comment)
-        session["log_entries"].append(log_entry)
-        session["log"] = f"{datetime.datetime.utcnow().strftime('%m/%d')}\n{LOG_HEADER}" + "".join(session["log_entries"])
-
-        session_start_message = f"**{session['region']} SESSION START - <@{session['user']}>**"
-        if session["last_message_id"]:
-            last_message = await interaction.channel.fetch_message(session["last_message_id"])
-            await last_message.delete()
-        message = await interaction.channel.send(f"{session_start_message}\n```diff\n{session['log']}\n```")
-        session["last_message_id"] = message.id
-
-        cls.save_session(guild_id)
-
-    @classmethod
-    async def log_loss(cls, interaction: discord.Interaction, team_name: str, bombers: int, fighters: int, helis: int, tanks: int, spaa: int, comment: str = ""):
-        guild_id = interaction.guild.id
-        cls.load_session(guild_id)
-
-        if not cls.sessions[guild_id]["started"] or interaction.user.id != cls.sessions[guild_id]["user"]:
-            await interaction.response.send_message("You are not authorized to log this loss or no session is active.", ephemeral=True)
-            return
-
-        session = cls.sessions[guild_id]
-        session["losses"] += 1
-        game_number = session["wins"] + session["losses"]
-        log_entry = cls.format_log_entry("-", session["wins"], session["losses"], game_number, team_name, bombers, fighters, helis, tanks, spaa, comment)
-        session["log_entries"].append(log_entry)
-        session["log"] = f"{datetime.datetime.utcnow().strftime('%m/%d')}\n{LOG_HEADER}" + "".join(session["log_entries"])
-
-        session_start_message = f"**{session['region']} SESSION START - <@{session['user']}>**"
-        if session["last_message_id"]:
-            last_message = await interaction.channel.fetch_message(session["last_message_id"])
-            await last_message.delete()
-        message = await interaction.channel.send(f"{session_start_message}\n```diff\n{session['log']}\n```")
-        session["last_message_id"] = message.id
-
-        cls.save_session(guild_id)
-
-    @classmethod
-    async def end_session(cls, interaction: discord.Interaction, bot: discord.Client):
-        guild_id = interaction.guild.id
-        cls.load_session(guild_id)
-
-        if not cls.sessions[guild_id]["started"] or (interaction.user.id != cls.sessions[guild_id]["user"] and interaction.user != bot.user):
-            await interaction.response.send_message("You are not authorized to end this session or no session is active.", ephemeral=True)
-            return
-
-        session = cls.sessions[guild_id]
-        total_games = session["wins"] + session["losses"]
-        win_rate = (session["wins"] / total_games) * 100 if total_games > 0 else 0
-
-        session["log"] += f"\n--------------------------\nCALLED - WR: {win_rate:.2f}%\n"
-        session_start_message = f"**{session['region']} SESSION START - <@{session['user']}>**"
-        if session["last_message_id"]:
-            last_message = await interaction.channel.fetch_message(session["last_message_id"])
-            await last_message.delete()
-        await interaction.channel.send(f"{session_start_message}\n```diff\n{session['log']}\n```")
-
-        cls.sessions[guild_id] = SESSION_TEMPLATE.copy()
-
-        cls.save_session(guild_id)
-
-    @classmethod
-    async def edit_game(cls, interaction: discord.Interaction, status: str, team_name: str, bombers: int, fighters: int, helis: int, tanks: int, spaa: int, comment: str = ""):
-        guild_id = interaction.guild.id
-        cls.load_session(guild_id)
-
-        if guild_id not in cls.sessions or not cls.sessions[guild_id]["started"] or interaction.user.id != cls.sessions[guild_id]["user"]:
-            await interaction.response.send_message("You are not authorized to edit a game or no session is active.", ephemeral=True)
-            return
-
-        session = cls.sessions[guild_id]
-        if not session["log_entries"]:
-            await interaction.response.send_message("No games have been logged yet.", ephemeral=True)
-            return
-
-        last_game_index = len(session["log_entries"]) - 1
-        last_game_entry = session["log_entries"][last_game_index]
-        old_status = last_game_entry.split()[0][0]
-
-        if status.upper() == 'W' and old_status == '-':
-            session["wins"] += 1
-            session["losses"] -= 1
-        elif status.upper() == 'L' and old_status == '+':
-            session["wins"] -= 1
-            session["losses"] += 1
-
-        new_game_number = session["wins"] + session["losses"]
-        new_log_entry = cls.format_log_entry("+" if status.upper() == 'W' else "-", session["wins"], session["losses"], new_game_number, team_name, bombers, fighters, helis, tanks, spaa, comment)
-        session["log_entries"][last_game_index] = new_log_entry
-        session["log"] = f"{datetime.datetime.utcnow().strftime('%m/%d')}\n{LOG_HEADER}" + "".join(session["log_entries"])
-
-        session_start_message = f"**{session['region']} SESSION START - <@{session['user']}>**"
-        if session["last_message_id"]:
-            last_message = await interaction.channel.fetch_message(session["last_message_id"])
-            await last_message.delete()
-        message = await interaction.channel.send(f"{session_start_message}\n```diff\n{session['log']}\n```")
-        session["last_message_id"] = message.id
-
-        cls.save_session(guild_id)
