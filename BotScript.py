@@ -4,6 +4,7 @@ import sys
 import json
 import logging
 import asyncio
+import time as t
 import random
 import datetime as DT
 from datetime import datetime, time, timezone
@@ -56,6 +57,7 @@ bot = MyBot()
 async def snapshot_task():
     logging.info(f"Running member-leave alarm")
     for guild in bot.guilds:
+        t.sleep(60)
         guild_id = guild.id
         key = f"{guild_id}-preferences.json"
 
