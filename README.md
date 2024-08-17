@@ -7,43 +7,19 @@ This is a Discord bot designed for War Thunder, providing various features such 
 ### Prerequisites
 
 - Python 3.10 or higher
-- Poetry for package management
-
-### Installation
-
-1. Clone the repository to your local machine.
-
-    ```sh
-    git clone <repository_url>
-    cd <repository_directory>
-    ```
-
-2. Install the dependencies using Poetry.
-
-    ```sh
-    poetry install
-    ```
-
-3. Set your Discord bot token in the environment variable `TEST_DISCORD_KEY`.
-
-    ```sh
-    export DISCORD_KEY=your_discord_bot_token
-    ```
 
 ### Running the Bot
 
-You can start the bot by running `BotScript.py`.
-
-```sh
-poetry run python BotScript.py
-```
-
+You can start the bot by running `BotScript.py` once you put your discord bot token into your env.
 
 ### Commands Overview
 
 /grant [target] [permission_type] - Grant a user or role permission.
+
 /revoke [target] [permission_type] - Revoke a user or role's permission.
+
 /clear - Clear the entire Meta list (Owner only).
+
 /session - Start a new session.
 /win [team_name] [bombers] [fighters] [helis] [tanks] [spaa] [comment] - Log a win for a team.
 /loss [team_name] [bombers] [fighters] [helis] [tanks] [spaa] [comment] - Log a loss for a team.
