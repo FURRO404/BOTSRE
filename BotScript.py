@@ -174,7 +174,7 @@ async def before_points_alarm_task():
 @app_commands.describe(
     type="The type of alarm (e.g., Leave, Points)",
     channel_id="The ID of the channel to send alarm messages to",
-    squadron_name="The name of the squadron to monitor")
+    squadron_name="The FULL name of the squadron to monitor")
 @commands.has_permissions(administrator=True)
 async def alarm(interaction: discord.Interaction, type: str, channel_id: str,
         squadron_name: str):

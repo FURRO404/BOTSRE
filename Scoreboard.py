@@ -220,10 +220,10 @@ class Scoreboard:
         last_game_entry = session["log_entries"][last_game_index]
         old_status = last_game_entry.split()[0][0]
 
-        if status == 'W' and old_status == '-':
+        if status.upper() == 'W' and old_status == '-':
             session["wins"] += 1
             session["losses"] -= 1
-        elif status == 'L' and old_status == '+':
+        elif status.upper() == 'L' and old_status == '+':
             session["wins"] -= 1
             session["losses"] += 1
 
