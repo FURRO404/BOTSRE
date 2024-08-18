@@ -50,7 +50,7 @@ class MyBot(commands.Bot):
 
 bot = MyBot()
 
-@tasks.loop(minutes=30)
+@tasks.loop(minutes=15)
 async def snapshot_task():
     logging.info("Running member-leave alarm")
     for guild in bot.guilds:
@@ -67,13 +67,13 @@ async def snapshot_task():
             old_snapshot = Alarms.load_snapshot(guild_id, squadron_name)
             new_snapshot = Alarms.take_snapshot(squadron_name)
 
-            # Skip this iteration if new_snapshot is empty
-            if not new_snapshot:
-                logging.warning(f"New snapshot for {squadron_name} is empty, skipping.")
-                continue
-
             if old_snapshot:
                 left_members = Alarms.compare_snapshots(old_snapshot, new_snapshot)
+
+                # Skip this iteration if there are no left members
+                if left_members == "EMPTY":
+                    logging.info(f"No new members were found for {squadron_name}, skipping")
+                    continue
 
                 if left_members:
                     channel_id = squadron_preferences.get("Leave")
@@ -95,6 +95,7 @@ async def snapshot_task():
                         logging.info(f"No channel set for 'Leave' type Alarms for squadron {squadron_name}")
 
             Alarms.save_snapshot(new_snapshot, guild_id, squadron_name)
+
 
 
 @snapshot_task.before_loop

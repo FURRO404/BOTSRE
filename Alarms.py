@@ -2,6 +2,7 @@ import json
 import discord
 from replit.object_storage import Client
 from SQ_Info import fetch_squadron_info
+import logging
 
 client = Client()
 # Function to take a snapshot of the members and their scores
@@ -61,8 +62,14 @@ def compare_snapshots(old_snapshot, new_snapshot):
                 except (IndexError, ValueError) as e:
                     print(f"Error parsing new snapshot field: {value}, error: {e}")
 
+    # Log the old and new members
     print(f"Old members: {old_members}")
     print(f"New members: {new_members}")
+    
+
+    # If new_members is empty, return an empty dictionary and skip further processing
+    if not new_members:
+        return "EMPTY"
 
     left_members = {}
     for member, points in old_members.items():
@@ -70,6 +77,9 @@ def compare_snapshots(old_snapshot, new_snapshot):
             left_members[member] = points
 
     return left_members
+
+
+
 
 def compare_points(old_snapshot, new_snapshot):
     old_members = {}
