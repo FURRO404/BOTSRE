@@ -48,13 +48,11 @@ class MyBot(commands.Bot):
         await self.tree.sync()
         self.synced = True
 
-
 bot = MyBot()
-
 
 @tasks.loop(minutes=30)
 async def snapshot_task():
-    logging.info(f"Running member-leave alarm")
+    logging.info("Running member-leave alarm")
     for guild in bot.guilds:
         guild_id = guild.id
         key = f"{guild_id}-preferences.json"
@@ -62,18 +60,20 @@ async def snapshot_task():
         try:
             data = client.download_as_text(key)
             preferences = json.loads(data)
-        except ObjectNotFoundError:
-            preferences = {}
-        except FileNotFoundError:
+        except (ObjectNotFoundError, FileNotFoundError):
             preferences = {}
 
         for squadron_name, squadron_preferences in preferences.items():
             old_snapshot = Alarms.load_snapshot(guild_id, squadron_name)
             new_snapshot = Alarms.take_snapshot(squadron_name)
 
+            # Skip this iteration if new_snapshot is empty
+            if not new_snapshot:
+                logging.warning(f"New snapshot for {squadron_name} is empty, skipping.")
+                continue
+
             if old_snapshot:
-                left_members = Alarms.compare_snapshots(
-                    old_snapshot, new_snapshot)
+                left_members = Alarms.compare_snapshots(old_snapshot, new_snapshot)
 
                 if left_members:
                     channel_id = squadron_preferences.get("Leave")
@@ -88,15 +88,11 @@ async def snapshot_task():
                                         f"Member {member} left {squadron_name} with {points} points"
                                     )
                             else:
-                                logging.error(
-                                    f"Channel ID {channel_id} not found")
+                                logging.error(f"Channel ID {channel_id} not found")
                         else:
-                            logging.error(
-                                f"Invalid channel ID format: {channel_id}")
+                            logging.error(f"Invalid channel ID format: {channel_id}")
                     else:
-                        logging.info(
-                            f"No channel set for 'Leave' type Alarms for squadron {squadron_name}"
-                        )
+                        logging.info(f"No channel set for 'Leave' type Alarms for squadron {squadron_name}")
 
             Alarms.save_snapshot(new_snapshot, guild_id, squadron_name)
 
