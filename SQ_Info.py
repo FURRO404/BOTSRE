@@ -3,7 +3,7 @@ import re
 import requests
 import discord
 from bs4 import BeautifulSoup
-import time
+
 
 # --- PUBLIC VARIABLES (Global) ---
 # Target URL
@@ -17,7 +17,6 @@ def getData(squad):
 def scraper(url):
     try:
         response = requests.get(url, timeout=60)
-        time.sleep(2)
         content = BeautifulSoup(response.content, "lxml")
         return parser(content)
     except (requests.exceptions.RequestException, Exception) as e:

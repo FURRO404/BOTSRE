@@ -122,20 +122,25 @@ async def execute_points_alarm_task(region):
         guild_id = guild.id
         key = f"{guild_id}-preferences.json"
 
+        logging.info(f"Processing guild: {guild_id} for region: {region}")
+
         try:
             data = client.download_as_text(key)
             preferences = json.loads(data)
-        except ObjectNotFoundError:
+            logging.info(f"Successfully loaded preferences for guild: {guild_id}")
+        except (ObjectNotFoundError, FileNotFoundError):
             preferences = {}
-        except FileNotFoundError:
-            preferences = {}
+            logging.warning(f"No preferences found for guild: {guild_id}")
 
         for squadron_name, squadron_preferences in preferences.items():
+            logging.info(f"Checking squadron: {squadron_name} for points alarm")
+
             if "Points" in squadron_preferences:
                 old_snapshot = Alarms.load_snapshot(guild_id, squadron_name, region)
                 new_snapshot = Alarms.take_snapshot(squadron_name)
 
                 if old_snapshot:
+                    logging.info(f"Loaded old snapshot for {squadron_name} in region {region}")
                     points_changes = Alarms.compare_points(old_snapshot, new_snapshot)
 
                     if points_changes:
@@ -145,20 +150,34 @@ async def execute_points_alarm_task(region):
                             if channel_id.isdigit():
                                 channel = bot.get_channel(int(channel_id))
                                 if channel:
+                                    logging.info(f"Sending points update to channel {channel_id} for squadron {squadron_name}")
+                                    # Create the embed
+                                    embed = discord.Embed(
+                                        title=f"**{squadron_name} Points Update**",
+                                        description=f"Current Points: [to be implemented]",
+                                        color=discord.Color.blue()
+                                    )
+
+                                    changes_text = ""
                                     for member, (points_change, current_points) in points_changes.items():
                                         change_type = "gained" if points_change > 0 else "lost"
-                                        await channel.send(
-                                            f"Member {member} {change_type} {abs(points_change)} points, now at {current_points} points."
-                                        )
+                                        changes_text += f"Member {member} {change_type} {abs(points_change)} points, now at {current_points} points.\n"
+
+                                    embed.add_field(name="Member Changes", value=changes_text, inline=False)
+
+                                    # Send the embed to the channel
+                                    await channel.send(embed=embed)
+                                    logging.info(f"Points update sent successfully for {squadron_name} in {guild_id}")
                                 else:
-                                    logging.error(f"Channel ID {channel_id} not found")
+                                    logging.error(f"Channel ID {channel_id} not found for guild {guild_id}")
                             else:
-                                logging.error(f"Invalid channel ID format: {channel_id}")
+                                logging.error(f"Invalid channel ID format: {channel_id} for squadron {squadron_name}")
                         else:
                             logging.info(f"No channel set for 'Points' type Alarms for squadron {squadron_name}")
 
                 # Save the new snapshot with the region specified
                 Alarms.save_snapshot(new_snapshot, guild_id, squadron_name, region)
+                logging.info(f"New snapshot saved for {squadron_name} in region {region}")
 
 
 @points_alarm_task.before_loop
