@@ -10,7 +10,7 @@ This is a Discord bot designed for War Thunder, providing various features such 
 
 ### Running the Bot
 
-You can start the bot by running `BotScript.py` once you put your discord bot token into your env.
+You can start the bot by running `BotScript.py` once you put your discord bot token into your env, this bot is currently meant to be ran inside Replit.
 
 ### Features
 Meta Management
