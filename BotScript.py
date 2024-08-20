@@ -7,6 +7,7 @@ import asyncio
 import random
 import datetime as DT
 from datetime import datetime, time, timezone
+import re
 from io import StringIO
 
 # Third-Party Library Imports
@@ -25,13 +26,14 @@ from permissions import grant_permission, revoke_permission, has_permission
 import Alarms
 from Games import guessing_game, choose_random_vehicle, normalize_name, randomizer_game
 from SQ_Info import fetch_squadron_info
+from SQ_Info_Auto import fetch_clan_table_info
 from Searcher import normalize_name, get_vehicle_type, get_vehicle_country, autofill_search
 from SQB_Parser import parse_logs, separate_games, read_logs_from_file
 
 logging.basicConfig(level=logging.DEBUG)
 client = Client()
 
-TOKEN = os.environ.get('DISCORD_KEY')
+TOKEN = os.environ.get('TEST_DISCORD_KEY')
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -108,7 +110,7 @@ async def points_alarm_task():
     now_utc = datetime.now(timezone.utc).time()
 
     # Define the region based on the current time
-    if now_utc.hour == 23 and now_utc.minute == 30:
+    if now_utc.hour == 22 and now_utc.minute == 30:
         region = "US"
     elif now_utc.hour == 7 and now_utc.minute == 30:
         region = "EU"
@@ -151,17 +153,22 @@ async def execute_points_alarm_task(region):
                                 channel = bot.get_channel(int(channel_id))
                                 if channel:
                                     logging.info(f"Sending points update to channel {channel_id} for squadron {squadron_name}")
+
+                                    # Fetch the current squadron points using SQ_Info.py functions
+                                    squadron_info = fetch_squadron_info(squadron_name, embed_type="points")
+                                    current_points = squadron_info.fields[0].value if squadron_info else "N/A"
+
                                     # Create the embed
                                     embed = discord.Embed(
                                         title=f"**{squadron_name} Points Update**",
-                                        description=f"Current Points: [to be implemented]",
+                                        description=f"**Current Points: {current_points}**",
                                         color=discord.Color.blue()
                                     )
 
                                     changes_text = ""
                                     for member, (points_change, current_points) in points_changes.items():
                                         change_type = "gained" if points_change > 0 else "lost"
-                                        changes_text += f"Member {member} {change_type} {abs(points_change)} points, now at {current_points} points.\n"
+                                        changes_text += f"**{member} {change_type} {abs(points_change)} points**, now at **{current_points}**.\n"
 
                                     embed.add_field(name="Member Changes", value=changes_text, inline=False)
 
@@ -832,25 +839,41 @@ async def session(interaction: discord.Interaction):
         region = "US"
     else:
         region = "TEST"
+
+    # Defer the interaction to avoid timing out
+    await interaction.response.defer(ephemeral=True)
+
+    logging.debug(f"Starting session in region: {region}")
+
     try:
-        logging.debug(f"Starting session in region: {region}")
         await Scoreboard.start_session(interaction, region)
-        await interaction.response.send_message("Session started.", ephemeral=True)
+        await interaction.followup.send("Session started.", ephemeral=True)
+
     except discord.errors.InteractionResponded:
-        logging.error("Interaction has already been responded to")
+        logging.error("Interaction has already been responded to. Skipping response.")
+
+    except discord.errors.NotFound as e:
+        logging.error(f"Interaction Not Found (404): {e}")
+        await interaction.followup.send(f"Session started, but an error occurred: {e}", ephemeral=True)
+
+    except discord.errors.HTTPException as e:
+        logging.error(f"HTTPException: {e}")
+        await interaction.followup.send(f"HTTP error occurred: {e}", ephemeral=True)
+
     except Exception as e:
-        logging.error(f"Error starting session: {e}")
-        if not interaction.response.is_done():
-            await interaction.response.send_message(f"An error occurred: {e}", ephemeral=True)
+        logging.error(f"Unexpected error: {e}")
+        await interaction.followup.send(f"An unexpected error occurred: {e}", ephemeral=True)
+
+
 
 
 @bot.tree.command(name="win", description="Log a win for a team")
 @app_commands.describe(team_name="The name of the team",
                        bombers="Number of bombers",
-                       fighters="Number of helicopters",
-                       helis="Number of fighters",
-                       tanks="Number of spaa",
-                       spaa="Number of tanks",
+                       fighters="Number of fighters",
+                       helis="Number of helicopters",
+                       tanks="Number of tanks",
+                       spaa="Number of anti-aircraft",
                        comment="Additional comments")
 @has_roles_or_admin("Session")
 async def win(interaction: discord.Interaction,
@@ -861,26 +884,26 @@ async def win(interaction: discord.Interaction,
               tanks: int,
               spaa: int,
               comment: str = ""):
+    # Defer the interaction
+    await interaction.response.defer(ephemeral=True)
+
     try:
         await Scoreboard.log_win(interaction, team_name, bombers, fighters,
                                  helis, tanks, spaa, comment)
-        await interaction.response.send_message("Win logged.", ephemeral=True)
-    except discord.errors.InteractionResponded:
-        logging.error("Interaction has already been responded to")
+        await interaction.followup.send("Win logged.", ephemeral=True)
+
     except Exception as e:
         logging.error(f"Error logging win: {e}")
-        if not interaction.response.is_done():
-            await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
-
+        await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
 
 
 @bot.tree.command(name="loss", description="Log a loss for a team")
 @app_commands.describe(team_name="The name of the team",
                        bombers="Number of bombers",
-                       fighters="Number of helicopters",
-                       helis="Number of fighters",
-                       tanks="Number of spaa",
-                       spaa="Number of tanks",
+                       fighters="Number of fighters",
+                       helis="Number of helicopters",
+                       tanks="Number of tanks",
+                       spaa="Number of anti-aircraft",
                        comment="Additional comments")
 @has_roles_or_admin("Session")
 async def loss(interaction: discord.Interaction,
@@ -891,32 +914,40 @@ async def loss(interaction: discord.Interaction,
                tanks: int,
                spaa: int,
                comment: str = ""):
+    # Defer the interaction
+    await interaction.response.defer(ephemeral=True)
+
     try:
         await Scoreboard.log_loss(interaction, team_name, bombers, fighters, helis, tanks, spaa, comment)
-        await interaction.response.send_message("Loss logged.", ephemeral=True)
+        await interaction.followup.send("Loss logged.", ephemeral=True)
+
     except Exception as e:
-        await interaction.response.send_message(f"An error occurred: {e}")
+        logging.error(f"Error logging loss: {e}")
+        await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
+
 
 
 @bot.tree.command(name="end", description="End the current session")
 @has_roles_or_admin("Session")
 async def end(interaction: discord.Interaction):
+    # Defer the interaction to avoid timing out
+    await interaction.response.defer(ephemeral=True)
+
     try:
         await Scoreboard.end_session(interaction, bot)
-        await interaction.response.send_message("Session ended.", ephemeral=True)
-    except discord.errors.InteractionResponded:
-        logging.error("Interaction has already been responded to")
+        await interaction.followup.send("Session ended.", ephemeral=True)
+
     except Exception as e:
         logging.error(f"Error ending session: {e}")
-        if not interaction.response.is_done():
-            await interaction.response.send_message(f"An error occurred: {e}", ephemeral=True)
+        await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
+
 
 
 @bot.tree.command(name="edit", description="Edit the details of the last logged game")
 @app_commands.describe(status="The status of the game (W for win, L for loss)",
                        team_name="The name of the team",
                        bombers="Number of bombers",
-                       fighters="Number of fighters",
+                       fighters="Number of helicopters",
                        helis="Number of helicopters",
                        tanks="Number of tanks",
                        spaa="Number of anti-aircraft",
@@ -931,37 +962,69 @@ async def edit(interaction: discord.Interaction,
                tanks: int,
                spaa: int,
                comment: str = ""):
+    await interaction.response.defer(ephemeral=True)  # Defer the interaction response
+
     try:
         await Scoreboard.edit_game(interaction, status, team_name, bombers, fighters, helis, tanks, spaa, comment)
-        await interaction.response.send_message("Last game edited.", ephemeral=True)
+        await interaction.followup.send("Last game edited.", ephemeral=True)
     except Exception as e:
         logging.error(f"Error editing game: {e}")
-        await interaction.response.send_message(f"An error occurred: {e}", ephemeral=True)
+        await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
 
 
 
-@bot.tree.command(name="sq-info",
-                  description="Fetch information about a squadron")
+@bot.tree.command(name="sq-info", description="Fetch information about a squadron")
 @app_commands.describe(
     squadron="The full name of the squadron to fetch information about",
-    type=
-    "The type of information to display: members, points, or leave empty for full info"
+    type="The type of information to display: members, points, or leave empty for full info"
 )
-async def sq_info(interaction: discord.Interaction,
-                  squadron: str,
-                  type: str = None):
+async def sq_info(interaction: discord.Interaction, squadron: str = None, type: str = None):
     await interaction.response.defer(ephemeral=False)
+
     try:
+        # File to check for existing squadron data
+        filename = "SQUADRONS.json"
+
+        # Download existing squadron data
+        try:
+            squadrons_json = client.download_as_text(filename)
+            squadrons = json.loads(squadrons_json)
+        except:
+            squadrons = {}
+
+        guild_id = str(interaction.guild_id)
+
+        # Check if a squadron is set for the server
+        if not squadron and guild_id in squadrons:
+            squadron = squadrons[guild_id]["SQ_LongHandName"]
+        elif not squadron:
+            embed = discord.Embed(
+                title="Error",
+                description="No squadron specified and no squadron is set for this server.",
+                color=discord.Color.red()
+            )
+            embed.set_footer(text="Meow :3")
+            await interaction.followup.send(embed=embed, ephemeral=True)
+            return
+
+        # Fetch squadron information using the resolved squadron name
         embed = fetch_squadron_info(squadron, type)
         if embed:
             embed.set_footer(text="Meow :3")
             await interaction.followup.send(embed=embed)
         else:
-            await interaction.followup.send("Failed to fetch squadron info.")
+            await interaction.followup.send("Failed to fetch squadron info.", ephemeral=True)
+
     except Exception as e:
         logging.error(f"Error fetching squadron info: {e}")
-        await interaction.followup.send(
-            f"An error occurred while fetching the squadron info: {e}")
+        embed = discord.Embed(
+            title="Error",
+            description=f"An error occurred while fetching the squadron info: {e}",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text="Meow :3")
+        await interaction.followup.send(embed=embed, ephemeral=True)
+
 
 
 
@@ -1463,6 +1526,75 @@ async def randomizer(interaction: discord.Interaction):
     # Send the embed as the response
     embed.set_footer(text="Meow :3")
     await interaction.response.send_message(embed=embed)
+
+
+@bot.tree.command(name='set-squadron', description='Set the squadron information for this server')
+@app_commands.describe(sq_name='The name of the squadron to set')
+async def set_squadron(interaction: discord.Interaction, sq_name: str):
+    try:
+        # Defer the response to prevent timeouts
+        await interaction.response.defer()
+
+        # Fetch squadron information
+        squadron_info = fetch_clan_table_info(sq_name)
+
+        if not squadron_info:
+            embed = discord.Embed(title="Error", description=f"Squadron {sq_name} not found.", color=discord.Color.red())
+            embed.set_footer(text="Meow :3")
+            await interaction.followup.send(embed=embed, ephemeral=True)
+            return
+
+        # File to store squadron data
+        filename = "SQUADRONS.json"
+
+        # Download existing squadron data
+        try:
+            squadrons_json = client.download_as_text(filename)
+            squadrons = json.loads(squadrons_json)
+        except:
+            logging.warning("SQUADRONS.json not found. Creating a new one.") #Nigh Impossible
+            squadrons = {}
+
+        # Ensure the server doesn't already have a different squadron set
+        guild_id = str(interaction.guild_id)
+        if guild_id in squadrons and squadrons[guild_id]['SQ_ShortHand_Name'] != re.sub(r'\W+', '', squadron_info[1].split()[0]):
+            embed = discord.Embed(
+                title="Error",
+                description=f"This server already has a different squadron set: {squadrons[guild_id]['SQ_LongHandName']}.",
+                color=discord.Color.red()
+            )
+            await interaction.followup.send(embed=embed, ephemeral=True)
+            return
+
+        # Extract short-hand and long-hand names
+        sq_short_hand_name = re.sub(r'\W+', '', squadron_info[1].split()[0])
+        sq_long_hand_name = re.sub(r'\W+', ' ', ' '.join(squadron_info[1].split()[1:]))
+
+        # Update squadron data for the current Discord server
+        squadrons[guild_id] = {
+            "SQ_ShortHand_Name": sq_short_hand_name,
+            "SQ_LongHandName": sq_long_hand_name
+        }
+
+        # Upload the updated squadron data
+        client.upload_from_text(filename, json.dumps(squadrons))
+
+        # Create the embed for a successful response
+        embed = discord.Embed(
+            title="Squadron Set",
+            description=f"Squadron **{sq_long_hand_name}** has been set for this server.",
+            color=discord.Color.green()
+        )
+        embed.add_field(name="Short Name", value=sq_short_hand_name, inline=True)
+        embed.add_field(name="Long Name", value=sq_long_hand_name, inline=True)
+        embed.set_footer(text="Meow :3")
+
+        await interaction.followup.send(embed=embed, ephemeral=False)
+
+    except Exception as e:
+        logging.error(f"Error setting squadron: {e}")
+        embed = discord.Embed(title="Error", description=f"An error occurred while setting the squadron: {e}", color=discord.Color.red())
+        await interaction.followup.send(embed=embed, ephemeral=True)
 
 
 # Error handler for all commands

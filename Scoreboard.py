@@ -4,6 +4,7 @@ from replit.object_storage import Client
 import json
 import logging
 import requests
+from SQ_Info import fetch_squadron_info
 
 client = Client()
 
@@ -19,16 +20,13 @@ SESSION_TEMPLATE = {
     "losses": 0,
     "log_entries": [],
     "last_message_id": None,
-    "log": ""
-}
-
-DEFAULT_PERMISSIONS = {
-    # Define your default permissions here
+    "log": "",
+    "starting_points": 0,
+    "current_points": 0
 }
 
 class Scoreboard:
     sessions = {}
-    permissions = {}
 
     @classmethod
     def get_session_key(cls, guild_id, user_id):
@@ -61,6 +59,34 @@ class Scoreboard:
         client.upload_from_text(key, data)
 
     @classmethod
+    def get_squadron_points(cls, guild_id):
+        try:
+            squadron_data = client.download_as_text("SQUADRONS.json")
+            squadrons = json.loads(squadron_data)
+            squadron_info = squadrons.get(str(guild_id))
+
+            if not squadron_info:
+                logging.error(f"No squadron set for guild {guild_id}")
+                return 0  # Default to 0 if no squadron is set
+
+            long_hand_name = squadron_info['SQ_LongHandName']
+
+            # Fetch the squadron information using the longhand name
+            embed = fetch_squadron_info(long_hand_name, "points")
+            if embed is not None:
+                # Extract the points from the embed's field
+                points_field = embed.fields[0]  # Assuming the first field contains the points
+                points_value = points_field.value.replace(',', '')  # Remove commas for large numbers
+                return int(points_value)
+            else:
+                logging.error(f"Could not fetch points for squadron {long_hand_name}")
+                return 0  # Default to 0 if points cannot be fetched
+
+        except Exception as e:
+            logging.error(f"Error fetching squadron points for guild {guild_id}: {e}")
+            return 0  # Default to 0 if an error occurs
+
+    @classmethod
     async def start_session(cls, interaction: discord.Interaction, region: str):
         guild_id = interaction.guild.id
         user_id = interaction.user.id
@@ -75,6 +101,12 @@ class Scoreboard:
         session["started"] = True
         session["user"] = user_id
         session["region"] = region
+
+        # Fetch current points for the squadron if set
+        squadron_points = cls.get_squadron_points(guild_id)
+        session["starting_points"] = squadron_points
+        session["current_points"] = squadron_points
+
         session["log"] = f"{datetime.datetime.utcnow().strftime('%m/%d')}\n{LOG_HEADER}"
         cls.save_session(guild_id, user_id)
 
@@ -89,8 +121,6 @@ class Scoreboard:
             logging.error(f"Error sending session start message: {e}")
             if not interaction.response.is_done():
                 await interaction.response.send_message(f"An error occurred while starting the session: {e}", ephemeral=True)
-
-        await interaction.response.send_message("Session started.", ephemeral=True)
 
     @classmethod
     async def log_win(cls, interaction: discord.Interaction, team_name: str, bombers: int, fighters: int,
@@ -107,7 +137,17 @@ class Scoreboard:
         # Update session data
         session["wins"] += 1
         new_game_number = session["wins"] + session["losses"]
-        new_log_entry = cls.format_log_entry("+", session["wins"], session["losses"], new_game_number, team_name, bombers, fighters, helis, tanks, spaa, comment)
+
+        # Fetch new points and calculate the difference
+        previous_points = session["current_points"]
+        session["current_points"] = cls.get_squadron_points(guild_id)
+        point_difference = session["current_points"] - previous_points
+
+        # Format point difference for logging
+        point_diff_text = f"(+{point_difference})" if point_difference > 0 else f"({point_difference})"
+
+        # Create the log entry with the point difference
+        new_log_entry = cls.format_log_entry("+", session["wins"], session["losses"], new_game_number, team_name, bombers, fighters, helis, tanks, spaa, f"{point_diff_text} {comment}")
         session["log_entries"].append(new_log_entry)
         session["log"] = f"{datetime.datetime.utcnow().strftime('%m/%d')}\n{LOG_HEADER}" + "".join(session["log_entries"])
 
@@ -146,7 +186,17 @@ class Scoreboard:
         # Update session data
         session["losses"] += 1
         new_game_number = session["wins"] + session["losses"]
-        new_log_entry = cls.format_log_entry("-", session["wins"], session["losses"], new_game_number, team_name, bombers, fighters, helis, tanks, spaa, comment)
+
+        # Fetch new points and calculate the difference
+        previous_points = session["current_points"]
+        session["current_points"] = cls.get_squadron_points(guild_id)
+        point_difference = session["current_points"] - previous_points
+
+        # Format point difference for logging
+        point_diff_text = f"(+{point_difference})" if point_difference > 0 else f"({point_difference})"
+
+        # Create the log entry with the point difference
+        new_log_entry = cls.format_log_entry("-", session["wins"], session["losses"], new_game_number, team_name, bombers, fighters, helis, tanks, spaa, f"{point_diff_text} {comment}")
         session["log_entries"].append(new_log_entry)
         session["log"] = f"{datetime.datetime.utcnow().strftime('%m/%d')}\n{LOG_HEADER}" + "".join(session["log_entries"])
 
@@ -195,8 +245,11 @@ class Scoreboard:
             total_games = session["wins"] + session["losses"]
             win_rate = (session["wins"] / total_games) * 100 if total_games > 0 else 0
 
+            # Fetch final points
+            final_points = cls.get_squadron_points(guild_id)
+
             # Finalize the session log
-            session["log"] += f"\n--------------------------\nCALLED - WR: {win_rate:.2f}%\n"
+            session["log"] += f"\n--------------------------\nCALLED - WR: {win_rate:.2f}%\nPOINTS: {session['starting_points']} -> {final_points}\n"
             session_start_message = f"**{session['region']} SESSION START - <@{session['user']}>**"
 
             # Delete the previous session message
@@ -271,9 +324,15 @@ class Scoreboard:
                     session["wins"] -= 1
                     session["losses"] += 1
 
+            # Recalculate points and log the point difference
+            previous_points = session["current_points"]
+            session["current_points"] = cls.get_squadron_points(guild_id)
+            point_difference = session["current_points"] - previous_points
+            point_diff_text = f"(+{point_difference})" if point_difference > 0 else f"({point_difference})"
+
             # Create the new log entry
             new_game_number = session["wins"] + session["losses"]
-            new_log_entry = cls.format_log_entry(new_status, session["wins"], session["losses"], new_game_number, team_name, bombers, fighters, helis, tanks, spaa, comment)
+            new_log_entry = cls.format_log_entry(new_status, session["wins"], session["losses"], new_game_number, team_name, bombers, fighters, helis, tanks, spaa, f"{point_diff_text} {comment}")
             session["log_entries"][last_game_index] = new_log_entry
 
             # Rebuild the log
