@@ -33,7 +33,7 @@ from SQB_Parser import parse_logs, separate_games, read_logs_from_file
 logging.basicConfig(level=logging.DEBUG)
 client = Client()
 
-TOKEN = os.environ.get('TEST_DISCORD_KEY')
+TOKEN = os.environ.get('DISCORD_KEY')
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -41,7 +41,6 @@ intents.members = True
 
 
 class MyBot(commands.Bot):
-
     def __init__(self):
         super().__init__(command_prefix='~', intents=intents)
         self.synced = False
@@ -222,8 +221,6 @@ async def alarm(interaction: discord.Interaction, type: str, channel_id: str,
     await interaction.response.send_message(
         f"Alarm of type '{type}' set for squadron '{squadron_name}' to send messages in channel ID {channel_id}.",
         ephemeral=True)
-
-
 
 
 @bot.event
@@ -1297,39 +1294,6 @@ async def trivia(interaction: Interaction, difficulty: str = "medium"):
         "Select the fake vehicles from the dropdown below:", view=view)
 
 
-@bot.tree.command(name="help", description="Get a guide on how to use the bot")
-async def help(interaction: discord.Interaction):
-    guide_text = (
-        "**Commands Overview**\n"
-        "1. **/grant [target] [permission_type]** - Grant a user or role permission.\n"
-        "2. **/revoke [target] [permission_type]** - Revoke a user or role's permission.\n"
-        "3. **/clear** - Clear the entire Meta list (Owner only).\n"
-        "4. **/session** - Start a new session.\n"
-        "5. **/win [team_name] [bombers] [fighters] [helis] [tanks] [spaa] [comment]** - Log a win for a team.\n"
-        "6. **/loss [team_name] [bombers] [fighters] [helis] [tanks] [spaa] [comment]** - Log a loss for a team.\n"
-        "7. **/end** - End the current session.\n"
-        "8. **/edit [status] [team_name] [bombers] [fighters] [helis] [tanks] [spaa] [comment]** - Edit the details of the last logged game.\n"
-        "9. **/quick-log [status] [enemy team name]** - Quickly log a game using vehicle data from the game log.\n"
-        "10. **/randomizer** - returns a random vehicle at its BR.\n"
-        "11. **/alarm [type] [channel_id] [squadron_name]** - Set an alarm to monitor squadron changes.\n"
-        "12. **/stat [username]** - Get the ThunderSkill stats URL for a user.\n"
-        "13. **/guessing-game** - Start a guessing game.\n"
-        "14. **/trivia [difficulty]** - Play a War Thunder vehicle trivia game. A higher difficulty means more points.\n"
-        "15. **/leaderboard** - Show the leaderboard.\n"
-        "16. **/console** - Choose an action (Add or Remove vehicles).\n"
-        "17. **/time** - Get the current UTC time and your local time.\n"
-        "18. **/help** - Get a guide on how to use the bot.\n\n"
-        "*For detailed information on each command, please refer to the respective command descriptions.*"
-    )
-
-    embed = discord.Embed(
-        title="Bot Guide",
-        description=guide_text,
-        color=discord.Color.blue()
-    )
-    embed.set_footer(text="Meow :3")
-    await interaction.response.send_message(embed=embed, ephemeral=False)
-
 
 def categorize_vehicle(vehicle_type):
     if vehicle_type:
@@ -1530,6 +1494,7 @@ async def randomizer(interaction: discord.Interaction):
 
 @bot.tree.command(name='set-squadron', description='Set the squadron information for this server')
 @app_commands.describe(sq_name='The name of the squadron to set')
+@has_roles_or_admin("Session")
 async def set_squadron(interaction: discord.Interaction, sq_name: str):
     try:
         # Defer the response to prevent timeouts
@@ -1596,6 +1561,39 @@ async def set_squadron(interaction: discord.Interaction, sq_name: str):
         embed = discord.Embed(title="Error", description=f"An error occurred while setting the squadron: {e}", color=discord.Color.red())
         await interaction.followup.send(embed=embed, ephemeral=True)
 
+@bot.tree.command(name="help", description="Get a guide on how to use the bot")
+async def help(interaction: discord.Interaction):
+    guide_text = (
+        "**Commands Overview**\n"
+        "1. **/grant [target] [permission_type]** - Grant a user or role permission.\n"
+        "2. **/revoke [target] [permission_type]** - Revoke a user or role's permission.\n"
+        "3. **/clear** - Clear the entire Meta list (Owner only).\n"
+        "4. **/session** - Start a new session.\n"
+        "5. **/win [team_name] [bombers] [fighters] [helis] [tanks] [spaa] [comment]** - Log a win for a team.\n"
+        "6. **/loss [team_name] [bombers] [fighters] [helis] [tanks] [spaa] [comment]** - Log a loss for a team.\n"
+        "7. **/end** - End the current session.\n"
+        "8. **/edit [status] [team_name] [bombers] [fighters] [helis] [tanks] [spaa] [comment]** - Edit the details of the last logged game.\n"
+        "9. **/quick-log [status] [enemy team name]** - Quickly log a game using vehicle data from the game log.\n"
+        "10. **/randomizer** - returns a random vehicle at its BR.\n"
+        "11. **/alarm [type] [channel_id] [squadron_name]** - Set an alarm to monitor squadron changes.\n"
+        "12. **/stat [username]** - Get the ThunderSkill stats URL for a user.\n"
+        "13. **/guessing-game** - Start a guessing game.\n"
+        "14. **/trivia [difficulty]** - Play a War Thunder vehicle trivia game. A higher difficulty means more points.\n"
+        "15. **/leaderboard** - Show the leaderboard.\n"
+        "16. **/console** - Choose an action (Add or Remove vehicles).\n"
+        "17. **/time** - Get the current UTC time and your local time.\n"
+        "18. **/help** - Get a guide on how to use the bot.\n\n"
+        "19. **/set-squadron {SQ_Name}** - Store squadron name for the discord server."
+        "*For detailed information on each command, please refer to the respective command descriptions.*"
+    )
+
+    embed = discord.Embed(
+        title="Bot Guide",
+        description=guide_text,
+        color=discord.Color.blue()
+    )
+    embed.set_footer(text="Meow :3")
+    await interaction.response.send_message(embed=embed, ephemeral=False)
 
 # Error handler for all commands
 @clear.error
