@@ -4,6 +4,7 @@ from replit.object_storage import Client
 import json
 import logging
 import requests
+import asyncio
 from SQ_Info import fetch_squadron_info
 
 client = Client()
@@ -123,56 +124,7 @@ class Scoreboard:
                 await interaction.response.send_message(f"An error occurred while starting the session: {e}", ephemeral=True)
 
     @classmethod
-    async def log_win(cls, interaction: discord.Interaction, team_name: str, bombers: int, fighters: int,
-                      helis: int, tanks: int, spaa: int, comment: str = ""):
-        guild_id = interaction.guild.id
-        user_id = interaction.user.id
-        cls.load_session(guild_id, user_id)
-
-        session = cls.sessions[(guild_id, user_id)]
-        if not session["started"]:
-            await interaction.response.send_message("No active session found. Please start a session first.", ephemeral=True)
-            return
-
-        # Update session data
-        session["wins"] += 1
-        new_game_number = session["wins"] + session["losses"]
-
-        # Fetch new points and calculate the difference
-        previous_points = session["current_points"]
-        session["current_points"] = cls.get_squadron_points(guild_id)
-        point_difference = session["current_points"] - previous_points
-
-        # Format point difference for logging
-        point_diff_text = f"(+{point_difference})" if point_difference > 0 else f"({point_difference})"
-
-        # Create the log entry with the point difference
-        new_log_entry = cls.format_log_entry("+", session["wins"], session["losses"], new_game_number, team_name, bombers, fighters, helis, tanks, spaa, f"{point_diff_text} {comment}")
-        session["log_entries"].append(new_log_entry)
-        session["log"] = f"{datetime.datetime.utcnow().strftime('%m/%d')}\n{LOG_HEADER}" + "".join(session["log_entries"])
-
-        # Attempt to delete the last message and send the updated session log
-        try:
-            if session["last_message_id"]:
-                last_message = await interaction.channel.fetch_message(session["last_message_id"])
-                await last_message.delete()
-
-            session_start_message = f"**{session['region']} SESSION START - <@{session['user']}>**"
-            message = await interaction.channel.send(f"{session_start_message}\n```diff\n{session['log']}\n```")
-            session["last_message_id"] = message.id
-            cls.save_session(guild_id, user_id)
-
-            await interaction.response.send_message("Win logged.", ephemeral=True)
-
-        except discord.errors.InteractionResponded:
-            logging.error("Interaction has already been responded to")
-        except Exception as e:
-            logging.error(f"Error logging win: {e}")
-            if not interaction.response.is_done():
-                await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
-
-    @classmethod
-    async def log_loss(cls, interaction: discord.Interaction, team_name: str, bombers: int, fighters: int,
+    async def log_game(cls, interaction: discord.Interaction, status: str, team_name: str, bombers: int, fighters: int,
                        helis: int, tanks: int, spaa: int, comment: str = ""):
         guild_id = interaction.guild.id
         user_id = interaction.user.id
@@ -183,24 +135,20 @@ class Scoreboard:
             await interaction.response.send_message("No active session found. Please start a session first.", ephemeral=True)
             return
 
-        # Update session data
-        session["losses"] += 1
+        # Update session data based on status
+        if status == "+":
+            session["wins"] += 1
+        elif status == "-":
+            session["losses"] += 1
+
         new_game_number = session["wins"] + session["losses"]
 
-        # Fetch new points and calculate the difference
-        previous_points = session["current_points"]
-        session["current_points"] = cls.get_squadron_points(guild_id)
-        point_difference = session["current_points"] - previous_points
-
-        # Format point difference for logging
-        point_diff_text = f"(+{point_difference})" if point_difference > 0 else f"({point_difference})"
-
-        # Create the log entry with the point difference
-        new_log_entry = cls.format_log_entry("-", session["wins"], session["losses"], new_game_number, team_name, bombers, fighters, helis, tanks, spaa, f"{point_diff_text} {comment}")
+        # Log entry without points update
+        new_log_entry = cls.format_log_entry(status, session["wins"], session["losses"], new_game_number, team_name, bombers, fighters, helis, tanks, spaa, f"(updating...) {comment}")
         session["log_entries"].append(new_log_entry)
         session["log"] = f"{datetime.datetime.utcnow().strftime('%m/%d')}\n{LOG_HEADER}" + "".join(session["log_entries"])
 
-        # Attempt to delete the last message and send the updated session log
+        # Send initial log message
         try:
             if session["last_message_id"]:
                 last_message = await interaction.channel.fetch_message(session["last_message_id"])
@@ -211,14 +159,74 @@ class Scoreboard:
             session["last_message_id"] = message.id
             cls.save_session(guild_id, user_id)
 
-            await interaction.response.send_message("Loss logged.", ephemeral=True)
+            # Respond to the interaction
+            await interaction.response.send_message("Game logged, updating points...", ephemeral=True)
 
         except discord.errors.InteractionResponded:
             logging.error("Interaction has already been responded to")
+            await interaction.followup.send("Game logged, updating points...", ephemeral=True)
+
+        # Start background task to update points
+        asyncio.create_task(cls.update_points_in_log(guild_id, user_id, interaction.channel, message.id))
+
+
+    
+
+    @classmethod
+    async def update_points_in_log(cls, guild_id, user_id, channel, message_id):
+        start_time = datetime.datetime.utcnow()
+        max_wait_time = datetime.timedelta(minutes=12)
+        points_updated = False
+
+        session = cls.sessions[(guild_id, user_id)]
+        previous_points = session["current_points"]
+
+        while datetime.datetime.utcnow() - start_time < max_wait_time:
+            session["current_points"] = cls.get_squadron_points(guild_id)
+            new_points = session["current_points"]
+
+            if new_points != previous_points:
+                points_updated = True
+                break
+            await asyncio.sleep(30)  # Wait 10 seconds before checking again
+
+        # Only update the last entry in the log
+        try:
+            if session["log_entries"]:
+                last_entry_index = -1  # Get the last entry in the list
+                last_entry = session["log_entries"][last_entry_index]
+
+                # Update the last entry with the new points or an error message
+                point_difference = new_points - previous_points
+                point_diff_text = f"(+{point_difference})" if points_updated else "(ERR)"
+                updated_entry = last_entry.replace("(updating...)", point_diff_text)
+
+                # Replace the last entry in the session's log
+                session["log_entries"][last_entry_index] = updated_entry
+                session["log"] = f"{datetime.datetime.utcnow().strftime('%m/%d')}\n{LOG_HEADER}" + "".join(session["log_entries"])
+
+                # Fetch and edit the original message
+                message = await channel.fetch_message(message_id)
+                await message.edit(content=f"**{session['region']} SESSION START - <@{session['user']}>**\n```diff\n{session['log']}\n```")
+                cls.save_session(guild_id, user_id)
+
         except Exception as e:
-            logging.error(f"Error logging loss: {e}")
-            if not interaction.response.is_done():
-                await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
+            logging.error(f"Error updating points in log: {e}")
+
+
+    @classmethod
+    async def log_win(cls, interaction: discord.Interaction, team_name: str, bombers: int, fighters: int,
+                      helis: int, tanks: int, spaa: int, comment: str = ""):
+        # Pass "+" for a win status
+        await cls.log_game(interaction, "+", team_name, bombers, fighters, helis, tanks, spaa, comment)
+
+    @classmethod
+    async def log_loss(cls, interaction: discord.Interaction, team_name: str, bombers: int, fighters: int,
+                       helis: int, tanks: int, spaa: int, comment: str = ""):
+        # Pass "-" for a loss status
+        await cls.log_game(interaction, "-", team_name, bombers, fighters, helis, tanks, spaa, comment)
+
+
 
     @classmethod
     async def end_session(cls, interaction: discord.Interaction, bot: discord.Client):
@@ -355,7 +363,6 @@ class Scoreboard:
             logging.error(f"Error editing game: {e}")
             if not interaction.response.is_done():
                 await interaction.followup.send(f"An error occurred while editing the game: {e}", ephemeral=True)
-
 
     @classmethod
     def format_log_entry(cls, status, wins, losses, game_number, team_name, bombers, fighters, helis, tanks, spaa, comment=''):

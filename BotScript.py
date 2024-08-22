@@ -31,7 +31,7 @@ from Searcher import normalize_name, get_vehicle_type, get_vehicle_country, auto
 from SQB_Parser import parse_logs, separate_games, read_logs_from_file
 
 logging.basicConfig(level=logging.DEBUG)
-client = Client()
+client = Client(bucket_id="replit-objstore-b5261a8a-c768-4543-975e-dfce1cd7077d")
 
 TOKEN = os.environ.get('DISCORD_KEY')
 
