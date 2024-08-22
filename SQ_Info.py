@@ -1,4 +1,3 @@
-from datetime import time
 import re
 import requests
 import discord
@@ -106,8 +105,6 @@ def create_embed(players, summary, squadron_name, embed_type=None):
             embed.add_field(name="\u00A0", value=chunk, inline=False)  # \u00A0 is a non-breaking space
 
     return embed
-
-
 
 
 # Main function to fetch and format squadron data

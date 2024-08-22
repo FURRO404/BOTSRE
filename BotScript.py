@@ -26,7 +26,7 @@ from permissions import grant_permission, revoke_permission, has_permission
 import Alarms
 from Games import guessing_game, choose_random_vehicle, normalize_name, randomizer_game
 from SQ_Info import fetch_squadron_info
-from SQ_Info_Auto import fetch_clan_table_info
+from SQ_Info_Auto import fetch_clan_table_info, process_all_squadrons
 from Searcher import normalize_name, get_vehicle_type, get_vehicle_country, autofill_search
 from SQB_Parser import parse_logs, separate_games, read_logs_from_file
 
@@ -1560,6 +1560,52 @@ async def set_squadron(interaction: discord.Interaction, sq_name: str):
         logging.error(f"Error setting squadron: {e}")
         embed = discord.Embed(title="Error", description=f"An error occurred while setting the squadron: {e}", color=discord.Color.red())
         await interaction.followup.send(embed=embed, ephemeral=True)
+
+
+
+# Define the cooldown mapping (rate: 1 usage, per: 600 seconds)
+cooldown_mapping = commands.CooldownMapping.from_cooldown(1, 600, commands.BucketType.guild)
+
+def server_cooldown(interaction: discord.Interaction):
+    bucket = cooldown_mapping.get_bucket(interaction)
+    retry_after = bucket.update_rate_limit()
+    if retry_after:
+        raise app_commands.CommandOnCooldown(cooldown_mapping.get_cooldown(), retry_after)
+
+@bot.tree.command(name='top',
+      description='Get the top squadrons with detailed stats')
+@server_cooldown  # Apply the per-server cooldown check
+async def top(interaction: discord.Interaction):
+    await interaction.response.defer()
+
+    squadron_data = process_all_squadrons()
+
+    if not squadron_data:
+        await interaction.followup.send("No squadron data available.", ephemeral=True)
+        return
+
+    embed = discord.Embed(title="**Top 20 Squadrons**", color=discord.Color.purple())
+
+    for squadron in squadron_data:
+        embed.add_field(name=f"**{squadron['Squadron Name']}**", value=(
+        f"**Squadron Score:** {squadron['Squadron Score']}\n"
+        f"**Air Kills:** {squadron['Air Kills']}\n"
+        f"**Ground Kills:** {squadron['Ground Kills']}\n"
+        f"**Deaths:** {squadron['Deaths']}\n"
+        f"**KD Ratio:** {squadron['KD Ratio']}\n"
+        f"**Playtime:** {squadron['Playtime']}\n"
+        "\u200b"  # Adds a small amount of space between each squadron
+    ), inline=True)
+
+    embed.set_footer(text="Meow :3")
+    await interaction.followup.send(embed=embed, ephemeral=False)
+
+# Error handler for cooldown
+@bot.tree.error
+async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    if isinstance(error, app_commands.CommandOnCooldown):
+        await interaction.response.send_message(f"Command on cooldown for this server. Try again in {error.retry_after:.2f} seconds.", ephemeral=True)
+
 
 @bot.tree.command(name="help", description="Get a guide on how to use the bot")
 async def help(interaction: discord.Interaction):
