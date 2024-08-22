@@ -16,4 +16,4 @@ deploymentTarget = "gce"
 ignorePorts = true
 
 [objectStorage]
-defaultBucketID = "replit-objstore-7c9dc31a-b1a5-48b9-ae32-2f3a107b6ba2"
+defaultBucketID = "replit-objstore-b5261a8a-c768-4543-975e-dfce1cd7077d"
