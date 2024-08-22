@@ -1563,29 +1563,19 @@ async def set_squadron(interaction: discord.Interaction, sq_name: str):
 
 
 
-# Define the cooldown mapping (rate: 1 usage, per: 600 seconds)
-cooldown_mapping = commands.CooldownMapping.from_cooldown(1, 600, commands.BucketType.guild)
-
-def server_cooldown(interaction: discord.Interaction):
-    bucket = cooldown_mapping.get_bucket(interaction)
-    retry_after = bucket.update_rate_limit()
-    if retry_after:
-        raise app_commands.CommandOnCooldown(cooldown_mapping.get_cooldown(), retry_after)
-
 @bot.tree.command(name='top',
-      description='Get the top squadrons with detailed stats')
-@server_cooldown  # Apply the per-server cooldown check
+      description='Get the top 20 squadrons with detailed stats')
 async def top(interaction: discord.Interaction):
     await interaction.response.defer()
 
     squadron_data = process_all_squadrons()
-
+    
     if not squadron_data:
         await interaction.followup.send("No squadron data available.", ephemeral=True)
         return
 
     embed = discord.Embed(title="**Top 20 Squadrons**", color=discord.Color.purple())
-
+    
     for squadron in squadron_data:
         embed.add_field(name=f"**{squadron['Squadron Name']}**", value=(
         f"**Squadron Score:** {squadron['Squadron Score']}\n"
@@ -1596,15 +1586,9 @@ async def top(interaction: discord.Interaction):
         f"**Playtime:** {squadron['Playtime']}\n"
         "\u200b"  # Adds a small amount of space between each squadron
     ), inline=True)
-
+    
     embed.set_footer(text="Meow :3")
     await interaction.followup.send(embed=embed, ephemeral=False)
-
-# Error handler for cooldown
-@bot.tree.error
-async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
-    if isinstance(error, app_commands.CommandOnCooldown):
-        await interaction.response.send_message(f"Command on cooldown for this server. Try again in {error.retry_after:.2f} seconds.", ephemeral=True)
 
 
 @bot.tree.command(name="help", description="Get a guide on how to use the bot")
