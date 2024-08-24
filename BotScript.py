@@ -1494,21 +1494,15 @@ async def randomizer(interaction: discord.Interaction):
 
 
 @bot.tree.command(name='set-squadron', description='Set the squadron information for this server')
-@app_commands.describe(sq_name='The name of the squadron to set')
+@app_commands.describe(
+    sq_short_hand_name='The short name of the squadron to set',
+    sq_long_hand_name='The long name of the squadron to set'
+)
 @has_roles_or_admin("Session")
-async def set_squadron(interaction: discord.Interaction, sq_name: str):
+async def set_squadron(interaction: discord.Interaction, sq_short_hand_name: str, sq_long_hand_name: str):
     try:
         # Defer the response to prevent timeouts
         await interaction.response.defer()
-
-        # Fetch squadron information
-        squadron_info = fetch_clan_table_info(sq_name)
-
-        if not squadron_info:
-            embed = discord.Embed(title="Error", description=f"Squadron {sq_name} not found.", color=discord.Color.red())
-            embed.set_footer(text="Meow :3")
-            await interaction.followup.send(embed=embed, ephemeral=True)
-            return
 
         # File to store squadron data
         filename = "SQUADRONS.json"
@@ -1518,23 +1512,24 @@ async def set_squadron(interaction: discord.Interaction, sq_name: str):
             squadrons_json = client.download_as_text(filename)
             squadrons = json.loads(squadrons_json)
         except:
-            logging.warning("SQUADRONS.json not found. Creating a new one.") #Nigh Impossible
+            logging.warning("SQUADRONS.json not found. Creating a new one.") # Nigh Impossible
             squadrons = {}
 
         # Ensure the server doesn't already have a different squadron set
         guild_id = str(interaction.guild_id)
-        if guild_id in squadrons and squadrons[guild_id]['SQ_ShortHand_Name'] != re.sub(r'\W+', '', squadron_info[1].split()[0]):
+        if guild_id in squadrons and squadrons[guild_id]['SQ_ShortHand_Name'] != re.sub(r'\W+', '', sq_short_hand_name):
             embed = discord.Embed(
                 title="Error",
                 description=f"This server already has a different squadron set: {squadrons[guild_id]['SQ_LongHandName']}.",
                 color=discord.Color.red()
             )
+            embed.set_footer(text="Meow :3")
             await interaction.followup.send(embed=embed, ephemeral=True)
             return
 
-        # Extract short-hand and long-hand names
-        sq_short_hand_name = re.sub(r'\W+', '', squadron_info[1].split()[0])
-        sq_long_hand_name = re.sub(r'\W+', ' ', ' '.join(squadron_info[1].split()[1:]))
+        # Sanitize and store the short-hand and long-hand names
+        sq_short_hand_name = re.sub(r'\W+', '', sq_short_hand_name)
+        sq_long_hand_name = re.sub(r'\W+', ' ', sq_long_hand_name)
 
         # Update squadron data for the current Discord server
         squadrons[guild_id] = {
@@ -1561,6 +1556,7 @@ async def set_squadron(interaction: discord.Interaction, sq_name: str):
         logging.error(f"Error setting squadron: {e}")
         embed = discord.Embed(title="Error", description=f"An error occurred while setting the squadron: {e}", color=discord.Color.red())
         await interaction.followup.send(embed=embed, ephemeral=True)
+
 
 
 
