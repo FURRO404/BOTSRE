@@ -51,6 +51,39 @@ class MyBot(commands.Bot):
 
 bot = MyBot()
 
+@bot.event
+async def on_ready():
+    print(f'We have logged in as {bot.user} in the following guilds:')
+    for guild in bot.guilds:
+        print(f' - {guild.name} (id: {guild.id})')
+    await bot.change_presence(activity=discord.Activity(
+        type=discord.ActivityType.playing, name="War Thunder"))
+    if not bot.synced:
+        await bot.tree.sync()
+        bot.synced = True
+    snapshot_task.start()
+    points_alarm_task.start()
+
+
+@bot.event
+async def on_guild_join(guild):
+    print(f'Joined new guild: {guild.name} (id: {guild.id})')
+    await bot.tree.sync()
+    guild_id = guild.id
+    key = "guilds.json"
+
+    try:
+        data = client.download_as_text(key)
+        guilds = json.loads(data)
+    except ObjectNotFoundError:
+        guilds = []
+
+    if guild_id not in guilds:
+        guilds.append(guild_id)
+        client.upload_from_text(key, json.dumps(guilds))
+
+
+
 @tasks.loop(minutes=15)
 async def snapshot_task():
     logging.info("Running member-leave alarm")
@@ -202,7 +235,7 @@ async def alarm(interaction: discord.Interaction, type: str, channel_id: str,
         squadron_name: str):
     guild_id = interaction.guild.id
     key = f"{guild_id}-preferences.json"
-    
+
     try:
         data = client.download_as_text(key)
         preferences = json.loads(data)
@@ -210,49 +243,17 @@ async def alarm(interaction: discord.Interaction, type: str, channel_id: str,
         preferences = {}
     except FileNotFoundError:
         preferences = {}
-    
+
     if squadron_name not in preferences:
         preferences[squadron_name] = {}
-    
+
     preferences[squadron_name][type] = channel_id
-    
+
     client.upload_from_text(key, json.dumps(preferences))
-    
+
     await interaction.response.send_message(
         f"Alarm of type '{type}' set for squadron '{squadron_name}' to send messages in channel ID {channel_id}.",
         ephemeral=True)
-
-
-@bot.event
-async def on_ready():
-    print(f'We have logged in as {bot.user} in the following guilds:')
-    for guild in bot.guilds:
-        print(f' - {guild.name} (id: {guild.id})')
-    await bot.change_presence(activity=discord.Activity(
-        type=discord.ActivityType.watching, name="R3IGN Throw"))
-    if not bot.synced:
-        await bot.tree.sync()
-        bot.synced = True
-    snapshot_task.start()
-    points_alarm_task.start()
-
-
-@bot.event
-async def on_guild_join(guild):
-    print(f'Joined new guild: {guild.name} (id: {guild.id})')
-    await bot.tree.sync()
-    guild_id = guild.id
-    key = "guilds.json"
-
-    try:
-        data = client.download_as_text(key)
-        guilds = json.loads(data)
-    except ObjectNotFoundError:
-        guilds = []
-
-    if guild_id not in guilds:
-        guilds.append(guild_id)
-        client.upload_from_text(key, json.dumps(guilds))
 
 
 @bot.tree.command(name="grant", description="Grant a user or role permission")
