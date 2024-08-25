@@ -1436,28 +1436,6 @@ async def quick_log(interaction: discord.Interaction,
                                 enemy_team, message, result_type, comment)
 
 
-@bot.event
-async def on_message(message: discord.Message):
-    # Ignore messages sent by the bot itself
-    if message.author == bot.user:
-        return
-
-    # Check if the bot is mentioned in the message
-    if bot.user.mentioned_in(message):
-        logging.debug("Bot was mentioned in a message")
-        try:
-            embed = discord.Embed(title="Pong!", description="I use slash commands!\nUse **/help** for more info.", color=discord.Color.green())
-            embed.set_footer(text="Meow :3")
-            await message.channel.send(embed=embed)
-            logging.debug("Mention response sent successfully")
-        except Exception as e:
-            logging.error(f"Error in on_message: {e}")
-            embed = discord.Embed(title="Error", description="Something went wrong.", color=discord.Color.red())
-            await message.channel.send(embed=embed)
-
-    # Process other commands
-    await bot.process_commands(message)
-
 @bot.tree.command(name="baley", description="Replies with 'the baley video'")
 async def baley(interaction: discord.Interaction):
     await interaction.response.send_message("https://cdn.discordapp.com/attachments/1248819562972057763/1267280639120510996/Snapchat-1412399103.mp4")
