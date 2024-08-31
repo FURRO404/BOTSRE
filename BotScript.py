@@ -170,11 +170,15 @@ async def execute_points_alarm_task(region):
             logging.info(f"Checking squadron: {squadron_name} for points alarm")
 
             if "Points" in squadron_preferences:
-                old_snapshot = Alarms.load_snapshot(guild_id, squadron_name, region)
+                # Determine the opposite region for comparison
+                opposite_region = "EU" if region == "US" else "US"
+
+                # Load the snapshot from the opposite region
+                old_snapshot = Alarms.load_snapshot(guild_id, squadron_name, opposite_region)
                 new_snapshot = Alarms.take_snapshot(squadron_name)
 
                 if old_snapshot:
-                    logging.info(f"Loaded old snapshot for {squadron_name} in region {region}")
+                    logging.info(f"Loaded old snapshot for {squadron_name} from region {opposite_region}")
                     points_changes = Alarms.compare_points(old_snapshot, new_snapshot)
 
                     if points_changes:
@@ -217,6 +221,7 @@ async def execute_points_alarm_task(region):
                 # Save the new snapshot with the region specified
                 Alarms.save_snapshot(new_snapshot, guild_id, squadron_name, region)
                 logging.info(f"New snapshot saved for {squadron_name} in region {region}")
+
 
 
 @points_alarm_task.before_loop
