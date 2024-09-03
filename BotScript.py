@@ -38,18 +38,132 @@ TOKEN = os.environ.get('DISCORD_KEY')
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
-
+intents.messages = True
+intents.dm_messages = True
 
 class MyBot(commands.Bot):
     def __init__(self):
         super().__init__(command_prefix='~', intents=intents)
         self.synced = False
+        self.conversations = {}  # Dictionary to track active conversations
 
     async def setup_hook(self):
         await self.tree.sync()
         self.synced = True
 
 bot = MyBot()
+
+@bot.event
+async def on_message(message):
+    if isinstance(message.channel, discord.DMChannel):
+        if message.author == bot.user:
+            return  # Ignore messages from the bot itself
+
+        logging.info(f'Received DM from {message.author.name}: {message.content}')
+
+        if message.content.startswith('conversation-start @'):
+            try:
+                parts = message.content.split(' ', 2)
+                if len(parts) < 2:
+                    await message.channel.send('Invalid format. Use: `conversation-start @userID`')
+                    logging.info('Invalid format received for conversation-start.')
+                    return
+
+                user_id_str = parts[1].strip('@')
+                user_id = int(user_id_str)
+
+                user = bot.get_user(user_id)
+                if user is None:
+                    user = await bot.fetch_user(user_id)
+
+                if user:
+                    bot.conversations[message.author.id] = {
+                        'recipient_id': user_id,
+                        'starter_id': message.author.id
+                    }
+                    await message.channel.send(f'Conversation started with {user.name}.')
+                    logging.info(f'Conversation started with {user.name} for user {message.author.name}.')
+                else:
+                    await message.channel.send('User not found.')
+                    logging.warning(f'User with ID {user_id} not found.')
+
+            except Exception as e:
+                await message.channel.send(f'An error occurred: {str(e)}')
+                logging.error(f'Error handling conversation start: {str(e)}')
+
+        elif message.content == 'conversation-end':
+            if message.author.id in bot.conversations:
+                del bot.conversations[message.author.id]
+                await message.channel.send('Conversation ended.')
+                logging.info(f'Conversation ended for user {message.author.name}.')
+            else:
+                await message.channel.send('No active conversation found.')
+
+        elif message.content.startswith('message @'):
+            try:
+                parts = message.content.split(' ', 2)
+                if len(parts) < 3:
+                    await message.channel.send('Invalid format. Use: `message @userID your message`')
+                    logging.info('Invalid format received for message command.')
+                    return
+
+                user_id_str = parts[1].strip('@')
+                user_message = parts[2]
+
+                user_id = int(user_id_str)
+
+                user = bot.get_user(user_id)
+                if user is None:
+                    user = await bot.fetch_user(user_id)
+
+                if user:
+                    await user.send(user_message)
+                    await message.channel.send(f'Message sent to {user.name}.')
+                    logging.info(f'Message sent to {user.name}: {user_message}')
+                else:
+                    await message.channel.send('User not found.')
+                    logging.warning(f'User with ID {user_id} not found.')
+
+            except Exception as e:
+                await message.channel.send(f'An error occurred: {str(e)}')
+                logging.error(f'Error handling DM: {str(e)}')
+
+        # Forwarding messages between the starter and recipient
+        elif message.author.id in bot.conversations:
+            conversation = bot.conversations[message.author.id]
+            recipient_id = conversation['recipient_id']
+            starter_id = conversation['starter_id']
+
+            # If the sender is the starter, forward to the recipient
+            if message.author.id == starter_id:
+                recipient = bot.get_user(recipient_id)
+                if recipient is None:
+                    recipient = await bot.fetch_user(recipient_id)
+
+                if recipient and recipient.id != bot.user.id:  # Ensure the recipient is not the bot
+                    await recipient.send(message.content)
+                    logging.info(f'Forwarded message from {message.author.name} to {recipient.name}: {message.content}')
+
+            # If the sender is the recipient, forward to the starter
+            elif message.author.id == recipient_id:
+                starter = bot.get_user(starter_id)
+                if starter is None:
+                    starter = await bot.fetch_user(starter_id)
+
+                if starter and starter.id != bot.user.id:  # Ensure the starter is not the bot
+                    await starter.send(f'Received a reply from {message.author.name}: {message.content}')
+                    logging.info(f'Forwarded reply from {message.author.name} to {starter.name}: {message.content}')
+                else:
+                    logging.warning(f'Starter with ID {starter_id} not found.')
+            else:
+                logging.warning(f'Unexpected scenario: message.author.id = {message.author.id}')
+
+    # Process commands after handling the message
+    await bot.process_commands(message)
+
+
+
+
 
 @bot.event
 async def on_ready():
@@ -170,15 +284,11 @@ async def execute_points_alarm_task(region):
             logging.info(f"Checking squadron: {squadron_name} for points alarm")
 
             if "Points" in squadron_preferences:
-                # Determine the opposite region for comparison
-                opposite_region = "EU" if region == "US" else "US"
-
-                # Load the snapshot from the opposite region
-                old_snapshot = Alarms.load_snapshot(guild_id, squadron_name, opposite_region)
+                old_snapshot = Alarms.load_snapshot(guild_id, squadron_name, region)
                 new_snapshot = Alarms.take_snapshot(squadron_name)
 
                 if old_snapshot:
-                    logging.info(f"Loaded old snapshot for {squadron_name} from region {opposite_region}")
+                    logging.info(f"Loaded old snapshot for {squadron_name} in region {region}")
                     points_changes = Alarms.compare_points(old_snapshot, new_snapshot)
 
                     if points_changes:
@@ -221,7 +331,6 @@ async def execute_points_alarm_task(region):
                 # Save the new snapshot with the region specified
                 Alarms.save_snapshot(new_snapshot, guild_id, squadron_name, region)
                 logging.info(f"New snapshot saved for {squadron_name} in region {region}")
-
 
 
 @points_alarm_task.before_loop
@@ -1571,6 +1680,7 @@ async def top(interaction: discord.Interaction):
     await interaction.followup.send(embed=embed, ephemeral=False)
 
 
+
 @bot.tree.command(name="help", description="Get a guide on how to use the bot")
 async def help(interaction: discord.Interaction):
     guide_text = (
@@ -1604,6 +1714,13 @@ async def help(interaction: discord.Interaction):
     )
     embed.set_footer(text="Meow :3")
     await interaction.response.send_message(embed=embed, ephemeral=False)
+
+
+
+
+
+
+
 
 # Error handler for all commands
 @clear.error
