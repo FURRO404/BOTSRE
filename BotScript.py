@@ -261,21 +261,22 @@ async def before_snapshot_task():
     await bot.wait_until_ready()
 
 
-@tasks.loop(seconds=45)
+@tasks.loop(seconds=50) 
 async def points_alarm_task():
-    now_utc = datetime.now(timezone.utc).time()
+    now_utc = datetime.now(timezone.utc)
 
-    # Define the region based on the current time
+    # Check for the specific times for US and EU
     if now_utc.hour == 22 and now_utc.minute == 30:
-        logger.info("Region for US fired")
-        region = "US"
-    elif now_utc.hour == 7 and now_utc.minute == 30:
-        logger.info("Region for EU fired")
-        region = "EU"
-    else:
-        return  # Not a scheduled time
+        logger.info("Region for US fired at exactly 22:30 UTC")
+        logging.info("Running member-leave alarm")
+        await execute_points_alarm_task("US")
 
-    await execute_points_alarm_task(region)
+    elif now_utc.hour == 7 and now_utc.minute == 30:
+        logger.info("Region for EU fired at exactly 07:30 UTC")
+        logging.info("Running member-leave alarm")
+        await execute_points_alarm_task("EU")
+    else:
+        logger.info("Not fired")
 
 async def execute_points_alarm_task(region):
     for guild in bot.guilds:
