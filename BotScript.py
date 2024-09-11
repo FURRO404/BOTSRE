@@ -177,6 +177,7 @@ async def on_ready():
         bot.synced = True
     snapshot_task.start()
     points_alarm_task.start()
+    await execute_points_alarm_task("US")
 
 
 @bot.event
@@ -298,6 +299,7 @@ async def execute_points_alarm_task(region):
                                 channel = bot.get_channel(int(channel_id))
                                 if channel:
                                     logging.info(f"Sending points update to channel {channel_id} for squadron {squadron_name}")
+
                                     # Create the embed
                                     embed = discord.Embed(
                                         title=f"**{squadron_name} Points Update**",
@@ -310,7 +312,12 @@ async def execute_points_alarm_task(region):
                                         change_type = "gained" if points_change > 0 else "lost"
                                         changes_text += f"Member {member} {change_type} {abs(points_change)} points, now at {current_points} points.\n"
 
-                                    embed.add_field(name="Member Changes", value=changes_text, inline=False)
+                                    # Split changes_text into smaller chunks if it exceeds the limit
+                                    max_field_length = 1024
+                                    chunks = [changes_text[i:i + max_field_length] for i in range(0, len(changes_text), max_field_length)]
+
+                                    for i, chunk in enumerate(chunks):
+                                        embed.add_field(name=f"Member Changes Part {i + 1}", value=chunk, inline=False)
 
                                     # Send the embed to the channel
                                     await channel.send(embed=embed)
@@ -325,6 +332,7 @@ async def execute_points_alarm_task(region):
                 # Save the new snapshot with the region specified
                 Alarms.save_snapshot(new_snapshot, guild_id, squadron_name, region)
                 logging.info(f"New snapshot saved for {squadron_name} in region {region}")
+
 
 
 @points_alarm_task.before_loop
