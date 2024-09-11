@@ -30,18 +30,7 @@ from SQ_Info_Auto import fetch_clan_table_info, process_all_squadrons
 from Searcher import normalize_name, get_vehicle_type, get_vehicle_country, autofill_search
 from SQB_Parser import parse_logs, separate_games, read_logs_from_file
 
-# Set up logging to write to both Replit logs and LOGS.txt
-logger = logging.getLogger('points_alarm')
-logger.setLevel(logging.DEBUG)
-
-# Create a file handler for writing specific logs to LOGS.txt
-file_handler = logging.FileHandler('LOGS.txt')
-file_handler.setLevel(logging.INFO)  # Only log INFO level and above to the file
-file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s:%(message)s'))
-
-# Add the handler to the logger
-logger.addHandler(file_handler)
-
+logging.basicConfig(level=logging.DEBUG)
 client = Client(bucket_id="replit-objstore-b5261a8a-c768-4543-975e-dfce1cd7077d")
 
 TOKEN = os.environ.get('DISCORD_KEY')
@@ -261,47 +250,44 @@ async def before_snapshot_task():
     await bot.wait_until_ready()
 
 
-@tasks.loop(seconds=50) 
+@tasks.loop(minutes=1)
 async def points_alarm_task():
-    now_utc = datetime.now(timezone.utc)
+    now_utc = datetime.now(timezone.utc).time()
 
-    # Check for the specific times for US and EU
+    # Define the region based on the current time
     if now_utc.hour == 22 and now_utc.minute == 30:
-        logger.info("Region for US fired at exactly 22:30 UTC")
-        logging.info("Running member-leave alarm")
-        await execute_points_alarm_task("US")
-
+        region = "US"
     elif now_utc.hour == 7 and now_utc.minute == 30:
-        logger.info("Region for EU fired at exactly 07:30 UTC")
-        logging.info("Running member-leave alarm")
-        await execute_points_alarm_task("EU")
+        region = "EU"
     else:
-        logger.info("Not fired")
+        return  # Not a scheduled time
+
+    await execute_points_alarm_task(region)
 
 async def execute_points_alarm_task(region):
     for guild in bot.guilds:
         guild_id = guild.id
         key = f"{guild_id}-preferences.json"
 
-        logger.info(f"Processing guild: {guild_id} for region: {region}")
+        logging.info(f"Processing guild: {guild_id} for region: {region}")
 
         try:
             data = client.download_as_text(key)
             preferences = json.loads(data)
-            logger.info(f"Successfully loaded preferences for guild: {guild_id}")
+            logging.info(f"Successfully loaded preferences for guild: {guild_id}")
         except (ObjectNotFoundError, FileNotFoundError):
             preferences = {}
-            logger.warning(f"No preferences found for guild: {guild_id}")
+            logging.warning(f"No preferences found for guild: {guild_id}")
 
         for squadron_name, squadron_preferences in preferences.items():
-            logger.info(f"Checking squadron: {squadron_name} for points alarm")
+            logging.info(f"Checking squadron: {squadron_name} for points alarm")
 
             if "Points" in squadron_preferences:
                 old_snapshot = Alarms.load_snapshot(guild_id, squadron_name, region)
                 new_snapshot = Alarms.take_snapshot(squadron_name)
 
                 if old_snapshot:
-                    logger.info(f"Loaded old snapshot for {squadron_name} in region {region}")
+                    logging.info(f"Loaded old snapshot for {squadron_name} in region {region}")
                     points_changes = Alarms.compare_points(old_snapshot, new_snapshot)
 
                     if points_changes:
@@ -311,39 +297,34 @@ async def execute_points_alarm_task(region):
                             if channel_id.isdigit():
                                 channel = bot.get_channel(int(channel_id))
                                 if channel:
-                                    logger.info(f"Sending points update to channel {channel_id} for squadron {squadron_name}")
-
-                                    # Fetch the current squadron points using SQ_Info.py functions
-                                    squadron_info = fetch_squadron_info(squadron_name, embed_type="points")
-                                    current_points = squadron_info.fields[0].value if squadron_info else "N/A"
-
+                                    logging.info(f"Sending points update to channel {channel_id} for squadron {squadron_name}")
                                     # Create the embed
                                     embed = discord.Embed(
                                         title=f"**{squadron_name} Points Update**",
-                                        description=f"**Current Points: {current_points}**",
+                                        description=f"Current Points: [to be implemented]",
                                         color=discord.Color.blue()
                                     )
 
                                     changes_text = ""
                                     for member, (points_change, current_points) in points_changes.items():
                                         change_type = "gained" if points_change > 0 else "lost"
-                                        changes_text += f"**{member} {change_type} {abs(points_change)} points**, now at **{current_points}**.\n"
+                                        changes_text += f"Member {member} {change_type} {abs(points_change)} points, now at {current_points} points.\n"
 
                                     embed.add_field(name="Member Changes", value=changes_text, inline=False)
 
                                     # Send the embed to the channel
                                     await channel.send(embed=embed)
-                                    logger.info(f"Points update sent successfully for {squadron_name} in {guild_id}")
+                                    logging.info(f"Points update sent successfully for {squadron_name} in {guild_id}")
                                 else:
-                                    logger.error(f"Channel ID {channel_id} not found for guild {guild_id}")
+                                    logging.error(f"Channel ID {channel_id} not found for guild {guild_id}")
                             else:
-                                logger.error(f"Invalid channel ID format: {channel_id} for squadron {squadron_name}")
+                                logging.error(f"Invalid channel ID format: {channel_id} for squadron {squadron_name}")
                         else:
-                            logger.info(f"No channel set for 'Points' type Alarms for squadron {squadron_name}")
+                            logging.info(f"No channel set for 'Points' type Alarms for squadron {squadron_name}")
 
                 # Save the new snapshot with the region specified
                 Alarms.save_snapshot(new_snapshot, guild_id, squadron_name, region)
-                logger.info(f"New snapshot saved for {squadron_name} in region {region}")
+                logging.info(f"New snapshot saved for {squadron_name} in region {region}")
 
 
 @points_alarm_task.before_loop
