@@ -915,9 +915,18 @@ class BRSelectDropdown(discord.ui.Select):
 
 
 @bot.tree.command(name="console", description="Choose an action.")
+@has_roles_or_admin("Meta")
 async def console(interaction: discord.Interaction):
     view = InitialView(interaction)
     await interaction.response.send_message("Choose an action:", view=view)
+
+
+@bot.tree.command(name="viewmeta", description="View the meta list.")
+@app_commands.describe()
+async def viewmeta(interaction: discord.Interaction):
+    # This will mimic the "View" action from the console dropdown.
+    view = BRSelectView(interaction)
+    await interaction.response.send_message("Select BRs to view:", view=view)
 
 
 @bot.tree.command(name="clear", description="Clear the entire Meta list")
@@ -1702,7 +1711,8 @@ async def help(interaction: discord.Interaction):
         "13. **/guessing-game** - Start a guessing game.\n"
         "14. **/trivia [difficulty]** - Play a War Thunder vehicle trivia game. A higher difficulty means more points.\n"
         "15. **/leaderboard** - Show the leaderboard.\n"
-        "16. **/console** - Choose an action (Add or Remove vehicles).\n"
+        "16. **/console** - Manage the metalist.\n"
+        "17. **/viewmeta - View the metalist."
         "17. **/time** - Get the current UTC time and your local time.\n"
         "18. **/help** - Get a guide on how to use the bot.\n\n"
         "19. **/set-squadron {SQ_Name}** - Store squadron name for the discord server."
