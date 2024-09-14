@@ -283,12 +283,18 @@ async def execute_points_alarm_task(region):
         for squadron_name, squadron_preferences in preferences.items():
             logging.info(f"Checking squadron: {squadron_name} for points alarm")
 
+            # Fetch the current squadron points using SQ_Info.py functions
+            squadron_info = fetch_squadron_info(squadron_name, embed_type="points")
+            sq_total_points = squadron_info.fields[0].value if squadron_info else "N/A"
+            logging.info(f"{squadron_name} points at {sq_total_points}.")
+
             if "Points" in squadron_preferences:
-                old_snapshot = Alarms.load_snapshot(guild_id, squadron_name, region)
+                opposite_region = "EU" if region == "US" else "US"
+                old_snapshot = Alarms.load_snapshot(guild_id, squadron_name, opposite_region)
                 new_snapshot = Alarms.take_snapshot(squadron_name)
 
                 if old_snapshot:
-                    logging.info(f"Loaded old snapshot for {squadron_name} in region {region}")
+                    logging.info(f"Loaded old snapshot for {squadron_name} in region {opposite_region}")
                     points_changes = Alarms.compare_points(old_snapshot, new_snapshot)
 
                     if points_changes:
@@ -300,28 +306,43 @@ async def execute_points_alarm_task(region):
                                 if channel:
                                     logging.info(f"Sending points update to channel {channel_id} for squadron {squadron_name}")
 
-                                    # Create the embed
+                                    # Prepare the changes text by lines
+                                    changes_lines = []
+                                    for member, (points_change, current_points) in points_changes.items():
+                                        change_type = "gained" if points_change > 0 else "lost"
+                                        changes_lines.append(f"{member} {change_type} {abs(points_change)} points, now at {current_points} points.")
+
+                                    # Chunk the lines into sections that fit within the max_field_length limit
+                                    max_field_length = 1024
+                                    chunks = []
+                                    current_chunk = ""
+
+                                    for line in changes_lines:
+                                        if len(current_chunk) + len(line) + 1 > max_field_length:
+                                            chunks.append(current_chunk)
+                                            current_chunk = line + "\n"
+                                        else:
+                                            current_chunk += line + "\n"
+
+                                    # Add any remaining text in the last chunk
+                                    if current_chunk:
+                                        chunks.append(current_chunk)
+
+                                    # Create the embed and add fields for each chunk
                                     embed = discord.Embed(
                                         title=f"**{squadron_name} Points Update**",
-                                        description=f"Current Points: [to be implemented]",
+                                        description=f"**Current Points:** {sq_total_points}",
                                         color=discord.Color.blue()
                                     )
 
-                                    changes_text = ""
-                                    for member, (points_change, current_points) in points_changes.items():
-                                        change_type = "gained" if points_change > 0 else "lost"
-                                        changes_text += f"Member {member} {change_type} {abs(points_change)} points, now at {current_points} points.\n"
-
-                                    # Split changes_text into smaller chunks if it exceeds the limit
-                                    max_field_length = 1024
-                                    chunks = [changes_text[i:i + max_field_length] for i in range(0, len(changes_text), max_field_length)]
-
-                                    for i, chunk in enumerate(chunks):
-                                        embed.add_field(name=f"Member Changes Part {i + 1}", value=chunk, inline=False)
-
-                                    # Send the embed to the channel
+                                    for chunk in chunks:
+                                        embed.add_field(name="\u200A", value=chunk, inline=False)
+                                        
+                                    embed.set_footer(text="Meow :3")
+                                    # Send the combined embed
                                     await channel.send(embed=embed)
                                     logging.info(f"Points update sent successfully for {squadron_name} in {guild_id}")
+
                                 else:
                                     logging.error(f"Channel ID {channel_id} not found for guild {guild_id}")
                             else:
@@ -332,7 +353,6 @@ async def execute_points_alarm_task(region):
                 # Save the new snapshot with the region specified
                 Alarms.save_snapshot(new_snapshot, guild_id, squadron_name, region)
                 logging.info(f"New snapshot saved for {squadron_name} in region {region}")
-
 
 
 @points_alarm_task.before_loop
@@ -915,7 +935,6 @@ class BRSelectDropdown(discord.ui.Select):
 
 
 @bot.tree.command(name="console", description="Choose an action.")
-@has_roles_or_admin("Meta")
 async def console(interaction: discord.Interaction):
     view = InitialView(interaction)
     await interaction.response.send_message("Choose an action:", view=view)
@@ -1663,8 +1682,7 @@ async def set_squadron(interaction: discord.Interaction, sq_short_hand_name: str
 
 
 
-@bot.tree.command(name='top',
-      description='Get the top 20 squadrons with detailed stats')
+@bot.tree.command(name='top', description='Get the top 20 squadrons with detailed stats')
 async def top(interaction: discord.Interaction):
     await interaction.response.defer()
 
