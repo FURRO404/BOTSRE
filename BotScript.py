@@ -1732,7 +1732,7 @@ async def help(interaction: discord.Interaction):
         "17. **/viewmeta** - View the metalist.\n"
         "18. **/time** - Get the current UTC time and your local time.\n"
         "19. **/help** - Get a guide on how to use the bot.\n"
-        "20. **/set-squadron {SQ_Name}** - Store squadron name for the discord server."
+        "20. **/set-squadron {SQ_Name}** - Store squadron name for the discord server.\n\n"
         "*For detailed information on each command, please refer to the respective command descriptions.*"
     )
 
