@@ -178,7 +178,6 @@ async def on_ready():
     snapshot_task.start()
     points_alarm_task.start()
 
-
 @bot.event
 async def on_guild_join(guild):
     print(f'Joined new guild: {guild.name} (id: {guild.id})')
@@ -308,8 +307,9 @@ async def execute_points_alarm_task(region):
                                     # Prepare the changes text by lines
                                     changes_lines = []
                                     for member, (points_change, current_points) in points_changes.items():
+                                        safe_member_name = discord.utils.escape_markdown(member)
                                         change_type = "gained" if points_change > 0 else "lost"
-                                        changes_lines.append(f"{member} {change_type} {abs(points_change)} points, now at {current_points} points.")
+                                        changes_lines.append(f"{safe_member_name} {change_type} {abs(points_change)} points, now at {current_points} points.")
 
                                     # Chunk the lines into sections that fit within the max_field_length limit
                                     max_field_length = 1024
@@ -1729,10 +1729,10 @@ async def help(interaction: discord.Interaction):
         "14. **/trivia [difficulty]** - Play a War Thunder vehicle trivia game. A higher difficulty means more points.\n"
         "15. **/leaderboard** - Show the leaderboard.\n"
         "16. **/console** - Manage the metalist.\n"
-        "17. **/viewmeta - View the metalist."
-        "17. **/time** - Get the current UTC time and your local time.\n"
-        "18. **/help** - Get a guide on how to use the bot.\n\n"
-        "19. **/set-squadron {SQ_Name}** - Store squadron name for the discord server."
+        "17. **/viewmeta** - View the metalist.\n"
+        "18. **/time** - Get the current UTC time and your local time.\n"
+        "19. **/help** - Get a guide on how to use the bot.\n"
+        "20. **/set-squadron {SQ_Name}** - Store squadron name for the discord server."
         "*For detailed information on each command, please refer to the respective command descriptions.*"
     )
 
@@ -1743,12 +1743,6 @@ async def help(interaction: discord.Interaction):
     )
     embed.set_footer(text="Meow :3")
     await interaction.response.send_message(embed=embed, ephemeral=False)
-
-
-
-
-
-
 
 
 # Error handler for all commands
