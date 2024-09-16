@@ -177,7 +177,6 @@ async def on_ready():
         bot.synced = True
     snapshot_task.start()
     points_alarm_task.start()
-    await execute_points_alarm_task("US")
 
 
 @bot.event
@@ -294,7 +293,7 @@ async def execute_points_alarm_task(region):
                 new_snapshot = Alarms.take_snapshot(squadron_name)
 
                 if old_snapshot:
-                    logging.info(f"Loaded old snapshot for {squadron_name} in region {opposite_region}")
+                    logging.info(f"Loaded old snapshot for {squadron_name}, region {opposite_region}")
                     points_changes = Alarms.compare_points(old_snapshot, new_snapshot)
 
                     if points_changes:
@@ -330,8 +329,8 @@ async def execute_points_alarm_task(region):
 
                                     # Create the embed and add fields for each chunk
                                     embed = discord.Embed(
-                                        title=f"**{squadron_name} Points Update**",
-                                        description=f"**Current Points:** {sq_total_points}",
+                                        title=f"**{squadron_name} {region} Points Update**",
+                                        description=f"**Current Points:** {sq_total_points}\n\n**Player Changes:**",
                                         color=discord.Color.blue()
                                     )
 
