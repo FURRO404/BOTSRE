@@ -1579,9 +1579,6 @@ async def quick_log(interaction: discord.Interaction,
                                 enemy_team, message, result_type, comment)
 
 
-@bot.tree.command(name="baley", description="Replies with 'the baley video'")
-async def baley(interaction: discord.Interaction):
-    await interaction.response.send_message("https://cdn.discordapp.com/attachments/1248819562972057763/1267280639120510996/Snapchat-1412399103.mp4")
 
 @bot.tree.command(name='time', description='Get the current UTC time')
 async def time(interaction: discord.Interaction):
@@ -1699,7 +1696,7 @@ async def top(interaction: discord.Interaction):
         f"**Air Kills:** {squadron['Air Kills']}\n"
         f"**Ground Kills:** {squadron['Ground Kills']}\n"
         f"**Deaths:** {squadron['Deaths']}\n"
-        f"**KD Ratio:** {squadron['KD Ratio']}\n"
+        f"**K/D:** {squadron['KD Ratio']}\n"
         f"**Playtime:** {squadron['Playtime']}\n"
         "\u200b"  # Adds a small amount of space between each squadron
     ), inline=True)
@@ -1732,7 +1729,7 @@ async def help(interaction: discord.Interaction):
         "17. **/viewmeta** - View the metalist.\n"
         "18. **/time** - Get the current UTC time and your local time.\n"
         "19. **/help** - Get a guide on how to use the bot.\n"
-        "20. **/set-squadron {SQ_Name}** - Store squadron name for the discord server.\n\n"
+        "20. **/set-squadron {short hand} {long hand}** - Store squadron name for the discord server (used for logging).\n\n"
         "*For detailed information on each command, please refer to the respective command descriptions.*"
     )
 
