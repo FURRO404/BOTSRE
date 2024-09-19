@@ -251,7 +251,7 @@ USSR	Fighter
 MiG-15bis
 8.7	8.3	8.7
 USSR	Fighter	
-MiG-15bis ISH
+MiG-15bis ISh
 8.7	8.0	8.7
 USSR	Fighter	
 MiG-17
@@ -273,31 +273,31 @@ MiG-21S (R-13-300)
 9.0	9.7	10.0
 USSR	Fighter	
 MiG-21SMT
-10.0	10.3	10.7
+10.3	10.7	11.0
 USSR	Fighter	
 MiG-21bis
-10.7	11.0	11.0
+11.0	11.3	11.3
 USSR	Fighter	
 MiG-23M
-11.0	11.0	11.0
-USSR	Fighter	
-MiG-23ML
-11.3	11.3	11.0
-USSR	Fighter	
-MiG-23MLD
 11.3	11.3	11.3
 USSR	Fighter	
+MiG-23ML
+11.7	11.7	11.7
+USSR	Fighter	
+MiG-23MLD
+11.7	11.7	11.7
+USSR	Fighter	
 MiG-27K
-11.0	11.0	11.3
+11.3	11.3	11.7
 USSR	Fighter	
 MiG-27M
-11.0	11.0	11.3
+11.3	11.3	11.7
 USSR	Fighter	
 MiG-29
-12.0	12.0	12.0
+12.7	12.7	12.7
 USSR	Fighter	
 MiG-29SMT
-13.0	13.0	13.0
+13.3	13.3	13.3
 USSR	Strike aircraft	
 Orion
 10.7	10.7	10.7
@@ -423,37 +423,40 @@ Su-11
 7.7	7.3	7.0
 USSR	Strike aircraft	
 Su-17M2
-11.0	10.3	10.3
+11.3	10.7	10.7
 USSR	Strike aircraft	
 Su-17M4
-11.3	11.0	10.7
+11.7	11.3	11.0
 USSR	Strike aircraft	
 Su-22M3
-11.0	10.7	10.3
+11.7	11.3	11.0
+USSR	Strike aircraft	
+Su-24M
+11.7	11.3	11.3
 USSR	Strike aircraft	
 Su-25
-10.3	10.0	10.3
+10.7	10.3	10.7
 USSR	Strike aircraft	
 Su-25K
-10.3	10.0	10.3
+10.7	10.3	10.7
 USSR	Strike aircraft	
 Su-25T
-11.3	11.3	11.3
-USSR	Strike aircraft	
-Su-39
-11.3	11.3	11.3
-USSR	Strike aircraft	
-Su-25SM3
 11.7	11.7	11.7
 USSR	Strike aircraft	
+Su-39
+11.7	11.7	11.7
+USSR	Strike aircraft	
+Su-25SM3
+12.3	12.3	12.3
+USSR	Strike aircraft	
 Su-25BM
-11.0	11.0	11.3
+11.3	11.3	11.7
 USSR	Fighter	
 Su-27
-12.7	12.7	12.7
+13.3	13.3	13.3
 USSR	Fighter	
 Su-27SM
-13.0	13.0	13.0
+13.7	13.7	13.7
 USSR	Bomber	
 TB-3M-17-32
 1.3	1.3	1.3
@@ -564,7 +567,7 @@ Yak-38M
 9.3	9.3	9.3
 USSR	Fighter	
 Yak-141
-12.0	12.0	12.0
+12.7	12.7	12.7
 USSR	Bomber	
 Yer-2 (ACh-30B) (e)
 4.7	4.3	5.3
@@ -603,22 +606,25 @@ A-4E Early
 9.0	8.7	9.3
 USA	Strike aircraft	
 A-6E TRAM
-10.0	10.3	10.3
+10.3	10.7	10.7
 USA	Strike aircraft	
 A-7D
-10.7	10.0	9.7
+11.0	10.3	10.0
 USA	Strike aircraft	
 A-7E
-10.7	10.3	10.0
+11.0	10.7	10.3
 USA	Strike aircraft	
 A-7K
-11.0	10.7	10.0
+11.7	11.3	10.7
 USA	Strike aircraft	
 A-10A
-9.7	10.0	10.3
+10.0	10.3	10.7
 USA	Strike aircraft	
 A-10A Late
-10.0	10.3	10.3
+10.3	10.7	10.7
+USA	Strike aircraft	
+A-10C
+11.3	11.3	11.3
 USA	Strike aircraft	
 A-20G-25
 2.7	2.7	3.0
@@ -686,8 +692,11 @@ USA	Strike aircraft
 AV-8A
 9.3	9.7	9.7
 USA	Strike aircraft	
+AV-8B (NA)
+11.3	11.3	11.3
+USA	Strike aircraft	
 AV-8B Plus
-12.3	12.3	12.3
+13.0	13.0	13.0
 USA	Strike aircraft	
 AV-8C
 9.7	9.7	9.7
@@ -831,49 +840,52 @@ F11F-1
 9.0	9.0	9.0
 USA	Fighter	
 F-4C Phantom II
-10.3	10.0	10.3
+10.7	10.7	10.7
 USA	Fighter	
 F-4E Phantom II
-11.0	11.0	10.7
+11.3	11.3	11.0
 USA	Fighter	
 F-4J Phantom II
-11.0	11.3	11.3
+11.7	12.0	12.0
 USA	Fighter	
 F-4S Phantom II
-11.0	11.3	11.3
+11.7	12.0	12.0
 USA	Fighter	
 F-5A
-10.0	10.3	10.3
+10.3	11.0	10.7
 USA	Fighter	
 F-5C
-10.0	10.3	10.3
+10.3	11.0	10.7
 USA	Fighter	
 F-5E
-11.0	10.7	11.0
+11.3	11.0	11.3
 USA	Fighter	
 F-20A
-12.0	12.0	12.0
+12.7	12.7	12.7
 USA	Fighter	
 F-8E
-10.0	10.3	10.0
+10.3	10.7	10.3
 USA	Fighter	
 F-14A Early
-11.7	11.7	11.7
-USA	Fighter	
-F-14B
-12.0	12.0	12.0
-USA	Fighter	
-F-15A
 12.3	12.3	12.3
 USA	Fighter	
-F-15C MSIP II
+▄F-14A IRIAF
+12.3	12.3	12.3
+USA	Fighter	
+F-14B
+12.7	12.7	12.7
+USA	Fighter	
+F-15A
 13.0	13.0	13.0
 USA	Fighter	
+F-15C MSIP II
+13.7	13.7	13.7
+USA	Fighter	
 F-16A
-12.0	12.0	12.0
+12.7	12.7	12.7
 USA	Fighter	
 F-16A ADF
-12.0	12.0	12.0
+13.0	13.0	13.0
 USA	Fighter	
 F-80A-5
 6.7	7.0	7.0
@@ -921,10 +933,13 @@ F-104C
 9.7	9.3	9.7
 USA	Strike aircraft	
 F-105D
-10.7	10.0	9.7
+11.0	10.3	10.0
 USA	Strike aircraft	
 F-111A
-11.0	10.3	10.3
+11.3	10.7	10.7
+USA	Strike aircraft	
+F-111F
+11.7	11.7	11.7
 USA	Strike aircraft	
 FJ-4B
 9.0	8.7	9.0
@@ -957,7 +972,7 @@ MQ-1
 10.7	10.7	10.7
 USA	Fighter	
 F-16C
-13.0	13.0	13.0
+13.7	13.7	13.7
 USA	Bomber	
 OS2U-1
 1.0	1.0	1.0
@@ -1097,6 +1112,9 @@ USA	Bomber
 PBM-3 "Mariner"
 3.0	3.0	3.0
 USA	Bomber	
+PBM-5A "Mariner"
+3.7	3.7	3.7
+USA	Bomber	
 PBY-5 Catalina
 1.3	1.3	2.0
 USA	Bomber	
@@ -1191,10 +1209,10 @@ AHS
 10.3	11.3	10.3
 Sweden	Strike aircraft	
 AJ37
-10.0	10.3	10.7
+10.3	10.7	11.0
 Sweden	Strike aircraft	
 AJS37
-10.7	10.7	11.0
+11.0	11.0	11.3
 Sweden	Bomber	
 ▄Ar 196 A-5
 1.7	1.3	1.7
@@ -1311,16 +1329,16 @@ J35D
 10.0	10.3	10.7
 Sweden	Fighter	
 JA37C
-10.7	11.0	11.0
+11.0	11.3	11.3
 Sweden	Fighter	
 JA37D
-11.7	11.3	11.3
+12.3	12.0	12.0
 Sweden	Fighter	
 JAS39A
-12.7	12.7	12.7
+13.0	13.0	13.0
 Sweden	Fighter	
 JAS39C
-13.0	13.0	13.0
+13.7	13.7	13.7
 Sweden	Bomber	
 ▄Ju 88 A-4
 3.0	3.0	2.7
@@ -1329,7 +1347,7 @@ Mi-28A
 10.3	10.7	10.0
 Sweden	Fighter	
 ▄MiG-21bis
-10.7	11.0	11.0
+11.0	11.3	11.3
 Sweden	Fighter	
 Mörkö-Morane
 2.3	2.3	1.7
@@ -1347,7 +1365,7 @@ SK60B
 7.3	7.0	7.3
 Sweden	Fighter	
 Saab J35XS
-10.0	10.7	10.7
+10.7	11.3	11.3
 Sweden	Bomber	
 T18B
 3.7	4.3	4.0
@@ -1476,25 +1494,25 @@ F-1
 10.3	10.3	10.3
 Japan	Fighter	
 F-4EJ ADTW
-11.0	11.0	10.7
+11.3	11.3	11.0
 Japan	Fighter	
 F-4EJ Kai Phantom II
-11.3	11.7	11.7
+12.0	12.3	12.3
 Japan	Fighter	
 F-4EJ Phantom II
-11.0	11.0	10.7
+11.3	11.3	11.0
 Japan	Fighter	
 ▄F-5E FCU
-11.3	11.0	11.3
+11.7	11.3	11.7
 Japan	Fighter	
 F-15J
-12.3	12.3	12.3
-Japan	Fighter	
-F-15J(M)
 13.0	13.0	13.0
 Japan	Fighter	
+F-15J(M)
+13.7	13.7	13.7
+Japan	Fighter	
 F-16AJ
-12.0	12.0	12.0
+13.0	13.0	13.0
 Japan	Fighter	
 F-86F-30 ▅
 8.0	8.3	8.7
@@ -1752,7 +1770,7 @@ AB 205 A-1
 7.7	7.7	8.0
 Italy	Strike aircraft	
 ▄AV-8B Plus
-12.3	12.3	12.3
+13.0	13.0	13.0
 Italy	Fighter	
 Ariete
 9.3	9.3	9.0
@@ -1821,7 +1839,7 @@ CR.42
 1.7	1.3	1.3
 Italy	Fighter	
 ▄F-16A ADF
-12.0	12.0	12.0
+13.0	13.0	13.0
 Italy	Strike aircraft	
 ▄F-84F
 9.0	8.3	8.7
@@ -1833,16 +1851,16 @@ Italy	Fighter
 9.0	9.0	9.3
 Italy	Fighter	
 ▄F-104G
-10.3	10.7	10.0
+10.7	11.0	10.7
 Italy	Fighter	
 F-104S
-10.7	11.0	10.3
+11.0	11.3	10.7
 Italy	Fighter	
 ▄F-104S TAF
-10.7	11.0	10.3
+11.0	11.3	10.7
 Italy	Fighter	
 F-104S.ASA
-11.3	11.3	11.0
+12.0	12.0	11.7
 Italy	Strike aircraft	
 F.C.20 Bis
 2.0	2.0	2.3
@@ -1881,10 +1899,10 @@ G.91 pre-serie
 8.3	8.3	8.3
 Italy	Strike aircraft	
 AMX
-10.3	10.3	10.3
+10.7	10.7	10.7
 Italy	Strike aircraft	
 AMX A-1A
-10.7	10.7	10.7
+11.3	11.3	11.3
 Italy	Fighter	
 He 112 B-1/U2
 2.3	2.0	2.3
@@ -1908,7 +1926,7 @@ Italy	Fighter
 9.0	8.7	9.0
 Italy	Fighter	
 ◔JAS39EBS HU C
-13.0	13.0	13.0
+13.7	13.7	13.7
 Italy	Bomber	
 ▄Ju 87 D-3
 2.3	2.0	2.3
@@ -1929,16 +1947,16 @@ Italy	Attack helicopter
 10.0	9.7	9.7
 Italy	Fighter	
 ◔MiG-21MF
-10.0	10.3	10.7
+10.3	10.7	11.0
 Italy	Fighter	
 ◔MiG-21bis-SAU
-10.7	11.0	11.0
+11.0	11.3	11.3
 Italy	Fighter	
 ◔MiG-23MF
-11.0	11.0	11.0
+11.3	11.3	11.3
 Italy	Fighter	
 ◔MiG-29
-12.0	12.0	12.0
+12.7	12.7	12.7
 Italy	Fighter	
 ▄P-47D-30
 4.0	5.0	3.7
@@ -2016,16 +2034,19 @@ Italy	Fighter
 3.7	3.7	3.3
 Italy	Strike aircraft	
 ◔Su-22M3
-11.0	10.7	10.3
+11.7	11.3	11.0
 Italy	Attack helicopter	
 T129
 9.7	10.3	9.7
 Italy	Fighter	
 Tornado ADV
-11.7	11.3	11.7
+12.0	12.0	12.0
+Italy	Strike aircraft	
+▄Tornado IDS
+11.0	11.3	11.3
 Italy	Strike aircraft	
 ▄Tornado IDS (1995)
-11.3	11.3	11.3
+11.7	11.7	11.7
 Italy	Bomber	
 ◔Tu-2S-59
 6.0	5.7	6.0
@@ -2064,28 +2085,28 @@ Israel	Bomber
 5.0	5.3	6.3
 Israel	Fighter	
 Baz
-12.3	12.3	12.3
+13.0	13.0	13.0
 Israel	Fighter	
 Baz Meshupar
-13.0	13.0	13.0
+13.7	13.7	13.7
 Israel	Strike aircraft	
 F-84F
 8.7	8.3	8.7
 Israel	Fighter	
 Kfir C.2
-10.7	11.0	10.7
+11.3	11.7	11.3
 Israel	Fighter	
 Kfir C.7
-11.3	11.3	11.0
+12.0	12.0	11.7
 Israel	Fighter	
 Kfir Canard
-10.3	10.7	10.3
+11.0	11.3	11.0
 Israel	Fighter	
 Kurnass
-11.0	11.0	10.7
+11.3	11.3	11.0
 Israel	Fighter	
 Kurnass 2000
-11.3	11.3	11.3
+12.0	12.3	12.0
 Israel	Attack helicopter	
 Lahatut
 8.7	8.7	8.7
@@ -2106,10 +2127,13 @@ Nesher
 10.3	10.0	10.0
 Israel	Fighter	
 Netz
-12.0	12.3	12.0
-Israel	Fighter	
-Barak II
 13.0	13.0	13.0
+Israel	Fighter	
+F-16C Barak II
+13.7	13.7	13.7
+Israel	Fighter	
+F-16D Barak II
+13.7	13.7	13.7
 Israel	Fighter	
 P-51D-20-NA
 4.0	4.0	5.0
@@ -2208,7 +2232,7 @@ Buccaneer S.2
 10.3	9.3	9.3
 Great Britain	Strike aircraft	
 Buccaneer S.2B
-10.0	10.3	10.3
+10.3	10.7	10.7
 Great Britain	Bomber	
 Canberra B (I) Mk 6
 9.0	8.3	8.0
@@ -2232,7 +2256,10 @@ Great Britain	Frontline bomber
 2.3	2.3	2.3
 Great Britain	Fighter	
 F-4J(UK) Phantom II
-11.0	11.3	11.3
+11.7	12.0	12.0
+Great Britain	Strike aircraft	
+F-111C
+11.3	11.7	11.3
 Great Britain	Strike aircraft	
 Firebrand TF Mk IV
 3.7	3.7	4.3
@@ -2280,7 +2307,7 @@ Harrier GR.3
 10.3	9.7	9.3
 Great Britain	Strike aircraft	
 Harrier GR.7
-12.3	11.7	11.7
+13.0	12.3	12.3
 Great Britain	Frontline bomber	
 ▄Havoc Mk I
 2.0	2.0	2.3
@@ -2319,16 +2346,16 @@ Hurricane Mk.I/L FAA M
 2.7	2.3	2.0
 Great Britain	Fighter	
 ▄JAS39C
-13.0	13.0	13.0
+13.7	13.7	13.7
 Great Britain	Strike aircraft	
 Jaguar GR.1
 9.7	9.7	10.0
 Great Britain	Strike aircraft	
 Jaguar GR.1A
-10.0	10.3	10.3
+10.3	10.7	10.7
 Great Britain	Strike aircraft	
 Jaguar IS
-10.7	11.0	11.0
+11.0	11.3	11.3
 Great Britain	Fighter	
 Javelin F.(A.W.) Mk.9
 8.3	8.3	8.7
@@ -2366,14 +2393,14 @@ Great Britain	Fighter
 Meteor F Mk 4 G.41G
 7.7	8.0	8.0
 Great Britain	Fighter	
-Meteor F Mk 8 G.41K
+Meteor F Mk.8 G.41K
 7.7	8.0	8.0
 Great Britain	Fighter	
 Meteor F Mk.8 Reaper
 7.7	8.0	8.0
 Great Britain	Fighter	
 ▄MiG-21 Bison
-11.7	11.7	11.7
+12.3	12.3	12.3
 Great Britain	Strike aircraft	
 Mosquito FB Mk VI
 3.7	3.7	3.7
@@ -2394,10 +2421,10 @@ Osprey Mk IV
 1.3	1.0	1.3
 Great Britain	Fighter	
 Phantom FG.1
-11.0	11.3	10.7
+11.7	12.0	11.3
 Great Britain	Fighter	
 Phantom FGR.2
-11.0	11.3	10.7
+11.7	12.0	11.3
 Great Britain	Fighter	
 Plagis' Spitfire LF Mk IXc
 5.3	5.7	5.0
@@ -2421,13 +2448,13 @@ Sea Gladiator Mk I
 1.0	1.0	1.0
 Great Britain	Strike aircraft	
 Sea Harrier FRS.1 (e)
-10.3	10.3	10.3
+10.7	10.7	10.7
 Great Britain	Strike aircraft	
 Sea Harrier FRS.1
-10.7	10.7	10.7
+11.3	11.3	11.3
 Great Britain	Fighter	
 Sea Harrier FA 2
-12.3	12.3	12.3
+13.0	13.0	13.0
 Great Britain	Fighter	
 Sea Hawk FGA.6
 8.0	8.0	7.3
@@ -2550,13 +2577,13 @@ Great Britain	Fighter
 3.7	3.7	3.7
 Great Britain	Fighter	
 Tornado F.3
-11.7	11.3	11.7
+12.0	12.0	12.0
 Great Britain	Fighter	
 Tornado F.3 Late
-12.7	12.7	12.7
+13.3	13.3	13.3
 Great Britain	Strike aircraft	
 Tornado GR.1
-11.3	11.3	11.3
+11.7	11.7	11.7
 Great Britain	Fighter	
 Tuck's Gladiator Mk II
 1.3	1.0	1.3
@@ -2766,13 +2793,13 @@ EC-665 Tiger UHT
 10.3	11.7	10.7
 Germany	Fighter	
 ◄F-4F
-11.0	10.7	11.0
+11.3	11.0	11.0
 Germany	Fighter	
 ◄F-4F Early
-10.3	10.3	10.7
+10.7	10.7	11.0
 Germany	Fighter	
 ◄F-4F KWS LV
-12.7	12.7	12.7
+13.3	13.3	13.3
 Germany	Strike aircraft	
 ◄F-84F
 8.7	8.3	8.7
@@ -2781,7 +2808,10 @@ Germany	Fighter
 9.0	9.0	9.3
 Germany	Fighter	
 ◄F-104G
-10.3	10.7	10.3
+10.7	11.0	10.7
+Germany	Fighter	
+FFA P-16
+9.0	9.0	9.0
 Germany	Fighter	
 Flegel's Bf 109 A
 1.3	1.3	1.3
@@ -3042,31 +3072,31 @@ Germany	Fighter
 9.7	9.3	9.7
 Germany	Fighter	
 ◊MiG-21 "Lazur-M"
-10.7	11.0	11.0
+11.0	11.3	11.3
 Germany	Fighter	
 ◄MiG-21 SPS-K
 9.3	9.7	10.0
 Germany	Fighter	
 ◊MiG-21MF
-10.0	10.3	10.7
+10.3	10.7	11.0
 Germany	Fighter	
 ◊MiG-21bis-SAU
-10.7	11.0	11.0
+11.0	11.3	11.3
 Germany	Strike aircraft	
 ◊MiG-23BN
 9.7	9.7	9.7
 Germany	Fighter	
 ◊MiG-23MF
-11.0	11.0	11.0
-Germany	Fighter	
-◊MiG-23MLA
 11.3	11.3	11.3
 Germany	Fighter	
+◊MiG-23MLA
+11.7	11.7	11.7
+Germany	Fighter	
 ◊MiG-29
-12.0	12.0	12.0
+12.7	12.7	12.7
 Germany	Fighter	
 ◄MiG-29G
-12.3	12.7	12.7
+12.7	13.0	13.0
 Germany	Fighter	
 ▀P-47D
 3.7	4.3	3.7
@@ -3102,10 +3132,10 @@ Germany	Fighter
 8.0	8.0	8.0
 Germany	Strike aircraft	
 ◊Su-22M4
-11.3	11.0	10.7
+11.7	11.3	11.0
 Germany	Strike aircraft	
 ◊Su-22UM3K
-11.0	10.7	10.3
+11.7	11.3	11.0
 Germany	Fighter	
 Ta 152 C-3
 6.3	6.3	6.0
@@ -3120,13 +3150,13 @@ Germany	Fighter
 6.0	5.7	6.3
 Germany	Strike aircraft	
 ◄Tornado IDS MFG
-10.7	11.0	11.0
+11.0	11.3	11.3
 Germany	Strike aircraft	
 ◄Tornado IDS WTD61
-10.7	11.0	11.0
+11.0	11.3	11.3
 Germany	Strike aircraft	
 ◄Tornado IDS ASSTA1
-11.3	11.3	11.3
+11.7	11.7	11.7
 Germany	Utility helicopter	
 ◄UH-1D
 9.0	8.7	8.7
@@ -3189,7 +3219,7 @@ Etendard IVM
 9.3	9.0	9.3
 France	Strike aircraft	
 Super Etendard
-10.0	10.0	10.0
+10.3	10.3	10.3
 France	Fighter	
 F4U-7
 6.0	6.0	6.0
@@ -3210,10 +3240,10 @@ France	Fighter
 10.0	10.0	10.0
 France	Fighter	
 ▄F-16A
-12.0	12.3	12.0
+13.0	13.3	13.0
 France	Fighter	
 ▄F-16AM
-13.0	13.0	13.0
+13.7	13.7	13.7
 France	Strike aircraft	
 ▄F-84F
 9.0	8.3	8.7
@@ -3231,7 +3261,7 @@ France	Fighter
 9.7	9.3	9.7
 France	Fighter	
 ▄F-104G
-10.3	10.7	10.3
+10.7	11.0	10.7
 France	Bomber	
 F.222.2
 1.7	2.3	1.3
@@ -3262,12 +3292,15 @@ H-75A-4
 France	Fighter	
 ◘Hunter F.6
 9.3	9.0	9.0
+France	Utility helicopter	
+IAR 316B
+8.7	8.3	9.3
 France	Strike aircraft	
 Jaguar A
-10.3	10.3	10.0
+10.7	10.7	10.3
 France	Strike aircraft	
 Jaguar E
-10.0	10.3	9.7
+10.3	10.7	10.3
 France	Bomber	
 Lancaster MR.7
 5.0	5.3	6.0
@@ -3330,40 +3363,40 @@ Milan
 9.3	9.7	9.7
 France	Fighter	
 ▄Mirage 5BA
-10.3	10.3	10.3
+10.7	10.7	10.7
 France	Fighter	
 Mirage 5F
 10.3	10.0	10.0
 France	Fighter	
 Mirage 2000-5F
-13.0	13.0	13.0
+13.7	13.7	13.7
 France	Fighter	
 Mirage 2000C-S4
-11.3	11.7	11.7
+12.0	12.3	12.3
 France	Fighter	
 Mirage 2000C-S5
-11.3	11.7	11.7
+12.0	12.3	12.3
 France	Strike aircraft	
 Mirage 2000D-R1
-11.3	11.3	11.3
+12.0	12.3	12.3
 France	Fighter	
 Mirage 4000
-12.3	12.7	12.7
+13.0	13.0	13.0
 France	Fighter	
 Mirage F1C
-11.3	11.3	11.0
+12.0	12.0	11.7
 France	Fighter	
 Mirage F1C-200
-11.3	11.3	11.0
+12.0	12.0	11.7
 France	Fighter	
 Mirage F1CT
-11.3	11.3	11.0
+12.0	12.0	11.7
 France	Fighter	
 Mirage IIIC
 10.3	10.0	10.3
 France	Fighter	
 Mirage IIIE
-10.3	10.3	10.7
+10.7	10.7	11.0
 France	Fighter	
 Mystere IVA
 9.0	8.7	8.7
@@ -3434,6 +3467,12 @@ France	Bomber
 ▄SB2C-5
 3.7	3.7	4.0
 France	Fighter	
+▄Sea Fury FB 51
+5.7	5.7	5.7
+France	Fighter	
+▄Sea Hawk Mk.50
+8.0	8.0	8.0
+France	Fighter	
 ▄Seafire LF Mk.III
 5.0	5.0	5.0
 France	Fighter	
@@ -3468,7 +3507,7 @@ China	Fighter
 3.7	3.7	3.3
 China	Strike aircraft	
 A-5C
-10.0	10.0	10.0
+10.3	10.3	10.3
 China	Bomber	
 A-29
 2.3	2.0	2.0
@@ -3492,13 +3531,13 @@ China	Bomber
 2.7	2.7	2.7
 China	Fighter	
 ␗F-5A
-11.0	10.7	10.3
+11.3	11.0	10.7
 China	Fighter	
 ␗F-5E
-11.0	10.7	11.0
+11.3	11.0	11.3
 China	Fighter	
 ␗F-16A MLU
-12.0	12.0	12.0
+13.0	13.0	13.0
 China	Strike aircraft	
 ␗F-84G-21-RE
 7.7	7.7	8.0
@@ -3522,7 +3561,7 @@ China	Fighter
 9.7	9.3	9.7
 China	Fighter	
 ␗F-104G
-10.3	10.3	10.0
+10.7	10.7	10.3
 China	Fighter	
 ␗Gladiator Mk I
 1.0	1.0	1.0
@@ -3570,7 +3609,7 @@ J-6A
 10.0	9.3	9.7
 China	Fighter	
 J-7D
-10.7	11.0	10.7
+10.7	11.0	11.0
 China	Fighter	
 J-7E
 10.7	11.0	11.0
@@ -3579,16 +3618,22 @@ J-7II
 9.3	9.3	9.7
 China	Fighter	
 J-8B
-11.0	11.0	11.0
+11.3	11.3	11.3
 China	Fighter	
 J-8F
-12.3	12.3	12.3
+13.0	13.0	13.0
+China	Fighter	
+J-10A
+13.7	13.7	13.7
 China	Fighter	
 J-11
-12.7	12.7	12.7
+13.3	13.3	13.3
 China	Fighter	
 J-11A
-13.0	13.0	13.0
+13.7	13.7	13.7
+China	Strike aircraft	
+JF-17
+13.3	13.3	13.3
 China	Fighter	
 ␗Ki-27 otsu
 1.3	2.0	1.3
@@ -3672,7 +3717,7 @@ Q-5L
 10.7	9.3	10.7
 China	Strike aircraft	
 JH-7A
-11.3	11.7	11.7
+12.0	12.3	12.3
 China	Utility helicopter	
 SA.342L Gazelle
 8.7	8.7	8.7

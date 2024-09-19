@@ -2,17 +2,35 @@ USSR	Light tank
 BT-5
 1.0	1.0	1.0
 USSR	Light tank	
+BT-7
+1.3	1.3	1.3
+USSR	Light tank	
+BT-7M
+2.0	2.0	2.0
+USSR	Light tank	
 T-26
 1.0	1.0	1.0
+USSR	Medium tank	
+T-28 (1938)
+1.7	1.3	1.3
+USSR	Medium tank	
+T-28
+1.7	1.7	1.7
 USSR	Light tank	
 T-26-4
 1.0	1.0	1.0
 USSR	Light tank	
 T-60
 1.0	1.0	1.0
+USSR	Light tank	
+T-70
+2.0	2.0	2.0
 USSR	Tank destroyer	
 SU-5-1
 1.0	1.0	1.0
+USSR	Tank destroyer	
+SU-76M
+2.0	2.0	2.0
 USSR	SPAA	
 GAZ-AAA (4M)
 1.0	1.0	1.0
@@ -22,15 +40,15 @@ GAZ-AAA (DShK)
 USSR	Light tank	
 T-26 (1st Gv.T.Br.)
 1.0	1.0	1.0
-USSR	Light tank	
-BT-7
-1.3	1.3	1.3
-USSR	Medium tank	
-T-28 (1938)
-1.7	1.3	1.3
 USSR	Heavy tank	
 T-35
 1.3	1.3	1.3
+USSR	Tank destroyer	
+SU-57
+2.3	2.3	2.3
+USSR	Medium tank	
+▂T-III
+2.3	2.3	2.3
 USSR	Light tank	
 T-26E
 1.3	1.3	1.3
@@ -46,105 +64,12 @@ BM-8-24
 USSR	Light tank	
 BT-7 TD
 1.3	1.3	1.3
-USSR	Medium tank	
-T-28
-1.7	1.7	1.7
-USSR	Light tank	
-BT-7M
-2.0	2.0	2.0
-USSR	Light tank	
-T-70
-2.0	2.0	2.0
-USSR	Tank destroyer	
-SU-76M
-2.0	2.0	2.0
-USSR	Tank destroyer	
-SU-76M (5th Gv.Kav.Corps)
-2.0	2.0	2.0
-USSR	Tank destroyer	
-SU-57
-2.3	2.3	2.3
-USSR	Medium tank	
-T-III
-2.3	2.3	2.3
-USSR	Medium tank	
-T-28E
-2.3	2.3	2.3
-USSR	Light tank	
-T-80
-2.3	2.3	2.3
-USSR	Tank destroyer	
-ZiS-30
-2.3	2.3	2.3
-USSR	SPAA	
-GAZ-MM (72-K)
-2.3	2.3	2.3
-USSR	SPAA	
-ZUT-37
-2.3	2.3	2.3
-USSR	Tank destroyer	
-SU-76D
-2.3	2.3	2.3
 USSR	Light tank	
 T-50
 2.7	2.7	2.7
-USSR	Tank destroyer	
-SU-57B
-2.7	2.7	2.7
-USSR	Tank destroyer	
-SU-122
-2.7	2.7	2.7
-USSR	SPAA	
-BTR-152A
-3.0	2.7	2.7
-USSR	SPAA	
-ZiS-43
-4.0	2.7	2.7
-USSR	Tank destroyer	
-BM-13N
-2.7	2.7	2.7
-USSR	Medium tank	
-M3 Medium
-2.3	2.7	2.7
-USSR	SPAA	
-ZiS-12 (94-KM)
-3.7	3.0	3.0
-USSR	Light tank	
-T-126
-3.0	3.0	3.0
-USSR	Medium tank	
-МК-IX "Valentine"
-3.0	3.0	3.0
 USSR	Medium tank	
 T-34 (1940)
 3.3	3.3	2.7
-USSR	Tank destroyer	
-YaG-10 (29-K)
-3.3	3.3	3.3
-USSR	Medium tank	
-T-34 (Prototype)
-3.3	3.3	2.7
-USSR	Heavy tank	
-MK-II "Matilda"
-3.7	3.3	3.3
-USSR	SPAA	
-ZSU-37
-4.0	3.3	3.3
-USSR	Heavy tank	
-KV-1 (L-11)
-3.7	3.7	3.7
-USSR	Heavy tank	
-KV-2 (1939)
-3.7	3.7	3.7
-USSR	Heavy tank	
-SMK
-3.7	3.7	3.7
-USSR	Light tank	
-BT-7A (F-32)
-3.7	3.7	3.7
-USSR	Heavy tank	
-KV-2 (1940)
-3.7	3.7	3.7
 USSR	Medium tank	
 T-34 (1941)
 4.0	4.0	4.0
@@ -154,111 +79,168 @@ T-34 (1942)
 USSR	Medium tank	
 T-34E STZ
 4.3	4.0	3.7
+USSR	Medium tank	
+T-28E
+2.3	2.3	2.3
+USSR	Heavy tank	
+KV-1 (L-11)
+3.7	3.7	3.7
+USSR	Heavy tank	
+KV-2 (1939)
+3.7	3.7	3.7
 USSR	Heavy tank	
 KV-1S
 4.0	4.0	4.0
+USSR	Light tank	
+T-80
+2.3	2.3	2.3
+USSR	Tank destroyer	
+ZiS-30
+2.3	2.3	2.3
+USSR	Tank destroyer	
+SU-57B
+2.7	2.7	2.7
+USSR	Tank destroyer	
+SU-122
+2.7	2.7	2.7
+USSR	Tank destroyer	
+YaG-10 (29-K)
+3.3	3.3	3.3
+USSR	SPAA	
+GAZ-MM (72-K)
+2.3	2.3	2.3
+USSR	SPAA	
+BTR-152A
+3.0	2.7	2.7
+USSR	SPAA	
+ZiS-12 (94-KM)
+3.7	3.0	3.0
+USSR	SPAA	
+ZiS-43
+4.0	2.7	2.7
+USSR	Light tank	
+T-126
+3.0	3.0	3.0
+USSR	SPAA	
+ZUT-37
+2.3	2.3	2.3
+USSR	Heavy tank	
+SMK
+3.7	3.7	3.7
+USSR	Tank destroyer	
+BM-13N
+2.7	2.7	2.7
 USSR	Medium tank	
 T-34 (1st Gv.T.Br.)
 4.0	4.0	4.0
 USSR	Medium tank	
 T-34E
 4.0	4.0	3.7
+USSR	Medium tank	
+T-34 (Prototype)
+3.3	3.3	2.7
+USSR	Medium tank	
+▂M3 Medium
+2.3	2.7	2.7
+USSR	Tank destroyer	
+SU-76M (5th Gv.Kav.Corps)
+2.0	2.0	2.0
+USSR	Tank destroyer	
+SU-76D
+2.3	2.3	2.3
+USSR	Light tank	
+BT-7A (F-32)
+3.7	3.7	3.7
+USSR	Heavy tank	
+▂MK-II "Matilda"
+3.7	3.3	3.3
+USSR	Medium tank	
+▂МК-IX "Valentine"
+3.0	3.0	3.0
 USSR	Tank destroyer	
 SU-85A
 4.0	4.0	4.0
+USSR	Medium tank	
+T-34-57
+4.7	4.7	4.7
+USSR	Medium tank	
+T-34-85 (D-5T)
+5.3	5.3	5.3
+USSR	Heavy tank	
+KV-1 (ZiS-5)
+4.7	4.7	4.7
+USSR	Heavy tank	
+KV-85
+5.0	5.0	5.0
+USSR	Heavy tank	
+IS-1
+5.7	5.7	5.7
+USSR	Tank destroyer	
+ASU-57
+3.7	4.3	4.3
+USSR	Light tank	
+PT-76B
+5.0	5.3	5.3
 USSR	Tank destroyer	
 SU-152
 4.3	4.0	4.3
+USSR	Tank destroyer	
+SU-85
+4.3	4.3	4.3
+USSR	Tank destroyer	
+ISU-152
+4.7	4.7	4.7
+USSR	Tank destroyer	
+SU-85M
+5.0	5.0	5.0
+USSR	Tank destroyer	
+ISU-122
+5.3	5.3	5.3
+USSR	SPAA	
+ZSU-37
+4.0	3.3	3.3
 USSR	SPAA	
 BTR-152D
 4.0	4.0	4.0
 USSR	Tank destroyer	
 BM-31-12
 4.0	4.0	4.0
+USSR	Medium tank	
+T-34-57 (1943)
+4.7	4.7	4.7
+USSR	Medium tank	
+▂M4A2
+5.3	5.3	5.3
+USSR	SPAA	
+▂Phong khong T-34
+5.7	5.0	5.0
+USSR	Heavy tank	
+KV-2 (1940)
+3.7	3.7	3.7
 USSR	Heavy tank	
 KV-1E
 4.3	4.0	4.3
 USSR	Tank destroyer	
-ASU-57
-3.7	4.3	4.3
-USSR	Tank destroyer	
-SU-85
-4.3	4.3	4.3
-USSR	Medium tank	
-T-34-57
-4.7	4.7	4.7
-USSR	Heavy tank	
-KV-1 (ZiS-5)
-4.7	4.7	4.7
-USSR	Tank destroyer	
-ISU-152
-4.7	4.7	4.7
-USSR	Medium tank	
-T-34-57 (1943)
-4.7	4.7	4.7
-USSR	Tank destroyer	
 SU-100Y
 5.0	4.7	4.7
-USSR	Heavy tank	
-KV-85
-5.0	5.0	5.0
-USSR	Tank destroyer	
-SU-85M
-5.0	5.0	5.0
-USSR	SPAA	
-Phong khong T-34
-5.7	5.0	5.0
 USSR	Heavy tank	
 KV-2 (ZiS-6)
 5.0	5.0	5.0
 USSR	Medium tank	
-T-34-85 (D-5T)
-5.3	5.3	5.3
-USSR	Light tank	
-PT-76B
-5.0	5.3	5.3
-USSR	Tank destroyer	
-ISU-122
-5.3	5.3	5.3
-USSR	Medium tank	
-M4A2
-5.3	5.3	5.3
-USSR	Heavy tank	
-KV-122
-5.7	5.3	5.3
-USSR	Heavy tank	
-IS-1
-5.7	5.7	5.7
-USSR	Medium tank	
 T-34-85
 5.7	5.7	5.7
-USSR	Tank destroyer	
-ISU-122S
-5.7	5.7	5.7
 USSR	Medium tank	
-T-34-85E
-5.7	5.7	5.7
-USSR	Tank destroyer	
-SU-122P
-5.7	5.7	5.7
-USSR	Tank destroyer	
-SU-100
-6.0	6.0	6.0
-USSR	Tank destroyer	
-2S1
-6.0	6.0	6.0
-USSR	SPAA	
-BTR-ZD
-5.7	6.0	6.0
-USSR	Heavy tank	
-KV-220
-6.0	6.0	6.0
-USSR	Medium tank	
-▂T-V
-6.0	6.0	6.0
+T-44
+6.7	6.7	6.7
 USSR	Heavy tank	
 IS-2
 6.3	6.3	6.3
+USSR	Heavy tank	
+IS-2 (1944)
+6.7	6.7	6.7
+USSR	Heavy tank	
+IS-2 No.321
+6.7	6.7	6.7
 USSR	Tank destroyer	
 ASU-85
 6.3	6.3	6.3
@@ -266,26 +248,44 @@ USSR	Tank destroyer
 SU-100P
 6.3	6.3	6.3
 USSR	Tank destroyer	
+ISU-122S
+5.7	5.7	5.7
+USSR	Tank destroyer	
+SU-100
+6.0	6.0	6.0
+USSR	Tank destroyer	
+2S1
+6.0	6.0	6.0
+USSR	Tank destroyer	
 2S3M
 6.3	6.3	6.3
 USSR	SPAA	
+BTR-ZD
+5.7	6.0	6.0
+USSR	SPAA	
 M53/59
 6.3	6.3	6.3
+USSR	Heavy tank	
+KV-122
+5.7	5.3	5.3
+USSR	Medium tank	
+T-34-85E
+5.7	5.7	5.7
+USSR	Tank destroyer	
+SU-122P
+5.7	5.7	5.7
 USSR	Medium tank	
 T-44-122
 6.3	6.3	6.3
 USSR	Medium tank	
 T-34-100
 6.3	6.3	6.3
+USSR	Heavy tank	
+KV-220
+6.0	6.0	6.0
 USSR	Medium tank	
-T-44
-6.7	6.7	6.7
-USSR	Heavy tank	
-IS-2 (1944)
-6.7	6.7	6.7
-USSR	Heavy tank	
-IS-2 No.321
-6.7	6.7	6.7
+▂T-V
+6.0	6.0	6.0
 USSR	Heavy tank	
 IS-2 "Revenge"
 6.7	6.7	6.7
@@ -295,38 +295,11 @@ Object 248
 USSR	Light tank	
 ▂Type 62
 6.7	6.7	6.7
-USSR	Tank destroyer	
-SU-122-54
-6.7	6.7	6.7
 USSR	Medium tank	
 T-44-100
 7.0	7.0	7.0
-USSR	Tank destroyer	
-Object 268
-7.3	7.0	7.0
-USSR	SPAA	
-ZSU-57-2
-7.0	7.0	7.0
-USSR	Heavy tank	
-IS-3
-7.3	7.3	7.3
-USSR	Light tank	
-BTR-80A
-7.3	7.3	7.3
 USSR	Medium tank	
 T-54 (1947)
-7.7	7.7	7.7
-USSR	Heavy tank	
-IS-4M
-7.7	7.7	7.7
-USSR	SPAA	
-ZSU-37-2
-8.0	7.7	7.7
-USSR	Heavy tank	
-IS-6
-7.7	7.7	7.7
-USSR	Heavy tank	
-T-10A
 7.7	7.7	7.7
 USSR	Medium tank	
 T-54 (1949)
@@ -334,6 +307,15 @@ T-54 (1949)
 USSR	Medium tank	
 T-54 (1951)
 8.0	8.0	8.0
+USSR	Heavy tank	
+IS-3
+7.3	7.3	7.3
+USSR	Heavy tank	
+IS-4M
+7.7	7.7	7.7
+USSR	Light tank	
+BTR-80A
+7.3	7.3	7.3
 USSR	Light tank	
 BMP-1
 7.7	8.0	8.0
@@ -341,25 +323,34 @@ USSR	Light tank
 Object 906
 7.7	8.0	8.0
 USSR	Tank destroyer	
+SU-122-54
+6.7	6.7	6.7
+USSR	Tank destroyer	
+Object 268
+7.3	7.0	7.0
+USSR	SPAA	
+ZSU-57-2
+7.0	7.0	7.0
+USSR	SPAA	
+ZSU-37-2
+8.0	7.7	7.7
+USSR	Heavy tank	
+IS-6
+7.7	7.7	7.7
+USSR	Tank destroyer	
 Object 120
 8.0	8.0	8.0
 USSR	Medium tank	
 TO-55
 8.0	8.0	8.0
-USSR	SPAA	
-ZSU-23-4
-8.0	8.0	8.0
+USSR	Heavy tank	
+T-10A
+7.7	7.7	7.7
 USSR	Light tank	
 PT-76-57
 7.7	8.3	8.3
 USSR	Medium tank	
 T-55A
-8.3	8.3	8.3
-USSR	Heavy tank	
-T-10M
-8.0	8.3	8.3
-USSR	Heavy tank	
-IS-7
 8.3	8.3	8.3
 USSR	Medium tank	
 T-55AMD-1
@@ -368,44 +359,41 @@ USSR	Medium tank
 T-62
 8.7	8.7	8.7
 USSR	Medium tank	
+T-62M-1
+9.0	9.0	9.0
+USSR	Medium tank	
+T-72A
+9.3	9.3	9.3
+USSR	Heavy tank	
+T-10M
+8.0	8.3	8.3
+USSR	Medium tank	
 Object 435
 8.7	8.7	8.7
+USSR	Medium tank	
+T-64A (1971)
+9.3	9.3	9.3
+USSR	Medium tank	
+T-64B
+9.7	9.7	9.7
 USSR	Light tank	
 BMP-2
 8.7	8.7	8.7
 USSR	Light tank	
 Object 685
 8.3	8.7	8.7
+USSR	Light tank	
+BMP-3
+8.7	9.0	9.0
+USSR	Light tank	
+2S25
+9.3	9.3	9.3
 USSR	Tank destroyer	
 IT-1
 8.7	8.7	8.7
 USSR	Tank destroyer	
 Shturm-S
 8.7	8.7	8.7
-USSR	Medium tank	
-T-55AM-1
-8.7	8.7	8.7
-USSR	Medium tank	
-T-62M-1
-9.0	9.0	9.0
-USSR	Light tank	
-BMP-3
-8.7	9.0	9.0
-USSR	Light tank	
-BMD-4
-8.7	9.0	9.0
-USSR	Heavy tank	
-Object 279
-9.0	9.0	9.0
-USSR	Medium tank	
-T-72A
-9.3	9.3	9.3
-USSR	Medium tank	
-T-64A (1971)
-9.3	9.3	9.3
-USSR	Light tank	
-2S25
-9.3	9.3	9.3
 USSR	Tank destroyer	
 Object 775
 9.3	9.3	9.3
@@ -413,26 +401,47 @@ USSR	SPAA
 ZSU-23-4
 8.0	8.0	8.0
 USSR	SPAA	
-ZSU-23-4M4
-9.3 9.3 9.3
-USSR	SPAA	
 Strela-10M2
 10.3	10.3	10.3
 USSR	Medium tank	
-T-64B
-9.7	9.7	9.7
-USSR	Tank destroyer	
-Khrizantema-S
-9.7	9.7	9.7
+T-55AM-1
+8.7	8.7	8.7
+USSR	Light tank	
+BMD-4
+8.7	9.0	9.0
+USSR	Heavy tank	
+IS-7
+8.3	8.3	8.3
+USSR	Heavy tank	
+Object 279
+9.0	9.0	9.0
 USSR	Medium tank	
 T-72B
 10.0	10.0	10.0
 USSR	Medium tank	
 T-72B (1989)
 10.0	10.0	10.0
+USSR	Medium tank	
+T-90A
+10.7	10.7	10.7
+USSR	Medium tank	
+T-72B3
+11.3	11.3	11.3
+USSR	Medium tank	
+T-80B
+10.3	10.3	10.3
+USSR	Medium tank	
+T-80U
+11.3	11.3	11.3
 USSR	Light tank	
 2S25M
 9.7	10.0	10.0
+USSR	Tank destroyer	
+Khrizantema-S
+9.7	9.7	9.7
+USSR	SPAA	
+2S6
+10.7	10.7	10.7
 USSR	Light tank	
 BMP-2M
 10.0	10.0	10.0
@@ -442,33 +451,15 @@ USSR	Light tank
 USSR	Medium tank	
 T-72AV (TURMS-T)
 10.0	10.0	10.0
-USSR	SPAA	
-Strela-10M2
-10.3	10.3	10.3
-USSR	Medium tank	
-T-80B
-10.3	10.3	10.3
 USSR	Medium tank	
 T-72M2 Moderna
 10.3	10.3	10.3
 USSR	Medium tank	
-T-90A
-10.7	10.7	10.7
-USSR	SPAA	
-2S6
-10.7	10.7	10.7
+␙T-80U
+11.3	11.3	11.3
 USSR	Medium tank	
 T-80UM2
 11.0	11.0	11.0
-USSR	Medium tank	
-T-72B3
-11.3	11.3	11.3
-USSR	Medium tank	
-T-80U
-11.3	11.3	11.3
-USSR	Medium tank	
-␙T-80U
-11.3	11.3	11.3
 USSR	Medium tank	
 T-80UK
 11.3	11.3	11.3
@@ -485,98 +476,62 @@ USA	Light tank
 M2A4
 1.0	1.0	1.0
 USA	Light tank	
-LVT(A)(1)
-1.0	1.0	1.0
+M3 Stuart
+1.7	2.0	2.0
 USA	Light tank	
-M2A2
-1.0	1.0	1.0
-USA	Light tank	
-M2A4 (1st Arm.Div.)
-1.0	1.0	1.0
-USA	Light tank	
-○LVT(A)(1)
-1.0	1.0	1.0
-USA	Light tank	
-M8 LAC
-1.0	1.0	1.0
+M3A1 Stuart
+2.0	2.3	2.3
 USA	Medium tank	
 M2
 1.3	1.3	1.3
-USA	Tank destroyer	
-M8 HMC
-1.3	1.3	1.3
 USA	Light tank	
-LVT(A)(4)
-1.3	1.3	1.3
+LVT(A)(1)
+1.0	1.0	1.0
+USA	Light tank	
+M22
+1.7	2.0	2.0
 USA	SPAA	
 M13 MGMC
 1.3	1.7	1.7
 USA	SPAA	
 M15 CGMC
 2.0	1.7	1.7
+USA	Light tank	
+M2A2
+1.0	1.0	1.0
+USA	Tank destroyer	
+M8 HMC
+1.3	1.3	1.3
 USA	Tank destroyer	
 M3 GMC
 1.7	1.7	1.7
 USA	Light tank	
-M3 Stuart
-1.7	2.0	2.0
+M2A4 (1st Arm.Div.)
+1.0	1.0	1.0
 USA	Light tank	
-M22
-1.7	2.0	2.0
-USA	Light tank	
-M3A1 Stuart
-2.0	2.3	2.3
+LVT(A)(4)
+1.3	1.3	1.3
 USA	Light tank	
 M3A1 (USMC)
 2.0	2.3	2.3
-USA	Tank destroyer	
-▃LVT(A)(4) (ZIS-2)
-2.3	2.3	2.3
+USA	Light tank	
+○LVT(A)(1)
+1.0	1.0	1.0
+USA	Light tank	
+M8 LAC
+1.0	1.0	1.0
 USA	Light tank	
 M5A1
 2.3	2.7	2.7
-USA	Medium tank	
-M3 Lee
-2.3	2.7	2.7
-USA	SPAA	
-M16 MGMC
-2.7	2.7	2.7
-USA	Light tank	
-▃Stuart VI (5th CAD)
-2.3	2.7	2.7
-USA	Medium tank	
-▃Grant I
-2.3	2.7	2.7
-USA	Light tank	
-M8A1 GMC
-2.7	2.7	2.7
-USA	Light tank	
-M5A1 TD
-2.3	2.7	2.7
-USA	Medium tank	
-M4A3 (105)
-3.0	3.0	3.0
-USA	Light tank	
-T18E2
-3.0	3.0	3.0
-USA	Medium tank	
-M4A1
-3.3	3.3	3.3
-USA	Tank destroyer	
-M10 GMC
-3.7	3.3	3.3
 USA	Light tank	
 M24
 3.3	3.7	3.7
 USA	Medium tank	
-M4
-3.7	3.7	3.7
+M3 Lee
+2.3	2.7	2.7
 USA	Medium tank	
-M4A5
-3.7	3.7	3.7
-USA	Light tank	
-M24 (TL)
-3.3	3.7	3.7
+M4A1
+3.3	3.3	3.3
 USA	Medium tank	
 M4
 3.7	3.7	3.7
@@ -584,11 +539,80 @@ USA	Medium tank
 M4A2
 4.0	4.0	4.0
 USA	SPAA	
+M16 MGMC
+2.7	2.7	2.7
+USA	Medium tank	
+M4A3 (105)
+3.0	3.0	3.0
+USA	Tank destroyer	
+M10 GMC
+3.7	3.3	3.3
+USA	Light tank	
+▃Stuart VI (5th CAD)
+2.3	2.7	2.7
+USA	Medium tank	
+▃Grant I
+2.3	2.7	2.7
+USA	Medium tank	
+M4A5
+3.7	3.7	3.7
+USA	Light tank	
+M24 (TL)
+3.3	3.7	3.7
+USA	Light tank	
+M8A1 GMC
+2.7	2.7	2.7
+USA	Light tank	
+M5A1 TD
+2.3	2.7	2.7
+USA	Tank destroyer	
+▃LVT(A)(4) (ZIS-2)
+2.3	2.3	2.3
+USA	Light tank	
+T18E2
+3.0	3.0	3.0
+USA	Medium tank	
+M4
+3.7	3.7	3.7
+USA	Light tank	
+M18 GMC
+5.3	6.0	6.0
+USA	Medium tank	
+M4A1 (76) W
+5.0	5.0	5.0
+USA	Medium tank	
+M4A2 (76) W
+5.3	5.3	5.3
+USA	Medium tank	
+M4A3 (76) W
+5.3	5.7	5.7
+USA	Heavy tank	
+M6A1
+4.7	5.0	5.0
+USA	Heavy tank	
+T1E1
+5.0	5.3	5.3
+USA	Heavy tank	
+M4A3E2
+5.3	5.7	5.7
+USA	SPAA	
 M19A1
 4.7	4.0	4.0
 USA	SPAA	
 M42
 5.0	4.0	4.0
+USA	Tank destroyer	
+M36 GMC
+5.3	5.3	5.3
+USA	Tank destroyer	
+M36B2
+5.7	5.7	5.7
+USA	Heavy tank	
+T14
+4.7	4.7	4.7
+USA	Light tank	
+M18 "Black Cat"
+5.3	6.0	6.0
 USA	Medium tank	
 Calliope
 4.3	4.0	4.0
@@ -596,68 +620,29 @@ USA	Tank destroyer
 T55E1
 4.3	4.3	4.3
 USA	Heavy tank	
-T14
-4.7	4.7	4.7
-USA	Medium tank	
-M4A1 (76) W
-5.0	5.0	5.0
-USA	Heavy tank	
-M6A1
-4.7	5.0	5.0
-USA	Medium tank	
-M4A2 (76) W
-5.3	5.3	5.3
-USA	Heavy tank	
-T1E1
-5.0	5.3	5.3
-USA	Tank destroyer	
-M36 GMC
-5.3	5.3	5.3
-USA	Medium tank	
-M4A3 (76) W
-5.3	5.7	5.7
-USA	Heavy tank	
-M4A3E2
-5.3	5.7	5.7
-USA	Tank destroyer	
-M36B2
-5.7	5.7	5.7
-USA	Heavy tank	
 Cobra King
 5.3	5.7	5.7
 USA	Light tank	
-M18 GMC
-5.3	6.0	6.0
+M41A1
+6.0	6.3	6.3
 USA	Light tank	
-M18 "Black Cat"
-5.3	6.0	6.0
+T92
+6.7	7.0	7.0
 USA	Medium tank	
 M4/T26
 6.0	6.0	6.0
-USA	Light tank	
-M41A1
-6.0	6.3	6.3
 USA	Medium tank	
 T25
 6.3	6.3	6.3
-USA	Heavy tank	
-M4A3E2 (76) W
-6.3	6.3	6.3
-USA	Tank destroyer	
-M109A1
-6.3	6.3	6.3
-USA	Light tank	
-Super Hellcat
-6.3	6.3	6.3
-USA	Medium tank	
-T20
-6.3	6.3	6.3
-USA	Tank destroyer	
-T28
-6.7	6.3	6.7
 USA	Medium tank	
 M26
 6.7	6.7	6.7
+USA	Medium tank	
+M46
+7.0	7.0	6.7
+USA	Heavy tank	
+M4A3E2 (76) W
+6.3	6.3	6.3
 USA	Heavy tank	
 T26E5
 6.7	6.7	6.7
@@ -668,50 +653,53 @@ USA	Heavy tank
 T34
 7.0	6.7	6.7
 USA	Tank destroyer	
+M109A1
+6.3	6.3	6.3
+USA	Tank destroyer	
 M56
 6.0	6.7	6.7
 USA	Tank destroyer	
 M50
 6.7	6.7	6.7
+USA	Light tank	
+Super Hellcat
+6.3	6.3	6.3
 USA	Medium tank	
 M26 T99
 6.7	6.7	6.7
 USA	Medium tank	
 M26E1
 6.7	6.7	6.3
+USA	Medium tank	
+M46 "Tiger"
+7.0	7.0	6.7
+USA	Medium tank	
+T20
+6.3	6.3	6.3
+USA	Tank destroyer	
+T28
+6.7	6.3	6.7
+USA	Heavy tank	
+T29
+7.0	7.0	6.7
 USA	Heavy tank	
 T30
 6.7	6.7	6.7
 USA	Heavy tank	
 M6A2E1
 6.7	6.7	6.7
-USA	Light tank	
-T92
-6.7	7.0	7.0
-USA	Medium tank	
-M46
-7.0	7.0	6.7
-USA	Medium tank	
-M46 "Tiger"
-7.0	7.0	6.7
-USA	Heavy tank	
-T29
-7.0	7.0	6.7
-USA	Tank destroyer	
-T95
-7.3	7.0	7.0
-USA	Medium tank	
-M728 CEV
-8.0	7.0	7.0
 USA	Medium tank	
 M47
-7.3	7.3	7.3
-USA	Heavy tank	
-T32
 7.3	7.3	7.3
 USA	Medium tank	
 M48A1
 7.7	7.7	7.7
+USA	Medium tank	
+M60
+8.0	8.0	8.0
+USA	Heavy tank	
+T32
+7.3	7.3	7.3
 USA	Heavy tank	
 T32E1
 7.7	7.7	7.7
@@ -721,18 +709,21 @@ M103
 USA	SPAA	
 M163
 7.7	7.7	7.7
+USA	Tank destroyer	
+T95
+7.3	7.0	7.0
 USA	Light tank	
 T114
 7.3	7.7	7.7
 USA	Medium tank	
-T54E2
-7.7	7.7	7.7
-USA	Medium tank	
-M60
-8.0	8.0	8.0
+M728 CEV
+8.0	7.0	7.0
 USA	Medium tank	
 ▃Magach 3 (ERA)
 8.0	8.0	8.0
+USA	Medium tank	
+T54E2
+7.7	7.7	7.7
 USA	Medium tank	
 T54E1
 8.0	8.0	8.0
@@ -746,41 +737,41 @@ USA	Medium tank
 M60A1 (AOS)
 8.3	8.3	8.3
 USA	Medium tank	
-T95E1
-8.3	8.3	8.3
-USA	Medium tank	
-M60A2
-8.3	8.3	8.3
-USA	Tank destroyer	
-M901
-8.3	8.3	8.3
-USA	Medium tank	
 M60A1 RISE (P)
 8.3	8.7	8.7
 USA	Medium tank	
 M60A3 TTS
 9.0	9.0	9.0
 USA	Medium tank	
+T95E1
+8.3	8.3	8.3
+USA	Medium tank	
 XM803
 8.7	9.0	9.0
-USA	SPAA	
-M247
-9.0	9.0	9.0
-USA	Medium tank	
-XM1 (Chrysler)
-9.0	9.0	9.0
-USA	Medium tank	
-▃Merkava Mk.1
-9.0	9.0	9.0
 USA	Medium tank	
 MBT-70
 9.0	9.3	9.3
 USA	SPAA	
+M247
+9.0	9.0	9.0
+USA	SPAA	
 Imp.Chaparral
 9.3	9.3	9.3
 USA	Medium tank	
+M60A2
+8.3	8.3	8.3
+USA	Medium tank	
 XM1 (GM)
 9.3	9.3	9.3
+USA	Medium tank	
+XM1 (Chrysler)
+9.0	9.0	9.0
+USA	Tank destroyer	
+M901
+8.3	8.3	8.3
+USA	Medium tank	
+▃Merkava Mk.1
+9.0	9.0	9.0
 USA	Medium tank	
 ▃Merkava Mk.2B
 9.3	9.3	9.3
@@ -790,48 +781,6 @@ XM8
 USA	Light tank	
 M3A3 Bradley
 10.0	10.0	10.0
-USA	SPAA	
-LAV-AD
-9.7	10.0	10.0
-USA	Light tank	
-M1128
-9.3	10.0	10.0
-USA	Light tank	
-M1128 Wolfpack
-9.3	10.0	10.0
-USA	Light tank	
-CCVL
-9.7	10.0	10.0
-USA	Medium tank	
-M60 AMBT
-10.0	10.0	10.0
-USA	Medium tank	
-M1 Abrams
-10.3	10.3	10.3
-USA	SPAA	
-XM975
-10.0	10.3	10.3
-USA	Medium tank	
-M1 KVT
-10.3	10.3	10.3
-USA	Tank destroyer	
-LOSAT
-10.3	10.3	10.3
-USA	Medium tank	
-M1A1
-11.0	11.0	11.0
-USA	Medium tank	
-IPM1
-11.0	11.0	11.0
-USA	Light tank	
-AGS
-11.0	11.0	11.0
-USA	Medium tank	
-▃Merkava Mk.3D
-11.0	11.0	11.0
-USA	Medium tank	
-␙M1A1
-11.0	11.0	11.0
 USA	Light tank	
 HSTV-L
 11.3	11.3	11.3
@@ -839,11 +788,53 @@ USA	Medium tank
 M1A1 HC
 11.3	11.3	11.3
 USA	Medium tank	
+M1 Abrams
+10.3	10.3	10.3
+USA	Medium tank	
+M1A1
+11.0	11.0	11.0
+USA	Medium tank	
+IPM1
+11.0	11.0	11.0
+USA	SPAA	
+LAV-AD
+9.7	10.0	10.0
+USA	SPAA	
+XM975
+10.0	10.3	10.3
+USA	Light tank	
+M1128
+9.3	10.0	10.0
+USA	Light tank	
+M1128 Wolfpack
+9.3	10.0	10.0
+USA	Medium tank	
+M1 KVT
+10.3	10.3	10.3
+USA	Medium tank	
 M1A1 AIM
 11.3	11.3	11.3
 USA	Medium tank	
 M1A1 Click-Bait
 11.3	11.3	11.3
+USA	Tank destroyer	
+LOSAT
+10.3	10.3	10.3
+USA	Light tank	
+AGS
+11.0	11.0	11.0
+USA	Light tank	
+CCVL
+9.7	10.0	10.0
+USA	Medium tank	
+M60 AMBT
+10.0	10.0	10.0
+USA	Medium tank	
+▃Merkava Mk.3D
+11.0	11.0	11.0
+USA	Medium tank	
+␙M1A1
+11.0	11.0	11.0
 USA	Medium tank	
 M1A2 Abrams
 11.7	11.7	11.7
@@ -853,18 +844,36 @@ M1A2 SEP
 USA	Medium tank	
 M1A2 SEP V2
 11.7	11.7	11.7
-USA	Tank destroyer	
+USA	SPAA	
 ADATS
 11.7	11.7	11.7
 Sweden	Light tank	
 Strv m/31
 1.0	1.0	1.0
 Sweden	Light tank	
+BT-42
+2.0	1.7	1.7
+Sweden	Light tank	
 Strv m/38
 1.0	1.0	1.0
 Sweden	Light tank	
+Strv m/40L
+2.0	2.0	2.0
+Sweden	SPAA	
+Pvlvv fm/42
+1.3	1.7	1.3
+Sweden	Tank destroyer	
+Ikv 72
+1.7	1.7	1.7
+Sweden	Tank destroyer	
+Sav m/43 (1944)
+1.7	1.7	1.7
+Sweden	Light tank	
 Vickers Mk.E
 1.0	1.0	1.0
+Sweden	Medium tank	
+▄T-28
+1.7	1.7	1.7
 Sweden	Light tank	
 Strv m/39
 1.0	1.0	1.0
@@ -875,35 +884,14 @@ Sweden	Light tank
 Strv m/39 TD
 1.0	1.0	1.0
 Sweden	Light tank	
-BT-42
-2.0	1.7	1.7
-Sweden	SPAA	
-Pvlvv fm/42
-1.3	1.7	1.3
-Sweden	Tank destroyer	
-Ikv 72
-1.7	1.7	1.7
-Sweden	Tank destroyer	
-Sav m/43 (1944)
-1.7	1.7	1.7
-Sweden	Medium tank	
-▄T-28
-1.7	1.7	1.7
-Sweden	Tank destroyer	
-Spj fm/43-44
-2.3	1.7	1.7
-Sweden	Light tank	
-Strv m/40L
-2.0	2.0	2.0
-Sweden	Light tank	
 Pbil m/40
 2.0	2.0	2.0
-Sweden	SPAA	
-Pbv 301
-2.3	2.3	2.3
 Sweden	Light tank	
 Strv m/41 S-II
 2.3	2.7	2.7
+Sweden	Tank destroyer	
+Pvkv III
+3.3	3.3	3.3
 Sweden	Medium tank	
 Lago I
 2.7	2.7	2.7
@@ -911,8 +899,17 @@ Sweden	Medium tank
 Strv m/42 EH
 2.7	2.7	2.7
 Sweden	SPAA	
+Pbv 301
+2.3	2.3	2.3
+Sweden	SPAA	
 Lvtdgb m/40
 3.0	2.7	2.7
+Sweden	Tank destroyer	
+Spj fm/43-44
+2.3	1.7	1.7
+Sweden	Tank destroyer	
+Sav m/43 (1946)
+3.0	3.0	3.0
 Sweden	Light tank	
 Strv m/41 S-I
 2.7	2.7	2.7
@@ -920,56 +917,56 @@ Sweden	Medium tank
 Ikv 73
 2.7	2.7	2.7
 Sweden	Tank destroyer	
-Sav m/43 (1946)
-3.0	3.0	3.0
+Pvkv II
+3.7	4.0	4.0
 Sweden	Medium tank	
 Pvkv IV
 3.0	3.0	3.0
+Sweden	Medium tank	
+Strv m/42 DT
+5.0	5.0	5.0
 Sweden	SPAA	
 L-62 ANTI II
 3.7	3.0	3.0
-Sweden	Tank destroyer	
-Pvkv III
-3.3	3.3	3.3
-Sweden	Medium tank	
-▄Pz.IV
-4.0	3.7	3.7
-Sweden	Tank destroyer	
-SAV 20.12.48
-3.7	3.7	3.7
-Sweden	Medium tank	
-Sherman III/IV
-3.7	3.7	3.7
-Sweden	Tank destroyer	
-Pvkv II
-3.7	4.0	4.0
 Sweden	Tank destroyer	
 Pvkv m/43 (1946)
 4.0	4.0	4.0
 Sweden	Tank destroyer	
 Ikv 103
 4.0	4.0	4.0
-Sweden	Medium tank	
-▄T-34
-4.0	4.0	4.0
-Sweden	SPAA	
-Lvkv 42
-5.0	4.3	4.3
-Sweden	Medium tank	
-Strv m/42 DT
-5.0	5.0	5.0
 Sweden	Tank destroyer	
 Pvkv m/43 (1963)
 4.7	5.0	5.0
+Sweden	Medium tank	
+▄T-34
+4.0	4.0	4.0
+Sweden	Medium tank	
+▄Pz.IV
+4.0	3.7	3.7
 Sweden	Light tank	
 ▄PT-76
 5.0	5.3	5.3
 Sweden	Medium tank	
 ▄Comet I
 5.0	5.3	5.3
+Sweden	Tank destroyer	
+SAV 20.12.48
+3.7	3.7	3.7
+Sweden	Medium tank	
+Sherman III/IV
+3.7	3.7	3.7
+Sweden	Light tank	
+Pbv 501
+6.7	6.7	6.7
 Sweden	Light tank	
 Strv 74
 5.7	5.7	5.7
+Sweden	SPAA	
+Lvkv 42
+5.0	4.3	4.3
+Sweden	Tank destroyer	
+Bkan 1C
+7.0	6.7	6.7
 Sweden	Medium tank	
 ▄T-34-85
 5.7	5.7	5.7
@@ -977,35 +974,26 @@ Sweden	Medium tank
 ▄Charioteer Mk VII
 6.0	6.3	6.0
 Sweden	Light tank	
-Pbv 501
-6.7	6.7	6.7
-Sweden	Tank destroyer	
-Bkan 1C
-7.0	6.7	6.7
-Sweden	SPAA	
-▄ZSU-57-2
-7.0	7.0	7.0
-Sweden	Medium tank	
-Strv 81
-7.7	7.7	7.7
-Sweden	SPAA	
-VEAK 40
-7.7	7.7	7.7
-Sweden	Medium tank	
-Strv 81 (RB 52)
-7.7	7.7	7.7
-Sweden	Light tank	
 Ikv 91
 7.3	8.0	8.0
 Sweden	Light tank	
 U-SH 405
 7.7	8.0	8.0
 Sweden	Medium tank	
+Strv 81
+7.7	7.7	7.7
+Sweden	Medium tank	
 Strv 101
 8.0	8.0	8.0
 Sweden	Medium tank	
 Strv 103A
 8.0	8.0	8.0
+Sweden	SPAA	
+▄ZSU-57-2
+7.0	7.0	7.0
+Sweden	SPAA	
+VEAK 40
+7.7	7.7	7.7
 Sweden	Tank destroyer	
 Pvrbv 551
 8.0	8.0	8.0
@@ -1013,38 +1001,47 @@ Sweden	Medium tank
 ▄T-54
 8.0	8.0	8.0
 Sweden	Medium tank	
+Strv 81 (RB 52)
+7.7	7.7	7.7
+Sweden	Medium tank	
 Strv 103-0
 8.0	8.0	8.0
 Sweden	Tank destroyer	
 VIDAR
 8.0	8.0	8.0
-Sweden	Tank destroyer	
-UDES 33
-8.3	8.3	8.3
 Sweden	Light tank	
 Ikv 91-105
 8.7	8.7	8.7
+Sweden	Light tank	
+CV9030FIN
+9.3	9.3	9.3
+Sweden	Light tank	
+Strf 9040B
+9.3	9.7	9.7
 Sweden	Medium tank	
 Strv 104
 8.7	8.7	8.7
 Sweden	Medium tank	
 Strv 103С
 8.7	8.7	8.7
+Sweden	Medium tank	
+Strv 105
+9.3	9.3	9.3
 Sweden	SPAA	
 ItPsV Leopard
 8.7	8.7	8.7
+Sweden	SPAA	
+Lvrbv 701
+9.3	9.7	9.7
+Sweden	Tank destroyer	
+UDES 33
+8.3	8.3	8.3
 Sweden	Tank destroyer	
 Pbv 302 (BILL)
 8.7	8.7	8.7
 Sweden	Medium tank	
 ▄T-55M
 8.7	8.7	8.7
-Sweden	Light tank	
-CV9030FIN
-9.3	9.3	9.3
-Sweden	Medium tank	
-Strv 105
-9.3	9.3	9.3
 Sweden	Medium tank	
 ▄T-72M1
 9.3	9.3	9.3
@@ -1052,38 +1049,29 @@ Sweden	Medium tank
 Leopard 1A5NO2
 9.3	9.3	9.3
 Sweden	Light tank	
-Strf 9040B
-9.3	9.7	9.7
-Sweden	SPAA	
-Lvrbv 701
-9.3	9.7	9.7
-Sweden	Light tank	
 Strf 9040C
 10.0	10.0	10.0
+Sweden	Medium tank	
+Strv 121
+10.3	10.3	10.3
 Sweden	SPAA	
 Lvkv 9040C
 10.0	10.0	10.0
+Sweden	SPAA	
+ASRAD-R
+10.3	10.3	10.3
 Sweden	Light tank	
 Strf 9040 BILL
 10.7	10.0	10.0
+Sweden	Medium tank	
+▄Leopard 2A4
+10.3	10.3	10.3
 Sweden	Light tank	
 CV 90105
 9.7	10.0	10.0
 Sweden	Light tank	
 CT-CV 105HP
 9.7	10.0	10.0
-Sweden	Medium tank	
-Strv 121
-10.3	10.3	10.3
-Sweden	SPAA	
-ASRAD-R
-10.3	10.3	10.3
-Sweden	Medium tank	
-▄Leopard 2A4
-10.3	10.3	10.3
-Sweden	Medium tank	
-T 80 U
-11.0	11.0	11.0
 Sweden	Light tank	
 CV 90120
 11.3	11.3	11.3
@@ -1102,6 +1090,9 @@ ItO 90M
 Sweden	Medium tank	
 ▄Leopard 2A6
 11.7	11.7	11.7
+Sweden	Medium tank	
+T 80 U
+11.0	11.0	11.0
 Japan	Light tank	
 Ha-Go
 1.0	1.0	1.0
@@ -1114,72 +1105,81 @@ Ka-Mi
 Japan	Light tank	
 I-Go Ko
 1.0	1.0	1.0
-Japan	Light tank	
-Ha-Go Commander
-1.0	1.0	1.0
 Japan	Medium tank	
 Chi-Ha
 1.3	1.3	1.3
+Japan	Medium tank	
+Ho-I
+2.3	2.0	2.0
 Japan	Tank destroyer	
 Ho-Ro
-1.3	1.3	1.3
-Japan	SPAA	
-Type 94
-1.3	1.3	1.3
-Japan	Heavy tank	
-Ro-Go
 1.3	1.3	1.3
 Japan	Tank destroyer	
 Ro-Go Exp.
 1.7	1.7	1.7
 Japan	SPAA	
+Type 94
+1.3	1.3	1.3
+Japan	SPAA	
 Ta-Se
 1.7	1.7	1.7
-Japan	Medium tank	
-Chi-Ha Short Gun
-2.0	1.7	1.7
-Japan	Medium tank	
-Ho-I
-2.3	2.0	2.0
+Japan	Light tank	
+Ha-Go Commander
+1.0	1.0	1.0
+Japan	Heavy tank	
+Ro-Go
+1.3	1.3	1.3
 Japan	Medium tank	
 Ka-Chi
-2.0	2.0	2.0
-Japan	Tank destroyer	
-Ho-Ni I
 2.0	2.0	2.0
 Japan	Medium tank	
 Chi-Ha Kai
 2.3	2.3	2.3
-Japan	Tank destroyer	
-Ho-Ni III
-2.3	2.3	2.3
-Japan	Medium tank	
-Chi-Ha Kai TD
-2.3	2.3	2.3
 Japan	Medium tank	
 Chi-He
 2.7	2.7	2.7
+Japan	Tank destroyer	
+Ho-Ni I
+2.0	2.0	2.0
+Japan	Tank destroyer	
+Ho-Ni III
+2.3	2.3	2.3
 Japan	Tank destroyer	
 Chi-Ha LG
 2.7	2.7	2.7
 Japan	SPAA	
 ▅M16 MGMC
 2.7	2.7	2.7
-Japan	Medium tank	
-Chi-He (5th Regiment)
-2.7	2.7	2.7
 Japan	SPAA	
 So-Ki
 3.0	3.0	3.0
 Japan	Medium tank	
-Chi-Nu
-3.3	3.3	3.3
-Japan	Tank destroyer	
-Na-To
-3.3	3.3	3.3
+Chi-Ha Short Gun
+2.0	1.7	1.7
+Japan	Medium tank	
+Chi-He (5th Regiment)
+2.7	2.7	2.7
+Japan	Medium tank	
+Chi-Ha Kai TD
+2.3	2.3	2.3
 Japan	Light tank	
 ▅M24
 3.3	3.7	3.7
+Japan	Medium tank	
+Chi-Nu
+3.3	3.3	3.3
+Japan	Medium tank	
+Chi-To
+4.7	4.7	4.7
+Japan	Medium tank	
+Chi-To Late
+4.7	4.7	4.7
+Japan	Medium tank	
+Chi-Ri II
+5.0	5.0	5.0
+Japan	Tank destroyer	
+Na-To
+3.3	3.3	3.3
 Japan	SPAA	
 ▅M19A1
 4.7	4.0	4.0
@@ -1190,38 +1190,11 @@ Japan	Medium tank
 Chi-Nu II
 4.3	4.3	4.3
 Japan	Medium tank	
-Chi-To
-4.7	4.7	4.7
-Japan	Medium tank	
-Chi-To Late
-4.7	4.7	4.7
-Japan	Medium tank	
-Chi-Ri II
-5.0	5.0	5.0
-Japan	SPAA	
-SUB-I-II
-5.3	5.3	5.3
-Japan	Medium tank	
 ▅M4A3 (76) W
 5.3	5.7	5.7
-Japan	Tank destroyer	
-▅M36
-5.7	5.7	5.7
-Japan	Heavy tank	
-▅Heavy Tank No.6
-6.0	6.0	6.0
 Japan	Light tank	
 ▅M41A1
 6.0	6.3	6.3
-Japan	Medium tank	
-ST-A1
-6.3	6.3	6.3
-Japan	Medium tank	
-ST-A2
-6.3	6.3	6.3
-Japan	Tank destroyer	
-Type 75 SPH
-6.7	6.3	6.3
 Japan	Tank destroyer	
 Type 60 SPRG (C)
 6.7	6.7	6.7
@@ -1229,38 +1202,53 @@ Japan	Tank destroyer
 Type 60 ATM
 6.7	6.7	6.7
 Japan	Medium tank	
+ST-A1
+6.3	6.3	6.3
+Japan	Medium tank	
+ST-A2
+6.3	6.3	6.3
+Japan	Medium tank	
 Type 61
 6.3	6.7	6.7
 Japan	Medium tank	
 ST-A3
 6.7	6.7	6.7
 Japan	Tank destroyer	
+▅M36
+5.7	5.7	5.7
+Japan	Tank destroyer	
+Type 75 SPH
+6.7	6.3	6.3
+Japan	SPAA	
+SUB-I-II
+5.3	5.3	5.3
+Japan	Heavy tank	
+▅Heavy Tank No.6
+6.0	6.0	6.0
+Japan	Tank destroyer	
 Ho-Ri Prototype
 6.7	6.7	6.7
-Japan	Tank destroyer	
-Type 75 MLRS
-7.0	7.0	7.0
-Japan	Medium tank	
-▅M47
-7.3	7.3	7.3
-Japan	Tank destroyer	
-Type 99
-7.3	7.3	7.3
-Japan	Tank destroyer	
-Ho-Ri Production
-7.3	7.3	7.3
 Japan	Light tank	
 Type 87 RCV (P)
 7.7	7.7	7.7
+Japan	Medium tank	
+▅M47
+7.3	7.3	7.3
 Japan	Medium tank	
 STB-2
 8.3	8.3	8.3
 Japan	Medium tank	
 Type 74 (C)
 8.3	8.3	8.3
-Japan	SPAA	
-Type 87
-8.3	8.3	8.3
+Japan	Tank destroyer	
+Type 99
+7.3	7.3	7.3
+Japan	Tank destroyer	
+Ho-Ri Production
+7.3	7.3	7.3
+Japan	Tank destroyer	
+Type 75 MLRS
+7.0	7.0	7.0
 Japan	Light tank	
 Type 87 RCV
 9.0	9.0	9.0
@@ -1276,18 +1264,15 @@ Type 74 (F)
 Japan	Light tank	
 Type 16 (P)
 9.3	9.3	9.3
+Japan	SPAA	
+Type 87
+8.3	8.3	8.3
 Japan	Light tank	
 Type 16 (FPS)
 9.3	9.3	9.3
 Japan	Medium tank	
 Type 74 (G)
 9.3	9.3	9.3
-Japan	SPAA	
-Type 93
-9.3	9.3	9.3
-Japan	Light tank	
-Type 16
-9.7	9.7	9.7
 Japan	Medium tank	
 TKX (P)
 11.0	11.0	11.0
@@ -1297,6 +1282,12 @@ Type 90
 Japan	Medium tank	
 Type 90 (B)
 11.0	11.0	11.0
+Japan	Light tank	
+Type 16
+9.7	9.7	9.7
+Japan	SPAA	
+Type 93
+9.3	9.3	9.3
 Japan	SPAA	
 Type 81 (C)
 11.3	11.3	11.3
@@ -1313,65 +1304,44 @@ Italy	Light tank
 M11/39
 1.0	1.0	1.0
 Italy	Light tank	
+AS 42/47
+1.7	2.0	2.0
+Italy	Light tank	
 L6/40
 1.0	1.0	1.0
-Italy	Tank destroyer	
-L3/33 CC
-1.0	1.0	1.0
-Italy	Light tank	
-Csaba
-1.0	1.0	1.0
-Italy	Light tank	
-L6/40 (31 Rgt.)
-1.0	1.0	1.0
-Italy	SPAA	
-AS 42
-1.3	1.3	1.3
-Italy	Tank destroyer	
-47/32 L40
-1.3	1.3	1.3
-Italy	Light tank	
-Toldi IIA
-1.3	1.3	1.3
 Italy	Medium tank	
 M13/40 (I)
 1.7	1.7	1.7
-Italy	Tank destroyer	
-Lancia 3Ro (100/17)
-2.0	1.7	1.7
-Italy	Light tank	
-AS 42/47
-1.7	2.0	2.0
 Italy	Medium tank	
 M13/40 (III)
 2.0	2.0	2.0
 Italy	Medium tank	
 M14/41
 2.3	2.0	2.0
+Italy	SPAA	
+AS 42
+1.3	1.3	1.3
+Italy	Tank destroyer	
+L3/33 CC
+1.0	1.0	1.0
+Italy	Tank destroyer	
+47/32 L40
+1.3	1.3	1.3
+Italy	Tank destroyer	
+Lancia 3Ro (100/17)
+2.0	1.7	1.7
+Italy	Light tank	
+Csaba
+1.0	1.0	1.0
+Italy	Light tank	
+L6/40 (31 Rgt.)
+1.0	1.0	1.0
 Italy	Medium tank	
 M13/40 (II)
 2.0	2.0	2.0
-Italy	Tank destroyer	
-75/18 M41
-2.0	2.0	2.0
-Italy	SPAA	
-CM52
-2.3	2.3	2.3
-Italy	Tank destroyer	
-75/32 M41
-2.3	2.3	2.3
-Italy	Tank destroyer	
-75/34 M42
-2.3	2.3	2.3
-Italy	Medium tank	
-Turan I
-2.3	2.3	2.3
-Italy	Medium tank	
-M14/41 (47/40)
-2.3	2.3	2.3
-Italy	Medium tank	
-Turan II
-2.3	2.3	2.3
+Italy	Light tank	
+Toldi IIA
+1.3	1.3	1.3
 Italy	Light tank	
 AB 43
 2.3	2.7	2.7
@@ -1381,42 +1351,75 @@ Italy	Light tank
 Italy	Medium tank	
 M15/42
 2.7	2.7	2.7
-Italy	Tank destroyer	
-Zrinyi II
-2.7	2.7	2.7
-Italy	Medium tank	
-Celere Sahariano
-2.7	2.7	2.7
 Italy	Medium tank	
 ▄Pz.III N
-3.0	3.0	3.0
-Italy	Tank destroyer	
-105/25 M43
-3.0	3.0	3.0
-Italy	Tank destroyer	
-M43 "G.C.Leoncello"
 3.0	3.0	3.0
 Italy	Medium tank	
 P40
 3.3	3.3	3.3
+Italy	SPAA	
+CM52
+2.3	2.3	2.3
+Italy	Tank destroyer	
+75/18 M41
+2.0	2.0	2.0
+Italy	Tank destroyer	
+75/32 M41
+2.3	2.3	2.3
+Italy	Tank destroyer	
+75/34 M42
+2.3	2.3	2.3
+Italy	Tank destroyer	
+105/25 M43
+3.0	3.0	3.0
 Italy	Tank destroyer	
 75/34 M43
 3.3	3.3	3.3
+Italy	Medium tank	
+Turan I
+2.3	2.3	2.3
+Italy	Tank destroyer	
+Zrinyi II
+2.7	2.7	2.7
+Italy	Medium tank	
+M14/41 (47/40)
+2.3	2.3	2.3
+Italy	Medium tank	
+Celere Sahariano
+2.7	2.7	2.7
+Italy	Medium tank	
+Turan II
+2.3	2.3	2.3
 Italy	Medium tank	
 P40 "G.C. Leoncello"
 3.3	3.3	3.3
 Italy	Light tank	
 ▄M24
 3.3	3.7	3.7
+Italy	Tank destroyer	
+Breda 501
+4.7	4.7	4.7
 Italy	Medium tank	
 ▄Sherman V
 3.7	3.7	3.7
+Italy	Medium tank	
+Sherman Ic
+4.7	4.7	4.7
 Italy	SPAA	
 M42 Contraereo
 3.7	3.7	3.7
 Italy	Tank destroyer	
 90/53 M41M
 3.7	3.7	3.7
+Italy	Tank destroyer	
+▄StuG III G
+4.3	4.0	4.0
+Italy	Tank destroyer	
+75/46 M43
+4.7	4.7	4.7
+Italy	Medium tank	
+Turan III
+4.0	4.0	4.0
 Italy	Medium tank	
 ▄Sherman I Composito
 3.7	3.7	3.7
@@ -1424,41 +1427,38 @@ Italy	Medium tank
 ▄Pz.IV G
 4.0	3.7	3.7
 Italy	Tank destroyer	
-▄StuG III G
-4.3	4.0	4.0
-Italy	Medium tank	
-Turan III
-4.0	4.0	4.0
+M43 "G.C.Leoncello"
+3.0	3.0	3.0
 Italy	Tank destroyer	
 Zrinyi I
 4.0	4.0	4.0
 Italy	Tank destroyer	
 Breda 90/53
 4.0	4.0	4.0
-Italy	Tank destroyer	
-Breda 501
-4.7	4.7	4.7
-Italy	Medium tank	
-Sherman Ic
-4.7	4.7	4.7
-Italy	Tank destroyer	
-75/46 M43
-4.7	4.7	4.7
-Italy	Medium tank	
-▄Sherman Vc
-5.0	5.0	5.0
-Italy	SPAA	
-Leopard 40/70
-5.3	5.7	5.7
-Italy	Tank destroyer	
-M36B1
-5.7	5.7	5.7
 Italy	Light tank	
 ▄M18
 5.3	6.0	6.0
+Italy	Light tank	
+AUBL/74
+6.3	6.7	6.7
+Italy	Light tank	
+FIAT 6614
+6.7	6.7	6.7
+Italy	Medium tank	
+▄Sherman Vc
+5.0	5.0	5.0
+Italy	Medium tank	
+M26A1
+6.7	6.7	6.7
+Italy	SPAA	
+Leopard 40/70
+5.3	5.7	5.7
 Italy	SPAA	
 R3 T20 FA-HS
 4.7	6.0	6.0
+Italy	Tank destroyer	
+M36B1
+5.7	5.7	5.7
 Italy	Tank destroyer	
 ▄M109G
 6.0	6.0	6.0
@@ -1468,21 +1468,21 @@ Italy	Tank destroyer
 Italy	Heavy tank	
 Tigris
 6.0	6.0	6.0
-Italy	Light tank	
-AUBL/74
-6.3	6.7	6.7
-Italy	Light tank	
-FIAT 6614
-6.7	6.7	6.7
-Italy	Medium tank	
-M26A1
-6.7	6.7	6.7
 Italy	Medium tank	
 M26 "D.C.Ariete"
 6.7	6.7	6.7
 Italy	Light tank	
 C13 T90
 7.0	7.0	7.0
+Italy	Light tank	
+R3 T106 FA
+7.3	8.0	8.0
+Italy	Medium tank	
+M47 (105/55)
+7.7	7.7	7.7
+Italy	Medium tank	
+OF-40
+8.0	8.0	8.0
 Italy	SPAA	
 ◔ZSU-57-2
 7.0	7.0	7.0
@@ -1490,20 +1490,26 @@ Italy	Light tank
 ◔BTR-80A
 7.3	7.3	7.3
 Italy	Medium tank	
-M47 (105/55)
-7.7	7.7	7.7
-Italy	Light tank	
-R3 T106 FA
-7.3	8.0	8.0
-Italy	Medium tank	
-OF-40
-8.0	8.0	8.0
-Italy	Medium tank	
 M60A1 "D.C.Ariete"
 8.0	8.0	8.0
 Italy	Light tank	
 AUBL/74 HVG
 8.0	8.0	8.0
+Italy	Light tank	
+VCC-80/60
+9.0	9.0	9.0
+Italy	Light tank	
+Centauro I 105
+9.3	9.3	9.3
+Italy	Light tank	
+Centauro I 105 R
+9.3	9.7	9.7
+Italy	Medium tank	
+OF-40 Mk.2A
+9.0	9.0	9.0
+Italy	Medium tank	
+▄Leopard 1A5
+9.3	9.3	9.3
 Italy	SPAA	
 ◔ZSU-23-4
 8.0	8.0	8.0
@@ -1514,44 +1520,41 @@ Italy	Tank destroyer
 M113A1 (TOW)
 8.3	8.3	8.3
 Italy	Light tank	
-VCC-80/60
-9.0	9.0	9.0
-Italy	Medium tank	
-OF-40 Mk.2A
-9.0	9.0	9.0
-Italy	Light tank	
 VBC (PT2)
 9.0	9.0	9.0
+Italy	Medium tank	
+◔T-72M1
+9.3	9.3	9.3
 Italy	Medium tank	
 OF-40 (MTCA)
 9.0	9.0	9.0
 Italy	Light tank	
-Centauro I 105
-9.3	9.3	9.3
-Italy	Medium tank	
-▄Leopard 1A5
-9.3	9.3	9.3
-Italy	Medium tank	
-◔T-72M1
-9.3	9.3	9.3
-Italy	Light tank	
-Centauro I 105 R
-9.3	9.7	9.7
-Italy	Light tank	
 VRCC
 9.3	9.7	9.7
+Italy	Light tank	
+Centauro I 120
+11.3	11.3	11.3
+Italy	Medium tank	
+Ariete (P)
+10.3	10.3	10.3
+Italy	Medium tank	
+Ariete PSO
+11.3	11.3	11.3
+Italy	Medium tank	
+Ariete
+11.3	11.3	11.3
 Italy	SPAA	
 SIDAM 25 (Mistral)
 10.0	9.7	9.7
+Italy	SPAA	
+OTOMATIC
+11.3	11.3	11.3
 Italy	Light tank	
 Dardo
 10.0	10.0	10.0
 Italy	Light tank	
 VCC-80/30
 10.0	10.0	10.0
-Italy	Medium tank	
-Ariete (P)
-10.3	10.3	10.3
 Italy	Light tank	
 Freccia
 10.3	10.3	10.3
@@ -1561,45 +1564,12 @@ Italy	Medium tank
 Italy	Light tank	
 KF41
 10.7	10.7	10.7
-Italy	Light tank	
-Centauro I 120
-11.3	11.3	11.3
-Italy	Medium tank	
-Ariete PSO
-11.3	11.3	11.3
-Italy	Medium tank	
-Ariete
-11.3	11.3	11.3
-Italy	SPAA	
-OTOMATIC
-11.3	11.3	11.3
 Italy	Medium tank	
 Ariete AMV
 11.7	11.7	11.7
-Israel	SPAA	
-TCM-20
-4.3	4.3	4.3
 Israel	Medium tank	
 M-51
 6.0	6.0	6.0
-Israel	Tank destroyer	
-M109
-6.0	6.0	6.0
-Israel	Medium tank	
-M-51 (W)
-6.0	6.0	6.0
-Israel	Tank destroyer	
-Rochev
-6.3	6.3	6.3
-Israel	Light tank	
-AMX-13
-6.3	6.7	6.7
-Israel	Tank destroyer	
-Zachlam Tager
-6.7	6.7	6.7
-Israel	SPAA	
-ZSU-57-2
-7.0	7.0	7.0
 Israel	Medium tank	
 Magach 1
 7.7	7.7	7.7
@@ -1607,14 +1577,32 @@ Israel	Medium tank
 Magach 2
 7.7	7.7	7.7
 Israel	Light tank	
+AMX-13
+6.3	6.7	6.7
+Israel	Light tank	
 AML-90
 7.0	7.7	7.7
 Israel	Medium tank	
 Sho't
 7.7	7.7	7.7
 Israel	SPAA	
-Hovet
-7.7	7.7	7.7
+TCM-20
+4.3	4.3	4.3
+Israel	SPAA	
+ZSU-57-2
+7.0	7.0	7.0
+Israel	Tank destroyer	
+M109
+6.0	6.0	6.0
+Israel	Tank destroyer	
+Rochev
+6.3	6.3	6.3
+Israel	Tank destroyer	
+Zachlam Tager
+6.7	6.7	6.7
+Israel	Medium tank	
+M-51 (W)
+6.0	6.0	6.0
 Israel	Medium tank	
 Magach 3
 8.0	8.0	8.0
@@ -1636,15 +1624,12 @@ Tiran 4S
 Israel	Medium tank	
 Sho't Kal Alef
 8.0	8.0	8.0
+Israel	SPAA	
+Hovet
+7.7	7.7	7.7
 Israel	Medium tank	
 Magach 3 (ERA)
 8.0	8.0	8.0
-Israel	SPAA	
-ZSU-23-4
-8.0	8.0	8.0
-Israel	Tank destroyer	
-Giraf
-8.3	8.3	8.3
 Israel	Medium tank	
 Magach 6R
 8.7	8.7	8.7
@@ -1655,13 +1640,7 @@ Israel	Medium tank
 Magach Hydra
 8.7	8.7	8.7
 Israel	Medium tank	
-Sho't Kal Gimel
-8.7	8.7	8.7
-Israel	Medium tank	
 Magach 6M
-9.0	9.0	9.0
-Israel	Medium tank	
-Sho't Kal Dalet
 9.0	9.0	9.0
 Israel	Medium tank	
 Magach 6C
@@ -1673,29 +1652,41 @@ Israel	Medium tank
 Magach 7C
 9.3	9.3	9.3
 Israel	Medium tank	
+Sho't Kal Gimel
+8.7	8.7	8.7
+Israel	Medium tank	
 Merkava Mk.1B
 9.3	9.3	9.3
 Israel	Medium tank	
 Merkava Mk.2B
 9.3	9.3	9.3
 Israel	SPAA	
+ZSU-23-4
+8.0	8.0	8.0
+Israel	SPAA	
 Machbet
 9.3	9.3	9.3
+Israel	Tank destroyer	
+Giraf
+8.3	8.3	8.3
+Israel	Medium tank	
+Sho't Kal Dalet
+9.0	9.0	9.0
 Israel	Medium tank	
 Magach 6B Gal
 9.3	9.3	9.3
 Israel	Medium tank	
 Merkava Mk.2D
 9.7	9.7	9.7
-Israel	SPAA	
-Imp.Chaparral
-10.3	10.3	10.3
 Israel	Medium tank	
 Merkava Mk.3B
 11.0	11.0	11.0
 Israel	Medium tank	
 Merkava Mk.3C
 11.0	11.0	11.0
+Israel	SPAA	
+Imp.Chaparral
+10.3	10.3	10.3
 Israel	Medium tank	
 Merkava Mk.4B
 11.3	11.3	11.3
@@ -1709,62 +1700,101 @@ Great Britain	Light tank
 A13 Mk I
 1.0	1.0	1.0
 Great Britain	Light tank	
-Tetrarch I
-1.0	1.0	1.0
-Great Britain	SPAA	
-Light AA Mk I
-1.0	1.0	1.0
-Great Britain	Light tank	
-A13 Mk I (3rd R.T.R.)
-1.0	1.0	1.0
-Great Britain	Light tank	
 A13 Mk II
 1.3	1.3	1.3
 Great Britain	Light tank	
+Stuart I
+1.7	2.0	2.0
+Great Britain	Light tank	
+Stuart III
+2.0	2.3	2.3
+Great Britain	Light tank	
+Tetrarch I
+1.0	1.0	1.0
+Great Britain	Light tank	
 Daimler Mk II
 1.3	1.3	1.3
+Great Britain	SPAA	
+Light AA Mk I
+1.0	1.0	1.0
+Great Britain	SPAA	
+Staghound AA
+2.3	2.0	2.0
 Great Britain	Light tank	
 SARC MkIVa
 1.3	1.3	1.3
+Great Britain	Light tank	
+A13 Mk I (3rd R.T.R.)
+1.0	1.0	1.0
 Great Britain	Heavy tank	
 Independent
-1.3	1.3	1.3
-Great Britain	Light tank	
-A13 Mk II 1939
 1.3	1.3	1.3
 Great Britain	Tank destroyer	
 Alecto I
 1.7	1.7	1.7
 Great Britain	Light tank	
-Stuart I
-1.7	2.0	2.0
-Great Britain	SPAA	
-Staghound AA
-2.3	2.0	2.0
+A13 Mk II 1939
+1.3	1.3	1.3
 Great Britain	Light tank	
-Stuart III
-2.0	2.3	2.3
+Crusader II
+2.3	2.7	2.7
+Great Britain	Light tank	
+Crusader III
+3.0	3.0	3.0
+Great Britain	Medium tank	
+Cromwell V
+3.0	3.3	3.0
+Great Britain	Medium tank	
+Cromwell I
+3.3	3.7	3.7
+Great Britain	Medium tank	
+Sherman II
+3.7	3.7	3.7
 Great Britain	Medium tank	
 Valentine I
 2.7	2.3	2.3
+Great Britain	Medium tank	
+Valentine XI
+3.0	2.7	2.7
+Great Britain	Medium tank	
+Valentine IX
+3.0	3.0	3.0
+Great Britain	Heavy tank	
+Matilda III
+2.7	2.7	2.7
+Great Britain	Heavy tank	
+Churchill I
+3.0	3.3	3.3
+Great Britain	Tank destroyer	
+Archer
+2.7	2.7	2.7
+Great Britain	Tank destroyer	
+Gun Carrier (3-in)
+3.0	3.0	3.0
+Great Britain	Tank destroyer	
+Achilles
+3.7	3.3	3.3
+Great Britain	SPAA	
+Crusader AA Mk I
+3.0	3.0	3.0
+Great Britain	SPAA	
+AEC AA
+3.7	3.3	3.3
 Great Britain	Light tank	
 SARC MkVI (2pdr)
 2.0	2.3	2.3
 Great Britain	Light tank	
-Crusader II
-2.3	2.7	2.7
-Great Britain	Medium tank	
-Valentine XI
-3.0	2.7	2.7
-Great Britain	Heavy tank	
-Matilda III
-2.7	2.7	2.7
-Great Britain	Tank destroyer	
-Archer
-2.7	2.7	2.7
+SARC MkVI (6pdr)
+3.0	3.3	3.3
 Great Britain	Light tank	
 Crusader "The Saint"
 2.3	2.7	2.7
+Great Britain	Medium tank	
+Cromwell V (RP-3)
+3.0	3.3	3.3
+Great Britain	Medium tank	
+A.C.I
+3.3	3.0	3.0
 Great Britain	Heavy tank	
 Matilda Hedgehog
 2.7	2.7	2.7
@@ -1772,82 +1802,10 @@ Great Britain	Medium tank
 Grant I
 2.3	2.7	2.7
 Great Britain	Light tank	
-Crusader III
-3.0	3.0	3.0
-Great Britain	Medium tank	
-Valentine IX
-3.0	3.0	3.0
-Great Britain	Tank destroyer	
-Gun Carrier (3-in)
-3.0	3.0	3.0
-Great Britain	SPAA	
-Crusader AA Mk I
-3.0	3.0	3.0
-Great Britain	Medium tank	
-A.C.I
-3.3	3.0	3.0
-Great Britain	Light tank	
 AEC Mk II
 3.0	3.0	3.0
 Great Britain	Medium tank	
-Cromwell V
-3.0	3.3	3.0
-Great Britain	Heavy tank	
-Churchill I
-3.0	3.3	3.3
-Great Britain	Tank destroyer	
-Achilles
-3.7	3.3	3.3
-Great Britain	SPAA	
-AEC AA
-3.7	3.3	3.3
-Great Britain	Light tank	
-SARC MkVI (6pdr)
-3.0	3.3	3.3
-Great Britain	Medium tank	
-Cromwell V (RP-3)
-3.0	3.3	3.3
-Great Britain	Tank destroyer	
-Achilles (65 Rg.)
-3.7	3.3	3.3
-Great Britain	Medium tank	
-Cromwell I
-3.3	3.7	3.7
-Great Britain	Medium tank	
-Sherman II
-3.7	3.7	3.7
-Great Britain	Heavy tank	
-Churchill III
-4.0	4.0	4.3
-Great Britain	SPAA	
-Ystervark
-4.3	4.0	4.0
-Great Britain	SPAA	
-Crusader AA Mk II
-5.0	4.0	4.0
-Great Britain	Heavy tank	
-Excelsior
-4.0	4.0	4.0
-Great Britain	Heavy tank	
-Churchill NA75
-4.3	4.3	4.3
-Great Britain	Light tank	
-Concept 3
-4.3	4.3	4.3
-Great Britain	Medium tank	
 Sherman Firefly
-4.7	4.7	4.7
-Great Britain	Heavy tank	
-Churchill VII
-4.7	4.7	4.7
-Great Britain	Medium tank	
-Avenger
-4.7	4.7	4.7
-Great Britain	Medium tank	
-Sherman IC "Trzyniec"
-4.7	4.7	4.7
-Great Britain	Heavy tank	
-Churchill Crocodile
 4.7	4.7	4.7
 Great Britain	Medium tank	
 Challenger
@@ -1855,9 +1813,36 @@ Challenger
 Great Britain	Medium tank	
 Comet I
 5.0	5.3	5.3
+Great Britain	Heavy tank	
+Churchill III
+4.0	4.0	4.3
+Great Britain	Heavy tank	
+Churchill NA75
+4.3	4.3	4.3
+Great Britain	Heavy tank	
+Churchill VII
+4.7	4.7	4.7
+Great Britain	Medium tank	
+Avenger
+4.7	4.7	4.7
+Great Britain	SPAA	
+Ystervark
+4.3	4.0	4.0
+Great Britain	SPAA	
+Crusader AA Mk II
+5.0	4.0	4.0
 Great Britain	SPAA	
 Bosvark
 5.3	5.3	5.3
+Great Britain	Light tank	
+Concept 3
+4.3	4.3	4.3
+Great Britain	Tank destroyer	
+Achilles (65 Rg.)
+3.7	3.3	3.3
+Great Britain	Medium tank	
+Sherman IC "Trzyniec"
+4.7	4.7	4.7
 Great Britain	Medium tank	
 A.C.IV
 5.3	5.3	5.3
@@ -1865,56 +1850,53 @@ Great Britain	Medium tank
 Comet I "Iron Duke IV"
 5.0	5.3	5.3
 Great Britain	Heavy tank	
+Excelsior
+4.0	4.0	4.0
+Great Britain	Heavy tank	
+Churchill Crocodile
+4.7	4.7	4.7
+Great Britain	Heavy tank	
 TOG II
 5.3	5.3	5.3
 Great Britain	Tank destroyer	
 QF 3.7 Ram
 5.3	5.3	5.3
-Great Britain	SPAA	
-Skink
-6.0	5.3	5.3
 Great Britain	Medium tank	
 Centurion Mk 1
 6.0	6.0	6.0
-Great Britain	Heavy tank	
-Black Prince
-6.0	6.0	5.7
+Great Britain	Medium tank	
+Centurion Mk 3
+7.7	7.7	7.7
 Great Britain	Medium tank	
 Charioteer Mk VII
 6.0	6.3	6.0
+Great Britain	Medium tank	
+FV4202
+7.3	7.3	7.3
 Great Britain	Tank destroyer	
 FV4005
 6.3	6.3	6.7
 Great Britain	Tank destroyer	
 ▄M109A1
 6.3	6.3	6.3
-Great Britain	Light tank	
-Ratel 90
-6.3	6.3	6.3
 Great Britain	Tank destroyer	
 Tortoise
 6.7	6.7	6.3
+Great Britain	Tank destroyer	
+Conway
+6.7	7.0	7.0
+Great Britain	SPAA	
+Skink
+6.0	5.3	5.3
+Great Britain	Light tank	
+Ratel 90
+6.3	6.3	6.3
 Great Britain	Light tank	
 Ratel 20
 6.7	6.7	6.7
 Great Britain	Tank destroyer	
 G6
 6.7	6.7	6.7
-Great Britain	Medium tank	
-Centurion Mk.2
-6.7	6.7	6.7
-Great Britain	Tank destroyer	
-Conway
-6.7	7.0	7.0
-Great Britain	Medium tank	
-Centurion Mk.5 AVRE
-8.0	7.0	7.0
-Great Britain	Medium tank	
-FV4202
-7.3	7.3	7.3
-Great Britain	Medium tank	
-Centurion Mk 3
-7.7	7.7	7.7
 Great Britain	Light tank	
 Eland 90 Mk.7
 7.0	7.7	7.7
@@ -1925,13 +1907,16 @@ Great Britain	Medium tank
 Centurion Action X
 7.7	7.7	7.7
 Great Britain	Heavy tank	
+Black Prince
+6.0	6.0	5.7
+Great Britain	Medium tank	
+Centurion Mk.2
+6.7	6.7	6.7
+Great Britain	Heavy tank	
 Caernarvon
 7.7	7.7	7.7
 Great Britain	Heavy tank	
 Conqueror
-7.7	7.7	7.7
-Great Britain	Medium tank	
-Centurion Mk.5/1
 7.7	7.7	7.7
 Great Britain	Medium tank	
 Centurion Mk 10
@@ -1946,8 +1931,29 @@ Great Britain	SPAA
 Falcon
 8.0	8.3	8.3
 Great Britain	Medium tank	
+Centurion Mk.5 AVRE
+8.0	7.0	7.0
+Great Britain	Medium tank	
+Centurion Mk.5/1
+7.7	7.7	7.7
+Great Britain	Medium tank	
+Chieftain Mk 3
+8.7	8.7	8.7
+Great Britain	Medium tank	
+Chieftain Mk 5
+8.7	8.7	8.7
+Great Britain	Medium tank	
+Chieftain Mk 10
+9.0	9.0	9.0
+Great Britain	Medium tank	
 Vickers Mk.3
 8.3	8.3	8.3
+Great Britain	Light tank	
+Vickers Mk.11
+8.7	8.7	8.7
+Great Britain	Light tank	
+VFM5
+9.3	9.3	9.3
 Great Britain	Light tank	
 Warrior
 8.3	8.3	8.3
@@ -1963,39 +1969,21 @@ Chieftain Marksman
 Great Britain	SPAA	
 ZA-35
 8.3	8.3	8.3
-Great Britain	Medium tank	
-Olifant Mk.1A
-8.3	8.3	8.3
-Great Britain	Medium tank	
-Vijayanta
-8.3	8.3	8.3
-Great Britain	Medium tank	
-Chieftain Mk 3
-8.7	8.7	8.7
-Great Britain	Medium tank	
-Chieftain Mk 5
-8.7	8.7	8.7
-Great Britain	Light tank	
-Vickers Mk.11
-8.7	8.7	8.7
 Great Britain	Light tank	
 Rooikat Mk.1D
 8.3	8.7	8.7
 Great Britain	Medium tank	
-Chieftain Mk 10
-9.0	9.0	9.0
+Olifant Mk.1A
+8.3	8.3	8.3
 Great Britain	Light tank	
 Rooikat MTTD
 9.0	9.0	9.0
 Great Britain	Medium tank	
-▄Sho't Kal Dalet
-9.0	9.0	9.0
-Great Britain	Light tank	
-VFM5
-9.3	9.3	9.3
-Great Britain	Medium tank	
 Olifant Mk.2
 9.3	9.3	9.3
+Great Britain	Medium tank	
+Vijayanta
+8.3	8.3	8.3
 Great Britain	Medium tank	
 Khalid
 9.3	9.3	9.3
@@ -2003,25 +1991,13 @@ Great Britain	Light tank
 Rooikat 105
 9.0	9.3	9.3
 Great Britain	Medium tank	
+▄Sho't Kal Dalet
+9.0	9.0	9.0
+Great Britain	Medium tank	
 Challenger Mk.2
 10.0	10.0	10.0
 Great Britain	Medium tank	
-TTD
-10.0	10.0	10.0
-Great Britain	Medium tank	
 Challenger Mk.3
-10.3	10.3	10.3
-Great Britain	Medium tank	
-Vickers Mk.7
-10.3	10.3	10.3
-Great Britain	SPAA	
-Stormer HVM
-10.3	10.3	10.3
-Great Britain	Medium tank	
-Challenger DS
-10.3	10.3	10.3
-Great Britain	Medium tank	
-Bhishma TWMP
 10.3	10.3	10.3
 Great Britain	Medium tank	
 Challenger 2
@@ -2033,11 +2009,26 @@ Great Britain	Medium tank
 Challenger 2 TES
 11.3	11.3	11.3
 Great Britain	Medium tank	
+Vickers Mk.7
+10.3	10.3	10.3
+Great Britain	SPAA	
+Stormer HVM
+10.3	10.3	10.3
+Great Britain	Medium tank	
+TTD
+10.0	10.0	10.0
+Great Britain	Medium tank	
+Challenger DS
+10.3	10.3	10.3
+Great Britain	Medium tank	
 ␙Challenger 2
 11.3	11.3	11.3
 Great Britain	Medium tank	
 Challenger 2 OES
 11.3	11.3	11.3
+Great Britain	Medium tank	
+Bhishma TWMP
+10.3	10.3	10.3
 Great Britain	Medium tank	
 Black Night
 11.7	11.7	11.7
@@ -2047,66 +2038,42 @@ Challenger 2E
 Great Britain	Medium tank	
 Challenger 3 TD
 11.7	11.7	11.7
-Great Britain	Tank destroyer	
+Great Britain	SPAA	
 ADATS (M113)
 11.7	11.7	11.7
 Germany	Light tank	
 Pz.35(t)
 1.0	1.0	1.0
+Germany	Light tank	
+Pz.38(t) A
+1.3	1.3	1.3
+Germany	Light tank	
+Pz.38(t) F
+2.0	2.3	2.3
+Germany	Light tank	
+Pz.38(t) n.A.
+2.3	2.3	2.3
 Germany	Medium tank	
 Pz.III E
 1.0	1.0	1.0
 Germany	Medium tank	
 Pz.III B
 1.0	1.0	1.0
-Germany	Tank destroyer	
-15cm sIG 33 B Sfl
-1.0	1.0	1.0
-Germany	Light tank	
-Sd.Kfz.221 (s.Pz.B.41)
-1.0	1.0	1.0
-Germany	Tank destroyer	
-Sd.Kfz.251/10
-1.0	1.0	1.0
-Germany	Light tank	
-Pz.38(t) A
-1.3	1.3	1.3
 Germany	Medium tank	
 Pz.III F
 1.3	1.3	1.3
+Germany	Medium tank	
+Pz.III J
+2.3	2.3	2.3
 Germany	Medium tank	
 Pz.IV C
 1.3	1.3	1.3
 Germany	Light tank	
 Pz.II C
 1.3	1.3	1.3
-Germany	SPAA	
-Flakpanzer I
-1.3	1.3	1.3
-Germany	Tank destroyer	
-Panzerjäger I
-1.3	1.3	1.3
-Germany	Tank destroyer	
-Sd.Kfz.251/9
-1.3	1.3	1.3
-Germany	Light tank	
-Pz.II C TD
-1.3	1.3	1.3
-Germany	Light tank	
-Pz.II C (DAK)
-1.3	1.3	1.3
-Germany	Medium tank	
-Nb.Fz.
-1.3	1.3	1.3
 Germany	Light tank	
 Pz.II F
 2.0	1.7	1.7
-Germany	SPAA	
-Flakpanzer 38
-2.0	1.7	1.7
-Germany	SPAA	
-Sd.Kfz. 6/2
-2.3	1.7	1.7
 Germany	Medium tank	
 Pz.IV E
 2.3	2.0	2.0
@@ -2114,11 +2081,50 @@ Germany	Medium tank
 Pz.IV F1
 2.3	2.0	2.0
 Germany	SPAA	
+Flakpanzer I
+1.3	1.3	1.3
+Germany	SPAA	
+Flakpanzer 38
+2.0	1.7	1.7
+Germany	SPAA	
 Sd.Kfz.222
 1.7	2.0	2.0
+Germany	SPAA	
+Sd.Kfz. 6/2
+2.3	1.7	1.7
+Germany	Tank destroyer	
+15cm sIG 33 B Sfl
+1.0	1.0	1.0
+Germany	Light tank	
+Sd.Kfz.221 (s.Pz.B.41)
+1.0	1.0	1.0
+Germany	Tank destroyer	
+Panzerjäger I
+1.3	1.3	1.3
+Germany	Tank destroyer	
+Sd.Kfz.251/9
+1.3	1.3	1.3
+Germany	Tank destroyer	
+Marder III
+2.3	2.3	2.3
+Germany	Tank destroyer	
+StuG III A
+2.3	2.3	2.3
+Germany	Light tank	
+Pz.II C TD
+1.3	1.3	1.3
+Germany	Light tank	
+Pz.II C (DAK)
+1.3	1.3	1.3
 Germany	Light tank	
 Sd.Kfz. 140/1
 1.7	2.0	2.0
+Germany	Medium tank	
+Nb.Fz.
+1.3	1.3	1.3
+Germany	Tank destroyer	
+Sd.Kfz.251/10
+1.0	1.0	1.0
 Germany	Light tank	
 Sd.Kfz.234/1
 2.0	2.0	2.0
@@ -2129,46 +2135,16 @@ Germany	Light tank
 Pz.Sp.Wg.P204(f) KwK
 2.0	2.0	2.0
 Germany	Light tank	
-Pz.38(t) F
-2.0	2.3	2.3
-Germany	Light tank	
-Pz.38(t) n.A.
-2.3	2.3	2.3
-Germany	Medium tank	
-Pz.III J
-2.3	2.3	2.3
+Sd.Kfz.234/2
+2.7	3.7	3.7
 Germany	Tank destroyer	
-Marder III
-2.3	2.3	2.3
-Germany	Tank destroyer	
-StuG III A
-2.3	2.3	2.3
-Germany	Tank destroyer	
-15 cm Pz.W.42
-2.3	2.3	2.3
-Germany	Light tank	
-Pz.Sfl.Ic
-2.3	2.3	2.3
+Dicker Max
+4.0	3.7	3.7
 Germany	Medium tank	
 Pz.III J1
 2.7	2.7	2.7
 Germany	Medium tank	
-Pz.III J1 TD
-2.7	2.7	2.7
-Germany	Medium tank	
 Pz.III L
-3.0	3.0	3.0
-Germany	Tank destroyer	
-Marder III H
-3.0	3.0	3.0
-Germany	Tank destroyer	
-StuH 42 G
-3.0	3.0	3.0
-Germany	Medium tank	
-Pz.III N
-3.0	3.0	3.0
-Germany	Tank destroyer	
-Sd.Kfz.251/22
 3.0	3.0	3.0
 Germany	Medium tank	
 Pz.III M
@@ -2179,48 +2155,108 @@ Pz.IV F2
 Germany	Medium tank	
 Pz.IV G
 3.7	3.3	3.3
-Germany	SPAA	
-Sd.Kfz.251/21
-3.3	3.3	3.3
-Germany	Tank destroyer	
-StuG III F
-3.3	3.3	3.3
-Germany	SPAA	
-Ostwind
-4.7	3.3	3.3
-Germany	Light tank	
-Sd.Kfz.234/2
-2.7	3.7	3.7
-Germany	Tank destroyer	
-Dicker Max
-4.0	3.7	3.7
 Germany	Medium tank	
 Pz.IV H
 4.0	3.7	3.7
 Germany	Medium tank	
 Pz.IV J
 4.0	3.7	3.7
+Germany	SPAA	
+Sd.Kfz.251/21
+3.3	3.3	3.3
+Germany	Tank destroyer	
+Marder III H
+3.0	3.0	3.0
+Germany	Tank destroyer	
+StuH 42 G
+3.0	3.0	3.0
+Germany	Tank destroyer	
+StuG III F
+3.3	3.3	3.3
+Germany	Tank destroyer	
+StuG III G
+4.3	4.0	4.0
+Germany	Medium tank	
+Pz.III J1 TD
+2.7	2.7	2.7
+Germany	Medium tank	
+Pz.III N
+3.0	3.0	3.0
+Germany	Tank destroyer	
+15 cm Pz.W.42
+2.3	2.3	2.3
 Germany	Light tank	
 Sd.Kfz.234/2 TD
 2.7	3.7	3.7
+Germany	Light tank	
+Pz.Sfl.Ic
+2.3	2.3	2.3
+Germany	Tank destroyer	
+Sd.Kfz.251/22
+3.0	3.0	3.0
+Germany	Tank destroyer	
+Sturer Emil
+4.3	4.3	4.3
+Germany	Tank destroyer	
+8,8 cm Flak 37 Sfl.
+4.7	4.0	3.7
+Germany	Tank destroyer	
+Nashorn
+5.3	5.3	5.3
+Germany	Tank destroyer	
+Waffenträger
+5.7	5.7	5.7
+Germany	Heavy tank	
+Tiger H1
+5.7	5.7	5.7
+Germany	Heavy tank	
+Tiger E
+6.0	6.0	6.0
+Germany	Medium tank	
+VK 3002 (M)
+5.0	5.0	5.0
+Germany	Medium tank	
+Panther D
+5.7	5.3	5.3
 Germany	SPAA	
 Wirbelwind
 4.7	3.7	3.7
+Germany	SPAA	
+Ostwind
+4.7	3.3	3.3
+Germany	Tank destroyer	
+Jagdpanzer IV
+4.7	4.3	4.3
+Germany	Tank destroyer	
+Jagdpanzer 38(t)
+4.7	4.3	4.3
+Germany	Tank destroyer	
+Panzer IV/70(V)
+5.3	5.7	5.7
+Germany	Medium tank	
+▀T 34 747 (r)
+4.3	4.3	4.3
 Germany	Heavy tank	
 ▀KW II 754 (r)
 3.7	3.7	3.7
 Germany	Medium tank	
 Pz.Bef.Wg.IV J
 4.0	3.7	3.7
-Germany	Tank destroyer	
-StuG III G
-4.3	4.0	4.0
-Germany	Tank destroyer	
-8,8 cm Flak 37 Sfl.
-4.7	4.0	3.7
 Germany	Heavy tank	
 ▀Pz.Kpfw. Churchill
 4.0	4.0	4.3
+Germany	Tank destroyer	
+Brummbär
+4.7	4.3	4.3
+Germany	Tank destroyer	
+Panzer IV/70(A)
+4.3	4.3	4.3
+Germany	Heavy tank	
+▀KW I C 756 (r)
+5.0	5.0	5.0
+Germany	Tank destroyer	
+Sd.Kfz.234/4
+4.3	4.7	4.7
 Germany	Medium tank	
 ▀M4 748 (a)
 4.0	4.0	4.0
@@ -2228,95 +2264,17 @@ Germany	Heavy tank
 ▀KV-IB
 4.3	4.0	4.3
 Germany	Tank destroyer	
-Sturer Emil
-4.3	4.3	4.3
-Germany	Tank destroyer	
-Jagdpanzer IV
-4.7	4.3	4.3
-Germany	Tank destroyer	
-Jagdpanzer 38(t)
-4.7	4.3	4.3
-Germany	Medium tank	
-▀T 34 747 (r)
-4.3	4.3	4.3
-Germany	Tank destroyer	
-Brummbär
-4.7	4.3	4.3
-Germany	Tank destroyer	
-Panzer IV/70(A)
-4.3	4.3	4.3
-Germany	Tank destroyer	
-Sd.Kfz.234/4
-4.3	4.7	4.7
-Germany	Medium tank	
-VK 3002 (M)
-5.0	5.0	5.0
-Germany	Heavy tank	
-▀KW I C 756 (r)
-5.0	5.0	5.0
-Germany	Tank destroyer	
-Nashorn
-5.3	5.3	5.3
-Germany	Medium tank	
-Panther D
-5.7	5.3	5.3
-Germany	Heavy tank	
-VK 45.01 (P)
-5.3	5.3	5.3
-Germany	SPAA	
-Ostwind II
-5.7	5.3	5.3
-Germany	Tank destroyer	
-Waffenträger
-5.7	5.7	5.7
-Germany	Heavy tank	
-Tiger H1
-5.7	5.7	5.7
-Germany	Tank destroyer	
-Panzer IV/70(V)
-5.3	5.7	5.7
-Germany	Tank destroyer	
 VFW
 5.7	5.7	5.7
 Germany	Heavy tank	
 ␠Tiger
 5.7	5.7	5.7
 Germany	Heavy tank	
-Pz.Bef.Wg.VI P
-5.7	5.7	5.7
-Germany	Tank destroyer	
-38 cm Sturmmörser
-6.0	5.7	6.3
-Germany	Heavy tank	
-Tiger E
-6.0	6.0	6.0
+VK 45.01 (P)
+5.3	5.3	5.3
 Germany	Tank destroyer	
 M109G
 6.0	6.0	6.0
-Germany	Medium tank	
-Panther A
-6.0	6.0	6.0
-Germany	Medium tank	
-Panther G
-6.0	6.0	6.0
-Germany	Medium tank	
-Panther F
-6.0	6.0	6.0
-Germany	Medium tank	
-Ersatz M10
-6.0	6.0	6.0
-Germany	Tank destroyer	
-Jagdpanther G1
-6.3	6.3	6.3
-Germany	Tank destroyer	
-JPz 4-5
-6.3	6.3	6.3
-Germany	Tank destroyer	
-Bfw. Jagdpanther G1
-6.3	6.3	6.3
-Germany	SPAA	
-Flakpanzer 341
-6.7	6.3	6.3
 Germany	Light tank	
 leKPz M41
 6.3	6.7	6.7
@@ -2326,51 +2284,69 @@ Tiger II (P)
 Germany	Heavy tank	
 Tiger II (H)
 7.0	6.7	6.7
+Germany	Medium tank	
+Panther A
+6.0	6.0	6.0
+Germany	Medium tank	
+Panther G
+6.0	6.0	6.0
+Germany	Medium tank	
+Panther F
+6.0	6.0	6.0
+Germany	SPAA	
+Ostwind II
+5.7	5.3	5.3
+Germany	SPAA	
+Kugelblitz
+7.3	7.0	7.0
+Germany	Tank destroyer	
+Jagdpanther G1
+6.3	6.3	6.3
+Germany	Tank destroyer	
+JPz 4-5
+6.3	6.3	6.3
 Germany	Tank destroyer	
 Ferdinand
 7.0	6.7	6.7
 Germany	Tank destroyer	
 Jagdtiger
 7.3	6.7	6.7
+Germany	Heavy tank	
+Pz.Bef.Wg.VI P
+5.7	5.7	5.7
+Germany	Tank destroyer	
+Bfw. Jagdpanther G1
+6.3	6.3	6.3
 Germany	Tank destroyer	
 Elefant
 7.0	6.7	6.7
+Germany	Tank destroyer	
+38 cm Sturmmörser
+6.0	5.7	6.3
+Germany	Medium tank	
+Panther II
+7.0	7.0	7.0
+Germany	Medium tank	
+Ersatz M10
+6.0	6.0	6.0
 Germany	Heavy tank	
 Tiger II (H) Sla.16
 7.0	6.7	6.7
 Germany	Light tank	
+Ru 251
+7.0	7.3	7.3
+Germany	SPAA	
+Flakpanzer 341
+6.7	6.3	6.3
+Germany	Light tank	
 SPz 12-3 LGS
 6.7	6.7	6.7
-Germany	SPAA	
-Kugelblitz
-7.3	7.0	7.0
-Germany	Medium tank	
-Panther II
-7.0	7.0	7.0
 Germany	Heavy tank	
 Tiger II (10.5 cm Kw.K)
 7.0	7.0	7.0
 Germany	Light tank	
-Ru 251
-7.0	7.3	7.3
-Germany	SPAA	
-Wiesel 1A4
-7.3	7.3	7.3
-Germany	Medium tank	
-mKPz M47 G
-7.3	7.3	7.3
-Germany	Light tank	
 Marder A1-
 7.7	7.7	7.7
-Germany	Medium tank	
-M48A2 C
-7.7	7.7	7.7
-Germany	Heavy tank	
-E-100
-8.0	7.7	7.7
-Germany	Heavy tank	
-Maus
-8.0	7.7	7.7
 Germany	Light tank	
 SPz BMP-1
 7.7	8.0	8.0
@@ -2381,8 +2357,14 @@ Germany	Light tank
 DF105
 8.0	8.0	8.0
 Germany	Medium tank	
+M48A2 C
+7.7	7.7	7.7
+Germany	Medium tank	
 Leopard I
 8.0	8.0	8.0
+Germany	SPAA	
+Wiesel 1A4
+7.3	7.3	7.3
 Germany	Tank destroyer	
 Raketenautomat
 7.7	8.0	8.0
@@ -2390,38 +2372,29 @@ Germany	Tank destroyer
 RakJPz 2
 8.0	8.0	8.0
 Germany	Medium tank	
+mKPz M47 G
+7.3	7.3	7.3
+Germany	Medium tank	
 Turm III
 8.3	8.3	8.3
-Germany	Medium tank	
-M48A2 G A2
-8.3	8.3	8.3
-Germany	SPAA	
-Gepard
-8.3	8.3	8.3
-Germany	Tank destroyer	
-RakJPz 2 (HOT)
-8.3	8.3	8.3
+Germany	Heavy tank	
+E-100
+8.0	7.7	7.7
+Germany	Heavy tank	
+Maus
+8.0	7.7	7.7
 Germany	Light tank	
 TAM
 8.7	8.7	8.7
 Germany	Light tank	
 JaPz.K A2
 8.7	8.7	8.7
-Germany	Tank destroyer	
-VT1-2
-8.3	8.7	8.7
-Germany	Medium tank	
-Leopard A1A1
-9.0	9.0	9.0
-Germany	Light tank	
-TAM 2IP
-9.0	9.0	9.0
-Germany	Light tank	
-Class 3 (P)
-9.0	9.0	9.0
 Germany	Light tank	
 Begleitpanzer 57
 9.7	9.3	9.3
+Germany	Medium tank	
+M48A2 G A2
+8.3	8.3	8.3
 Germany	Medium tank	
 KPz-70
 9.0	9.3	9.3
@@ -2432,29 +2405,35 @@ Germany	Medium tank
 ◊T-72M1
 9.3	9.3	9.3
 Germany	Medium tank	
+Leopard A1A1
+9.0	9.0	9.0
+Germany	Medium tank	
 Leopard 1A5
 9.3	9.3	9.3
+Germany	SPAA	
+Gepard
+8.3	8.3	8.3
+Germany	Tank destroyer	
+RakJPz 2 (HOT)
+8.3	8.3	8.3
+Germany	Light tank	
+TAM 2IP
+9.0	9.0	9.0
 Germany	Medium tank	
 Leopard A1A1 (L/44)
 9.3	9.3	9.3
+Germany	Tank destroyer	
+VT1-2
+8.3	8.7	8.7
+Germany	Light tank	
+Class 3 (P)
+9.0	9.0	9.0
 Germany	Medium tank	
 C2A1
 9.3	9.3	9.3
 Germany	Light tank	
 Radkampfwagen 90
 9.7	9.7	9.7
-Germany	Medium tank	
-Leopard 2K
-9.7	9.7	9.7
-Germany	SPAA	
-Ozelot
-9.7	9.7	9.7
-Germany	SPAA	
-Gepard 1A2
-9.7	9.7	9.7
-Germany	Tank destroyer	
-Wiesel 1A2
-9.0	9.7	9.7
 Germany	Light tank	
 TAM 2C
 9.7	10.0	10.0
@@ -2462,17 +2441,23 @@ Germany	Light tank
 PUMA
 10.0	10.0	10.0
 Germany	Medium tank	
-PT-16/T14 mod.
-10.0	10.0	10.0
-Germany	Medium tank	
-Leopard 2AV
-10.0	10.0	10.0
+Leopard 2K
+9.7	9.7	9.7
 Germany	Medium tank	
 Leopard 2A4
 10.3	10.3	10.3
 Germany	SPAA	
+Ozelot
+9.7	9.7	9.7
+Germany	SPAA	
+Gepard 1A2
+9.7	9.7	9.7
+Germany	SPAA	
 FlaRakPz 1
 10.0	10.3	10.3
+Germany	Tank destroyer	
+Wiesel 1A2
+9.0	9.7	9.7
 Germany	Medium tank	
 Leopard 2 (PzBtl 123)
 10.3	10.3	10.3
@@ -2480,8 +2465,11 @@ Germany	Light tank
 Vilkas
 10.3	10.3	10.3
 Germany	Medium tank	
-Leopard 2 PL
-11.3	11.3	11.3
+PT-16/T14 mod.
+10.0	10.0	10.0
+Germany	Medium tank	
+Leopard 2AV
+10.0	10.0	10.0
 Germany	Medium tank	
 Leopard 2A5
 11.7	11.7	11.7
@@ -2498,11 +2486,11 @@ Germany	SPAA
 FlaRakRad
 11.7	11.7	11.7
 Germany	Medium tank	
+Leopard 2 PL
+11.3	11.3	11.3
+Germany	Medium tank	
 ␙Leopard 2A5
 11.7	11.7	11.7
-Germany	Medium tank
-Leopard 2A4M
-11.3    11.3    11.3
 France	Light tank	
 AMC.34 YR
 1.0	1.0	1.0
@@ -2510,29 +2498,23 @@ France	Light tank
 AMD.35
 1.0	1.0	1.0
 France	Light tank	
+AMC.35 (ACG.1)
+1.3	1.3	1.3
+France	Light tank	
 H.35
 1.0	1.0	1.0
 France	Light tank	
 H.39
 1.0	1.0	1.0
+France	Medium tank	
+S.35
+1.3	1.3	1.3
 France	Light tank	
 FCM.36
 1.0	1.0	1.0
 France	Light tank	
 R.35 (SA38)
 1.0	1.0	1.0
-France	Tank destroyer	
-AMR.35 ZT3
-1.0	1.0	1.0
-France	Light tank	
-H.39 "Cambronne"
-1.0	1.0	1.0
-France	Light tank	
-AMC.35 (ACG.1)
-1.3	1.3	1.3
-France	Medium tank	
-S.35
-1.3	1.3	1.3
 France	Medium tank	
 D2
 1.3	1.3	1.3
@@ -2540,86 +2522,101 @@ France	SPAA
 P.7.T AA
 1.3	1.3	1.3
 France	Tank destroyer	
+AMR.35 ZT3
+1.0	1.0	1.0
+France	Tank destroyer	
 Lorraine 37L
 1.3	1.3	1.3
 France	Tank destroyer	
 SAu 40
 1.7	1.7	1.7
+France	Light tank	
+H.39 "Cambronne"
+1.0	1.0	1.0
 France	Heavy tank	
 2C bis
 1.7	1.7	1.7
 France	Light tank	
 AMD.35 (SA35)
 1.7	1.7	1.7
-France	SPAA	
-CCKW 353 AA
-2.7	2.0	2.0
-France	Heavy tank	
-B1 bis
-2.3	2.3	2.3
-France	Heavy tank	
-2C
-2.3	2.3	2.3
 France	Light tank	
 ▄Crusader Mk.II
 2.3	2.7	2.7
 France	Light tank	
 ▄M3A3 Stuart
 2.3	2.7	2.7
-France	Heavy tank	
-B1 ter
-2.7	2.7	2.7
-France	Medium tank	
-▄M4A3 (105)
-3.0	3.0	3.0
 France	Medium tank	
 ▄M4A1
 3.3	3.3	3.3
+France	Heavy tank	
+B1 bis
+2.3	2.3	2.3
+France	Heavy tank	
+2C
+2.3	2.3	2.3
+France	SPAA	
+CCKW 353 AA
+2.7	2.0	2.0
+France	Medium tank	
+▄M4A3 (105)
+3.0	3.0	3.0
 France	Tank destroyer	
 ▄M10 GMC
 3.7	3.3	3.3
+France	Heavy tank	
+B1 ter
+2.7	2.7	2.7
 France	Light tank	
 AMX-13-M24
 3.7	3.7	3.7
 France	Light tank	
 LVT-4/40
 3.7	3.7	3.7
-France	Medium tank	
-▄M4A4
-3.7	3.7	3.7
-France	Heavy tank	
-ARL-44 (ACL-1)
-3.7	3.7	3.7
 France	Light tank	
 AMX-13 (FL11)
 4.0	4.3	4.3
-France	Tank destroyer	
-Lorraine 155 Mle.50
-4.3	4.3	4.3
-France	Medium tank	
-M4A4 (SA50)
-5.0	5.0	5.0
-France	SPAA	
-AMX-13 DCA 40
-4.7	5.0	5.0
-France	Medium tank	
-M4A1 (FL10)
-4.7	5.0	5.0
 France	Light tank	
 E.B.R. (1951)
 4.3	5.3	5.0
-France	Tank destroyer	
-ARL-44
-5.3	5.3	5.3
+France	Medium tank	
+▄M4A4
+3.7	3.7	3.7
+France	Medium tank	
+M4A4 (SA50)
+5.0	5.0	5.0
+France	Heavy tank	
+ARL-44 (ACL-1)
+3.7	3.7	3.7
 France	Heavy tank	
 ▄M4A3E2
 5.3	5.7	5.7
 France	SPAA	
+AMX-13 DCA 40
+4.7	5.0	5.0
+France	SPAA	
 TPK 6.41
 5.3	5.7	5.7
 France	Tank destroyer	
+ARL-44
+5.3	5.3	5.3
+France	Tank destroyer	
 ▄M36B2
 5.7	5.7	5.7
+France	Medium tank	
+M4A1 (FL10)
+4.7	5.0	5.0
+France	Tank destroyer	
+Lorraine 155 Mle.50
+4.3	4.3	4.3
+France	Light tank	
+AMX-13
+6.3	6.7	6.7
+France	Medium tank	
+▄M26
+6.7	6.7	6.7
+France	Medium tank	
+AMX M4
+6.7	6.7	6.7
 France	SPAA	
 AMX-10P
 5.7	6.0	6.0
@@ -2633,29 +2630,11 @@ France	Medium tank
 Panther "Dauphine"
 6.0	6.0	6.0
 France	Light tank	
-AMX-13
-6.3	6.7	6.7
-France	Medium tank	
-▄M26
-6.7	6.7	6.7
-France	Medium tank	
-AMX M4
-6.7	6.7	6.7
-France	Light tank	
 AMX-13 (SS.11)
 6.7	6.7	6.7
 France	Light tank	
 E.B.R. (1954)
 6.7	6.7	6.7
-France	Tank destroyer	
-AuF1
-7.0	7.0	7.0
-France	Tank destroyer	
-AMX-10M
-7.3	7.3	7.3
-France	Tank destroyer	
-AMX-50 Foch
-7.3	7.3	7.3
 France	Light tank	
 AML-90
 7.0	7.7	7.7
@@ -2665,21 +2644,6 @@ AMX-13-90
 France	Medium tank	
 Lorraine 40t
 7.0	7.7	7.3
-France	Medium tank	
-AMX-50 (TOA100)
-7.0	7.7	7.0
-France	Heavy tank	
-AMX-50 Surbaissé
-7.7	7.7	7.7
-France	Heavy tank	
-Somua SM
-7.7	7.7	7.7
-France	Light tank	
-E.B.R. (1963)
-7.3	7.7	7.7
-France	Heavy tank	
-AMX-50 Surblindé
-7.7	7.7	7.7
 France	Light tank	
 Char 25t
 8.0	8.0	8.0
@@ -2687,11 +2651,35 @@ France	Medium tank
 AMX-30 (1972)
 8.0	8.0	8.0
 France	Medium tank	
+AMX-50 (TOA100)
+7.0	7.7	7.0
+France	Heavy tank	
+AMX-50 Surbaissé
+7.7	7.7	7.7
+France	Tank destroyer	
+AuF1
+7.0	7.0	7.0
+France	Tank destroyer	
+AMX-10M
+7.3	7.3	7.3
+France	Tank destroyer	
+AMX-50 Foch
+7.3	7.3	7.3
+France	Heavy tank	
+Somua SM
+7.7	7.7	7.7
+France	Medium tank	
 AMX-30
 8.0	8.0	8.0
+France	Light tank	
+E.B.R. (1963)
+7.3	7.7	7.7
 France	Medium tank	
 AMX-50 (TO90/930)
 8.0	8.0	8.0
+France	Heavy tank	
+AMX-50 Surblindé
+7.7	7.7	7.7
 France	Light tank	
 MARS 15
 8.3	8.3	8.3
@@ -2700,9 +2688,6 @@ AMX-13 (HOT)
 8.3	8.3	8.3
 France	Light tank	
 AMX-10RC
-8.3	8.3	8.3
-France	Medium tank	
-AMX-30 ACRA
 8.3	8.3	8.3
 France	Light tank	
 SK-105A2
@@ -2713,32 +2698,32 @@ AMX-30B2
 France	Medium tank	
 AMX-30B2 BRENUS
 8.7	8.7	8.7
-France	SPAA	
-AMX-30 DCA
-8.7	8.7	8.7
-France	Tank destroyer	
-MEPHISTO
-8.7	8.7	8.7
 France	Medium tank	
 AMX-32 (105)
 9.3	9.3	9.3
 France	Medium tank	
 AMX-32
 9.3	9.3	9.3
+France	Medium tank	
+AMX-40
+9.7	9.7	9.7
+France	SPAA	
+AMX-30 S DCA
+8.7	8.7	8.7
 France	SPAA	
 SANTAL
 9.3	9.3	9.3
 France	Medium tank	
+AMX-30 ACRA
+8.3	8.3	8.3
+France	Tank destroyer	
+MEPHISTO
+8.7	8.7	8.7
+France	Medium tank	
 AMX-30 Super
 9.3	9.3	9.3
-France	Medium tank	
-AMX-40
-9.7	9.7	9.7
 France	Light tank	
 VBCI-2 (MCT30)
-9.7	9.7	9.7
-France	SPAA	
-Roland 1
 9.7	9.7	9.7
 France	Medium tank	
 Leclerc
@@ -2746,6 +2731,9 @@ Leclerc
 France	Medium tank	
 Leclerc S2
 11.7	11.7	11.7
+France	SPAA	
+Roland 1
+9.7	9.7	9.7
 France	Medium tank	
 Leclerc SXXI
 11.7	11.7	11.7
@@ -2761,9 +2749,6 @@ China	Light tank
 China	Light tank	
 ␗T-26
 1.0	1.0	1.0
-China	Light tank	
-T-26 No.531
-1.0	1.0	1.0
 China	Medium tank	
 ␗Chi-Ha
 1.3	1.3	1.3
@@ -2776,15 +2761,9 @@ China	Tank destroyer
 China	Tank destroyer	
 ␗SU-76M
 2.0	2.0	2.0
-China	Medium tank	
-␗Chi-Ha Kai
-2.3	2.3	2.3
-China	SPAA	
-CCKW 353 (M45)
-2.3	2.3	2.3
-China	Tank destroyer	
-LVT(A)(4) (ZiS-2)
-2.3	2.3	2.3
+China	Light tank	
+T-26 No.531
+1.0	1.0	1.0
 China	Light tank	
 ␗M3A3 Stuart
 2.3	2.7	2.7
@@ -2792,20 +2771,35 @@ China	Light tank
 ␗M5A1
 2.3	2.7	2.7
 China	Light tank	
-␗M3A3 (1st PTG)
-2.3	2.7	2.7
+␗M24
+3.3	3.7	3.7
+China	Medium tank	
+␗Chi-Ha Kai
+2.3	2.3	2.3
+China	Medium tank	
+␗M4A4
+3.7	3.7	3.7
+China	SPAA	
+CCKW 353 (M45)
+2.3	2.3	2.3
+China	Tank destroyer	
+LVT(A)(4) (ZiS-2)
+2.3	2.3	2.3
 China	Tank destroyer	
 ␗M10 GMC
 3.7	3.3	3.3
 China	Light tank	
-␗M24
-3.3	3.7	3.7
-China	Medium tank	
-␗M4A4
-3.7	3.7	3.7
+␗M3A3 (1st PTG)
+2.3	2.7	2.7
 China	Medium tank	
 ␗M4A4 (1st PTG)
 3.7	3.7	3.7
+China	Light tank	
+Object 211
+5.0	5.0	5.0
+China	Light tank	
+␗PT-76
+5.0	5.0	5.0
 China	Medium tank	
 ␗T-34 (1943)
 4.0	4.0	4.0
@@ -2813,77 +2807,71 @@ China	Medium tank
 ␗M4A1 (75) W
 4.0	4.0	4.0
 China	SPAA	
+ZSD63/PG87
+5.3	5.0	5.0
+China	SPAA	
 ␗M42
 5.0	4.0	4.0
 China	Tank destroyer	
 ␗ISU-152
 4.7	4.7	4.7
 China	Light tank	
-Object 211
-5.0	5.0	5.0
-China	Light tank	
-␗PT-76
-5.0	5.0	5.0
-China	SPAA	
-ZSD63/PG87
-5.3	5.0	5.0
-China	SPAA	
-Phong khong T-34
-5.7	5.0	5.0
-China	Light tank	
 ␗M41A3
 5.3	5.3	5.3
-China	Tank destroyer	
-␗M36 GMC
-5.3	5.3	5.3
-China	Tank destroyer	
-␗ISU-122
-5.3	5.3	5.3
+China	Light tank	
+␗M18 GMC
+5.3	6.0	6.0
+China	Light tank	
+Type 63
+6.3	6.3	6.3
+China	Light tank	
+Type 62
+6.7	6.7	6.7
 China	Medium tank	
 ␗Т-34-85 (S-53)
 5.7	5.7	5.7
 China	Medium tank	
 Т-34-85 Gai
 5.7	5.7	5.7
-China	Medium tank	
-T-34-85 No.215
-5.7	5.7	5.7
-China	Light tank	
-␗M18 GMC
-5.3	6.0	6.0
-China	Tank destroyer	
-␗SU-100
-6.0	6.0	6.0
-China	Light tank	
-M64
-5.3	6.0	6.0
-China	Light tank	
-Type 63
-6.3	6.3	6.3
 China	Heavy tank	
 ␗IS-2
 6.3	6.3	6.3
+China	Heavy tank	
+␗IS-2 (1944)
+6.7	6.7	6.7
+China	SPAA	
+Phong khong T-34
+5.7	5.0	5.0
+China	Tank destroyer	
+␗M36 GMC
+5.3	5.3	5.3
+China	Tank destroyer	
+␗ISU-122
+5.3	5.3	5.3
+China	Tank destroyer	
+␗SU-100
+6.0	6.0	6.0
 China	Tank destroyer	
 PLZ83
 6.3	6.3	6.3
+China	Light tank	
+M64
+5.3	6.0	6.0
+China	Medium tank	
+T-34-85 No.215
+5.7	5.7	5.7
 China	Heavy tank	
 IS-2 No.402
 6.3	6.3	6.3
 China	Light tank	
-Type 62
-6.7	6.7	6.7
-China	Heavy tank	
-␗IS-2 (1944)
-6.7	6.7	6.7
-China	Light tank	
 ZTS63
-7.7	7.7	7.7
-China	Medium tank	
-␗M48A1
 7.7	7.7	7.7
 China	Light tank	
 ZBD86
 7.7	8.0	8.0
+China	Medium tank	
+␗M48A1
+7.7	7.7	7.7
 China	Medium tank	
 Type 59
 8.0	8.0	8.0
@@ -2893,21 +2881,36 @@ Type 69
 China	SPAA	
 WZ305
 8.7	8.0	8.0
-China	Medium tank	
-ZTZ59A
-8.0	8.0	8.0
-China	Light tank	
-M41D
-7.7	8.0	8.0
 China	Tank destroyer	
 ␗M113A1 (TOW)
 8.3	8.3	8.3
 China	Medium tank	
+ZTZ59A
+8.0	8.0	8.0
+China	Medium tank	
 Type 69-IIa
 8.3	8.3	8.3
+China	Light tank	
+M41D
+7.7	8.0	8.0
+China	Medium tank	
+␗M60A3 TTS
+9.0	9.0	9.0
+China	Medium tank	
+CM11
+9.3	9.3	9.3
 China	Medium tank	
 ZTZ59D1
 8.3	8.3	8.3
+China	Medium tank	
+ZTZ88B
+9.0	9.0	9.0
+China	Medium tank	
+ZTZ88A
+9.0	9.0	9.0
+China	Medium tank	
+ZTZ96
+9.3	9.3	9.3
 China	SPAA	
 PGZ09
 8.3	8.3	8.3
@@ -2917,27 +2920,15 @@ CM25
 China	Tank destroyer	
 PTZ89
 8.7	8.7	8.7
-China	Medium tank	
-Object 122MT "MC"
-8.7	8.7	8.7
-China	Medium tank	
-Т-62 №545
-8.7	8.7	8.7
-China	Medium tank	
-␗M60A3 TTS
-9.0	9.0	9.0
-China	Medium tank	
-ZTZ88B
-9.0	9.0	9.0
-China	Medium tank	
-ZTZ88A
-9.0	9.0	9.0
 China	Light tank	
 PTL02
 8.7	9.0	9.0
 China	Tank destroyer	
 AFT09
 9.0	9.0	9.0
+China	Medium tank	
+Object 122MT "MC"
+8.7	8.7	8.7
 China	Light tank	
 WMA301
 8.7	9.0	9.0
@@ -2945,11 +2936,20 @@ China	Medium tank
 T-69 II G
 9.0	9.0	9.0
 China	Medium tank	
-CM11
-9.3	9.3	9.3
+Т-62 №545
+8.7	8.7	8.7
 China	Medium tank	
-ZTZ96
-9.3	9.3	9.3
+MBT-2000
+10.7	10.7	10.7
+China	Medium tank	
+ZTZ96A
+10.0	10.0	10.0
+China	Medium tank	
+ZTZ99-II
+10.7	10.7	10.7
+China	Medium tank	
+ZTZ99-III
+10.7	10.7	10.7
 China	SPAA	
 PGZ04A
 9.3	9.3	9.3
@@ -2957,23 +2957,11 @@ China	Light tank
 ZLT11
 9.7	9.7	9.7
 China	Medium tank	
-ZTZ96A
-10.0	10.0	10.0
-China	Medium tank	
 ZTZ96A (P)
 10.0	10.0	10.0
 China	Light tank	
 QN506
 10.0	10.0	10.0
-China	Medium tank	
-MBT-2000
-10.7	10.7	10.7
-China	Medium tank	
-ZTZ99-II
-10.7	10.7	10.7
-China	Medium tank	
-ZTZ99-III
-10.7	10.7	10.7
 China	Medium tank	
 WZ1001(E) LCT
 11.7	11.7	11.7
