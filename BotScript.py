@@ -178,6 +178,7 @@ async def on_ready():
     snapshot_task.start()
     points_alarm_task.start()
 
+
 @bot.event
 async def on_guild_join(guild):
     print(f'Joined new guild: {guild.name} (id: {guild.id})')
