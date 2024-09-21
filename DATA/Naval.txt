@@ -551,7 +551,7 @@ Japan	Destroyer
 JDS Harukaze (DD-101)
 4.0	4.0	4.0
 Japan	Destroyer	
-JDS Yūgure (DD-184)
+JDS Yugure (DD-184)
 4.3	4.3	4.3
 Japan	Motor gun boat	
 PG 02
@@ -929,7 +929,7 @@ Great Britain	Heavy cruiser
 HMS York
 5.7	5.7	5.7
 Great Britain	Sub-chaser	
-LÉ Orla
+LE Orla
 4.0	4.0	4.0
 Great Britain	Motor gun boat	
 MGB-61
@@ -1010,13 +1010,13 @@ Germany	Motor torpedo boat
 KM-5
 1.7	1.7	1.7
 Germany	Light cruiser	
-Köln
+Koln
 5.3	5.3	5.3
 Germany	Frigate	
-Köln
+Koln
 4.3	4.3	4.3
 Germany	Motor gun boat	
-Krischan der Große
+Krischan der GroSe
 2.7	2.7	2.7
 Germany	Light cruiser	
 Leipzig
@@ -1034,7 +1034,7 @@ Germany	Destroyer
 Luchs
 3.7	3.7	3.7
 Germany	Frigate	
-Lübeck
+Lubeck
 4.3	4.3	4.3
 Germany	Sub-chaser	
 M-17
@@ -1046,7 +1046,7 @@ Germany	Motor torpedo gun boat
 MZ1
 3.0	3.0	3.0
 Germany	Light cruiser	
-Nürnberg
+Nurnberg
 5.7	5.7	5.7
 Germany	Motor torpedo boat	
 Pfeil

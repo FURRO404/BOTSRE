@@ -155,7 +155,7 @@ USSR	Heavy tank
 ▂MK-II "Matilda"
 3.7	3.3	3.3
 USSR	Medium tank	
-▂МК-IX "Valentine"
+▂MK-IX "Valentine"
 3.0	3.0	3.0
 USSR	Tank destroyer	
 SU-85A
@@ -1022,7 +1022,7 @@ Sweden	Medium tank
 Strv 104
 8.7	8.7	8.7
 Sweden	Medium tank	
-Strv 103С
+Strv 103C
 8.7	8.7	8.7
 Sweden	Medium tank	
 Strv 105
@@ -2204,7 +2204,7 @@ Germany	Tank destroyer
 Nashorn
 5.3	5.3	5.3
 Germany	Tank destroyer	
-Waffenträger
+Waffentrager
 5.7	5.7	5.7
 Germany	Heavy tank	
 Tiger H1
@@ -2246,7 +2246,7 @@ Germany	Heavy tank
 ▀Pz.Kpfw. Churchill
 4.0	4.0	4.3
 Germany	Tank destroyer	
-Brummbär
+Brummbar
 4.7	4.3	4.3
 Germany	Tank destroyer	
 Panzer IV/70(A)
@@ -2654,7 +2654,7 @@ France	Medium tank
 AMX-50 (TOA100)
 7.0	7.7	7.0
 France	Heavy tank	
-AMX-50 Surbaissé
+AMX-50 Surbaisse
 7.7	7.7	7.7
 France	Tank destroyer	
 AuF1
@@ -2678,7 +2678,7 @@ France	Medium tank
 AMX-50 (TO90/930)
 8.0	8.0	8.0
 France	Heavy tank	
-AMX-50 Surblindé
+AMX-50 Surblinde
 7.7	7.7	7.7
 France	Light tank	
 MARS 15
@@ -2828,10 +2828,10 @@ China	Light tank
 Type 62
 6.7	6.7	6.7
 China	Medium tank	
-␗Т-34-85 (S-53)
+␗T-34-85 (S-53)
 5.7	5.7	5.7
 China	Medium tank	
-Т-34-85 Gai
+T-34-85 Gai
 5.7	5.7	5.7
 China	Heavy tank	
 ␗IS-2
@@ -2936,7 +2936,7 @@ China	Medium tank
 T-69 II G
 9.0	9.0	9.0
 China	Medium tank	
-Т-62 №545
+T-62 №545
 8.7	8.7	8.7
 China	Medium tank	
 MBT-2000
