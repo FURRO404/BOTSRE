@@ -232,8 +232,9 @@ async def snapshot_task():
                             channel = bot.get_channel(int(channel_id))
                             if channel:
                                 for member, points in left_members.items():
+                                    safe_member_name = discord.utils.escape_markdown(member)
                                     await channel.send(
-                                        f"Member {member} left {squadron_name} with {points} points"
+                                        f"{safe_member_name} left {squadron_name} with {points} points"
                                     )
                             else:
                                 logging.error(f"Channel ID {channel_id} not found")
