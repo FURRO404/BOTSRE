@@ -255,9 +255,9 @@ async def points_alarm_task():
     now_utc = datetime.now(timezone.utc).time()
 
     # Define the region based on the current time
-    if now_utc.hour == 22 and now_utc.minute == 30:
+    if now_utc.hour == 22 and now_utc.minute == 10:
         region = "US"
-    elif now_utc.hour == 7 and now_utc.minute == 30:
+    elif now_utc.hour == 7 and now_utc.minute == 10:
         region = "EU"
     else:
         return  # Not a scheduled time
@@ -330,7 +330,7 @@ async def execute_points_alarm_task(region):
 
                                     # Create the embed and add fields for each chunk
                                     embed = discord.Embed(
-                                        title=f"**{squadron_name} {region} Points Update**",
+                                        title=f"**{squadron_name} {opposite_region} Points Update**",
                                         description=f"**Current Points:** {sq_total_points}\n\n**Player Changes:**",
                                         color=discord.Color.blue()
                                     )

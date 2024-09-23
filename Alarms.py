@@ -2,7 +2,7 @@ import json
 import discord
 from replit.object_storage import Client
 from SQ_Info import fetch_squadron_info
-import logging
+
 
 client = Client()
 # Function to take a snapshot of the members and their scores
