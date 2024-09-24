@@ -26,7 +26,7 @@ from permissions import grant_permission, revoke_permission, has_permission
 import Alarms
 from Games import guessing_game, choose_random_vehicle, normalize_name, randomizer_game
 from SQ_Info import fetch_squadron_info
-from SQ_Info_Auto import fetch_clan_table_info, process_all_squadrons
+from SQ_Info_Auto import process_all_squadrons
 from Searcher import normalize_name, get_vehicle_type, get_vehicle_country, autofill_search
 from SQB_Parser import parse_logs, separate_games, read_logs_from_file
 
@@ -198,7 +198,7 @@ async def on_guild_join(guild):
 
 
 
-@tasks.loop(minutes=15)
+@tasks.loop(minutes=10)
 async def snapshot_task():
     logging.info("Running member-leave alarm")
     for guild in bot.guilds:
