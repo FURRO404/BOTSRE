@@ -3,12 +3,9 @@ import requests
 import discord
 from bs4 import BeautifulSoup
 
-
-# --- PUBLIC VARIABLES (Global) ---
 # Target URL
 baseURL = 'https://warthunder.com/en/community/claninfo/'
 
-# Forms a complete URL pointing to the appropriate squadron page, then calls the scraper function using said URL.
 def getData(squad):
     return scraper(baseURL + squad)
 
@@ -57,13 +54,18 @@ def generate_summary(players, total_points):
         'total_members': total_members
     }
 
-# Function to create an embed with the player data based on the type
 def create_embed(players, summary, squadron_name, embed_type=None):
     embed = discord.Embed(title=f"Squadron Info: {squadron_name}", color=0x00ff00)
 
-    if embed_type == "members":
+    if embed_type in ["members", "logs"]:
         players_sorted = sorted(players, key=lambda x: x['points'], reverse=True)
-        player_list = [player['name'].replace('_', '\\_') + f": {player['points']} points" for player in players_sorted]
+
+        # Skip escaping for "logs" type
+        if embed_type == "logs":
+            player_list = [player['name'] + f": {player['points']} points" for player in players_sorted]
+        else:
+            player_list = [player['name'].replace('_', '\\_') + f": {player['points']} points" for player in players_sorted]
+
         player_chunks = []
         current_chunk = ""
 
@@ -88,6 +90,7 @@ def create_embed(players, summary, squadron_name, embed_type=None):
 
         players_sorted = sorted(players, key=lambda x: x['points'], reverse=True)
         player_list = [player['name'].replace('_', '\\_') + f": {player['points']} points" for player in players_sorted]
+
         player_chunks = []
         current_chunk = ""
 
@@ -105,6 +108,7 @@ def create_embed(players, summary, squadron_name, embed_type=None):
             embed.add_field(name="\u00A0", value=chunk, inline=False)  # \u00A0 is a non-breaking space
 
     return embed
+
 
 
 # Main function to fetch and format squadron data

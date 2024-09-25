@@ -33,7 +33,7 @@ from SQB_Parser import parse_logs, separate_games, read_logs_from_file
 logging.basicConfig(level=logging.DEBUG)
 client = Client(bucket_id="replit-objstore-b5261a8a-c768-4543-975e-dfce1cd7077d")
 
-TOKEN = os.environ.get('DISCORD_KEY')
+TOKEN = os.environ.get('TEST_DISCORD_KEY')
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -53,117 +53,6 @@ class MyBot(commands.Bot):
 
 bot = MyBot()
 
-@bot.event
-async def on_message(message):
-    if isinstance(message.channel, discord.DMChannel):
-        if message.author == bot.user:
-            return  # Ignore messages from the bot itself
-
-        logging.info(f'Received DM from {message.author.name}: {message.content}')
-
-        if message.content.startswith('conversation-start @'):
-            try:
-                parts = message.content.split(' ', 2)
-                if len(parts) < 2:
-                    await message.channel.send('Invalid format. Use: `conversation-start @userID`')
-                    logging.info('Invalid format received for conversation-start.')
-                    return
-
-                user_id_str = parts[1].strip('@')
-                user_id = int(user_id_str)
-
-                user = bot.get_user(user_id)
-                if user is None:
-                    user = await bot.fetch_user(user_id)
-
-                if user:
-                    bot.conversations[message.author.id] = {
-                        'recipient_id': user_id,
-                        'starter_id': message.author.id
-                    }
-                    await message.channel.send(f'Conversation started with {user.name}.')
-                    logging.info(f'Conversation started with {user.name} for user {message.author.name}.')
-                else:
-                    await message.channel.send('User not found.')
-                    logging.warning(f'User with ID {user_id} not found.')
-
-            except Exception as e:
-                await message.channel.send(f'An error occurred: {str(e)}')
-                logging.error(f'Error handling conversation start: {str(e)}')
-
-        elif message.content == 'conversation-end':
-            if message.author.id in bot.conversations:
-                del bot.conversations[message.author.id]
-                await message.channel.send('Conversation ended.')
-                logging.info(f'Conversation ended for user {message.author.name}.')
-            else:
-                await message.channel.send('No active conversation found.')
-
-        elif message.content.startswith('message @'):
-            try:
-                parts = message.content.split(' ', 2)
-                if len(parts) < 3:
-                    await message.channel.send('Invalid format. Use: `message @userID your message`')
-                    logging.info('Invalid format received for message command.')
-                    return
-
-                user_id_str = parts[1].strip('@')
-                user_message = parts[2]
-
-                user_id = int(user_id_str)
-
-                user = bot.get_user(user_id)
-                if user is None:
-                    user = await bot.fetch_user(user_id)
-
-                if user:
-                    await user.send(user_message)
-                    await message.channel.send(f'Message sent to {user.name}.')
-                    logging.info(f'Message sent to {user.name}: {user_message}')
-                else:
-                    await message.channel.send('User not found.')
-                    logging.warning(f'User with ID {user_id} not found.')
-
-            except Exception as e:
-                await message.channel.send(f'An error occurred: {str(e)}')
-                logging.error(f'Error handling DM: {str(e)}')
-
-        # Forwarding messages between the starter and recipient
-        elif message.author.id in bot.conversations:
-            conversation = bot.conversations[message.author.id]
-            recipient_id = conversation['recipient_id']
-            starter_id = conversation['starter_id']
-
-            # If the sender is the starter, forward to the recipient
-            if message.author.id == starter_id:
-                recipient = bot.get_user(recipient_id)
-                if recipient is None:
-                    recipient = await bot.fetch_user(recipient_id)
-
-                if recipient and recipient.id != bot.user.id:  # Ensure the recipient is not the bot
-                    await recipient.send(message.content)
-                    logging.info(f'Forwarded message from {message.author.name} to {recipient.name}: {message.content}')
-
-            # If the sender is the recipient, forward to the starter
-            elif message.author.id == recipient_id:
-                starter = bot.get_user(starter_id)
-                if starter is None:
-                    starter = await bot.fetch_user(starter_id)
-
-                if starter and starter.id != bot.user.id:  # Ensure the starter is not the bot
-                    await starter.send(f'Received a reply from {message.author.name}: {message.content}')
-                    logging.info(f'Forwarded reply from {message.author.name} to {starter.name}: {message.content}')
-                else:
-                    logging.warning(f'Starter with ID {starter_id} not found.')
-            else:
-                logging.warning(f'Unexpected scenario: message.author.id = {message.author.id}')
-
-    # Process commands after handling the message
-    await bot.process_commands(message)
-
-
-
-
 
 @bot.event
 async def on_ready():
@@ -177,7 +66,7 @@ async def on_ready():
         bot.synced = True
     snapshot_task.start()
     points_alarm_task.start()
-
+    logs_snapshot.start()  
 
 @bot.event
 async def on_guild_join(guild):
@@ -358,6 +247,38 @@ async def execute_points_alarm_task(region):
 
 @points_alarm_task.before_loop
 async def before_points_alarm_task():
+    await bot.wait_until_ready()
+
+@tasks.loop(minutes=3)
+async def logs_snapshot():
+    logging.info("Running logs snapshot task")
+
+    # Load SQUADRONS.json from Replit object storage
+    try:
+        squadrons_data = client.download_as_text("SQUADRONS.json")
+        squadrons = json.loads(squadrons_data)
+    except (ObjectNotFoundError, FileNotFoundError) as e:
+        logging.error("SQUADRONS.json not found or could not be loaded")
+        return
+
+    # Iterate through each server's squadron information
+    for server_id, squadron_info in squadrons.items():
+        long_hand_name = squadron_info.get("SQ_LongHandName", "Unknown")
+        logging.info(f"Fetching players for squadron: {long_hand_name}")
+
+        # Fetch squadron info from the website
+        embed = fetch_squadron_info(long_hand_name, embed_type="logs")
+
+        if embed:
+            # Log each player's name and points
+            for field in embed.fields:
+                logging.info(f"Squadron: {long_hand_name}, Players:\n{field.value}")
+        else:
+            logging.error(f"Failed to fetch data for squadron {long_hand_name}")
+            
+
+@logs_snapshot.before_loop
+async def before_logs_snapshot():
     await bot.wait_until_ready()
 
 
