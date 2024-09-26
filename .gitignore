@@ -161,3 +161,4 @@ cython_debug/
 
 Data_Cleaner.py
 EXTRA_STUFF/
+AutoLog.py
