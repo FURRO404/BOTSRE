@@ -62,7 +62,7 @@ def create_embed(players, summary, squadron_name, embed_type=None):
 
         # Skip escaping for "logs" type
         if embed_type == "logs":
-            player_list = [player['name'] + f": {player['points']} points" for player in players_sorted]
+            player_list = [player['name'] for player in players_sorted]
         else:
             player_list = [player['name'].replace('_', '\\_') + f": {player['points']} points" for player in players_sorted]
 

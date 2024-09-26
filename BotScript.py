@@ -9,6 +9,7 @@ import datetime as DT
 from datetime import datetime, time, timezone
 import re
 from io import StringIO
+import time as T
 
 # Third-Party Library Imports
 import discord
@@ -18,6 +19,7 @@ from replit.object_storage import Client
 from replit.object_storage.errors import ObjectNotFoundError
 import requests
 
+
 # Local Module Imports
 from Meta_Add import add_to_metas
 from Meta_Remove import remove_from_metas, find_vehicles_in_meta
@@ -26,6 +28,7 @@ from permissions import grant_permission, revoke_permission, has_permission
 import Alarms
 from Games import guessing_game, choose_random_vehicle, normalize_name, randomizer_game
 from SQ_Info import fetch_squadron_info
+from AutoLog import fetch_games_for_user
 from SQ_Info_Auto import process_all_squadrons
 from Searcher import normalize_name, get_vehicle_type, get_vehicle_country, autofill_search
 from SQB_Parser import parse_logs, separate_games, read_logs_from_file
@@ -33,7 +36,7 @@ from SQB_Parser import parse_logs, separate_games, read_logs_from_file
 logging.basicConfig(level=logging.DEBUG)
 client = Client(bucket_id="replit-objstore-b5261a8a-c768-4543-975e-dfce1cd7077d")
 
-TOKEN = os.environ.get('TEST_DISCORD_KEY')
+TOKEN = os.environ.get('DISCORD_KEY')
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -249,32 +252,89 @@ async def execute_points_alarm_task(region):
 async def before_points_alarm_task():
     await bot.wait_until_ready()
 
-@tasks.loop(minutes=3)
+@tasks.loop(minutes=5)
 async def logs_snapshot():
-    logging.info("Running logs snapshot task")
+    for guild in bot.guilds:
+        guild_id = guild.id
+        key = f"{guild_id}-preferences.json"
 
-    # Load SQUADRONS.json from Replit object storage
-    try:
-        squadrons_data = client.download_as_text("SQUADRONS.json")
-        squadrons = json.loads(squadrons_data)
-    except (ObjectNotFoundError, FileNotFoundError) as e:
-        logging.error("SQUADRONS.json not found or could not be loaded")
-        return
+        logging.info(f"Processing guild: {guild_id}")
 
-    # Iterate through each server's squadron information
-    for server_id, squadron_info in squadrons.items():
-        long_hand_name = squadron_info.get("SQ_LongHandName", "Unknown")
-        logging.info(f"Fetching players for squadron: {long_hand_name}")
+        try:
+            # Load the preferences file for the guild
+            data = client.download_as_text(key)
+            preferences = json.loads(data)
+            logging.info(f"Successfully loaded preferences for guild: {guild_id}")
+        except (ObjectNotFoundError, FileNotFoundError):
+            preferences = {}
+            logging.warning(f"No preferences found for guild: {guild_id}")
 
-        # Fetch squadron info from the website
-        embed = fetch_squadron_info(long_hand_name, embed_type="logs")
+        # Load SQUADRONS.json for this guild from Replit object storage
+        try:
+            squadrons_data = client.download_as_text("SQUADRONS.json")
+            squadrons = json.loads(squadrons_data)
+        except (ObjectNotFoundError, FileNotFoundError) as e:
+            logging.error("SQUADRONS.json not found or could not be loaded")
+            continue
 
-        if embed:
-            # Log each player's name and points
-            for field in embed.fields:
-                logging.info(f"Squadron: {long_hand_name}, Players:\n{field.value}")
-        else:
-            logging.error(f"Failed to fetch data for squadron {long_hand_name}")
+        # Load or create SESSIONS.json
+        try:
+            sessions_data = client.download_as_text("SESSIONS.json")
+            sessions = json.loads(sessions_data)
+        except (ObjectNotFoundError, FileNotFoundError):
+            logging.info("SESSIONS.json not found, creating a new one.")
+            sessions = {}
+
+        # Iterate through each squadron in the preferences and check for 'Logs' alarm
+        for squadron_name, squadron_preferences in preferences.items():
+            logging.info(f"Checking squadron: {squadron_name} for logs alarm")
+
+            if "Logs" in squadron_preferences:
+                channel_id = squadron_preferences.get("Logs")
+                logging.info(f"Logs are enabled for squadron: {squadron_name} in guild: {guild_id}")
+
+                # Fetch squadron info from the website
+                squadron_info = fetch_squadron_info(squadron_name, embed_type="logs")
+                if squadron_info:
+                    # Initialize session data if not already present
+                    if guild_id not in sessions:
+                        sessions[guild_id] = []
+
+                    unique_session_ids = {}
+
+                    # Process each player in the squadron
+                    for field in squadron_info.fields:
+                        usernames = field.value.split("\n")
+                        for username in usernames:
+                            # Fetch the games for each user asynchronously
+                            games = await fetch_games_for_user(username)
+                            for game in games:
+                                session_id = game.get('sessionIdHex')
+                                if session_id:
+                                    # Add session ID to unique list
+                                    if session_id not in unique_session_ids:
+                                        unique_session_ids[session_id] = []
+                                    unique_session_ids[session_id].append(username)
+
+                    # After collecting unique session IDs, validate with at least 5 other players
+                    for session_id, matching_players in unique_session_ids.items():
+                        if len(matching_players) >= 6:  # Original player + at least 5 others
+                            if session_id not in sessions[guild_id]:
+                                sessions[guild_id].append(session_id)
+                                logging.info(f"Valid session ID {session_id} found with players: {matching_players} for squadron {squadron_name}")
+                                #pass to download and parse
+                                logging.info(f"Session: {session_id} sent to replay parser")
+                                #parser needs to return the enemy comp, and literally any indicator of who won
+                                #then we can create an embed for the channel set in preferences with details, ideally also player names in the future.
+                                #then cleanup and remove everything we dont need.
+                    
+                    # Save updated sessions data
+                    client.upload_from_text("SESSIONS.json", json.dumps(sessions, indent=4))
+                    logging.info(f"Updated SESSIONS.json after processing squadron: {squadron_name}")
+                else:
+                    logging.error(f"Failed to fetch data for squadron {squadron_name} in guild {guild_id}")
+            else:
+                logging.info(f"Logs are disabled or not set for squadron: {squadron_name} in guild: {guild_id}")
             
 
 @logs_snapshot.before_loop
@@ -285,7 +345,7 @@ async def before_logs_snapshot():
 @bot.tree.command(name="alarm",
       description="Set an alarm to monitor squadron changes")
 @app_commands.describe(
-    type="The type of alarm (e.g., Leave, Points)",
+    type="The type of alarm (e.g., Leave, Points, Logs)",
     channel_id="The ID of the channel to send alarm messages to",
     squadron_name="The FULL name of the squadron to monitor")
 @commands.has_permissions(administrator=True)
