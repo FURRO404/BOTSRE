@@ -32,6 +32,8 @@ from AutoLog import fetch_games_for_user
 from SQ_Info_Auto import process_all_squadrons
 from Searcher import normalize_name, get_vehicle_type, get_vehicle_country, autofill_search
 from SQB_Parser import parse_logs, separate_games, read_logs_from_file
+#from Parse_Replay import get_winning_team, parse_replay
+from FriendlyComp import handle_comp_command
 
 logging.basicConfig(level=logging.DEBUG)
 client = Client(bucket_id="replit-objstore-b5261a8a-c768-4543-975e-dfce1cd7077d")
@@ -69,7 +71,7 @@ async def on_ready():
         bot.synced = True
     snapshot_task.start()
     points_alarm_task.start()
-    logs_snapshot.start()  
+    #logs_snapshot.start()  
 
 @bot.event
 async def on_guild_join(guild):
@@ -252,16 +254,28 @@ async def execute_points_alarm_task(region):
 async def before_points_alarm_task():
     await bot.wait_until_ready()
 
-@tasks.loop(minutes=5)
+def get_shortname_from_long(longname):
+    # Read the SQUADRONS.json from Replit object storage as text
+    squadrons_str = client.download_as_text("SQUADRONS.json")
+
+    # Convert the string to a dictionary
+    squadrons = json.loads(squadrons_str)
+
+    # Iterate through the dictionary to find the matching long name
+    for server_id, squadron_info in squadrons.items():
+        if squadron_info["SQ_LongHandName"] == longname:
+            return squadron_info["SQ_ShortHand_Name"]
+
+    return None
+
+@tasks.loop(minutes=7)
 async def logs_snapshot():
     for guild in bot.guilds:
         guild_id = guild.id
         key = f"{guild_id}-preferences.json"
-
         logging.info(f"Processing guild: {guild_id}")
 
         try:
-            # Load the preferences file for the guild
             data = client.download_as_text(key)
             preferences = json.loads(data)
             logging.info(f"Successfully loaded preferences for guild: {guild_id}")
@@ -269,15 +283,14 @@ async def logs_snapshot():
             preferences = {}
             logging.warning(f"No preferences found for guild: {guild_id}")
 
-        # Load SQUADRONS.json for this guild from Replit object storage
         try:
             squadrons_data = client.download_as_text("SQUADRONS.json")
             squadrons = json.loads(squadrons_data)
+            logging.info("Loaded SQUADRONS.json")
         except (ObjectNotFoundError, FileNotFoundError) as e:
             logging.error("SQUADRONS.json not found or could not be loaded")
             continue
 
-        # Load or create SESSIONS.json
         try:
             sessions_data = client.download_as_text("SESSIONS.json")
             sessions = json.loads(sessions_data)
@@ -285,58 +298,106 @@ async def logs_snapshot():
             logging.info("SESSIONS.json not found, creating a new one.")
             sessions = {}
 
-        # Iterate through each squadron in the preferences and check for 'Logs' alarm
+        # Check if the guild_id exists in sessions.json, if not, create an empty list
+        if str(guild_id) not in sessions:
+            sessions[str(guild_id)] = []
+            logging.info(f"Added new guild entry for guild: {guild_id} in sessions.json")
+
+        all_found_sessions = []  # Collect all sessions found for this guild
+
+        # Iterate through the preferences to check if logging is set up
         for squadron_name, squadron_preferences in preferences.items():
-            logging.info(f"Checking squadron: {squadron_name} for logs alarm")
 
             if "Logs" in squadron_preferences:
                 channel_id = squadron_preferences.get("Logs")
                 logging.info(f"Logs are enabled for squadron: {squadron_name} in guild: {guild_id}")
 
-                # Fetch squadron info from the website
                 squadron_info = fetch_squadron_info(squadron_name, embed_type="logs")
+
+                found_sessions = []
+
                 if squadron_info:
-                    # Initialize session data if not already present
-                    if guild_id not in sessions:
-                        sessions[guild_id] = []
-
-                    unique_session_ids = {}
-
-                    # Process each player in the squadron
                     for field in squadron_info.fields:
                         usernames = field.value.split("\n")
                         for username in usernames:
-                            # Fetch the games for each user asynchronously
                             games = await fetch_games_for_user(username)
+
                             for game in games:
                                 session_id = game.get('sessionIdHex')
-                                if session_id:
-                                    # Add session ID to unique list
-                                    if session_id not in unique_session_ids:
-                                        unique_session_ids[session_id] = []
-                                    unique_session_ids[session_id].append(username)
 
-                    # After collecting unique session IDs, validate with at least 5 other players
-                    for session_id, matching_players in unique_session_ids.items():
-                        if len(matching_players) >= 6:  # Original player + at least 5 others
-                            if session_id not in sessions[guild_id]:
-                                sessions[guild_id].append(session_id)
-                                logging.info(f"Valid session ID {session_id} found with players: {matching_players} for squadron {squadron_name}")
-                                #pass to download and parse
-                                logging.info(f"Session: {session_id} sent to replay parser")
-                                #parser needs to return the enemy comp, and literally any indicator of who won
-                                #then we can create an embed for the channel set in preferences with details, ideally also player names in the future.
-                                #then cleanup and remove everything we dont need.
-                    
-                    # Save updated sessions data
-                    client.upload_from_text("SESSIONS.json", json.dumps(sessions, indent=4))
-                    logging.info(f"Updated SESSIONS.json after processing squadron: {squadron_name}")
-                else:
-                    logging.error(f"Failed to fetch data for squadron {squadron_name} in guild {guild_id}")
-            else:
-                logging.info(f"Logs are disabled or not set for squadron: {squadron_name} in guild: {guild_id}")
-            
+                                # Append each new session ID to the found_sessions list if not in old_replay_ids
+                                if session_id and session_id not in sessions[str(guild_id)]:
+                                    found_sessions.append(session_id)
 
+                # Count occurrences of each session_id in found_sessions
+                session_counts = {}
+                for session in found_sessions:
+                    if session in session_counts:
+                        session_counts[session] += 1
+                    else:
+                        session_counts[session] = 1
+
+                # Collect sessions that appear more than 3 times
+                valid_sessions = [session for session, count in session_counts.items() if count >= 3]
+                logging.info(f"Valid session IDs (found 3 or more times): {valid_sessions}")
+
+                all_found_sessions.extend(found_sessions)  # Add found sessions to the overall list
+
+                # Process each valid session ID one by one
+                for session_id in valid_sessions:                      
+                    session_id_prefixed = '0' + session_id
+                    full_comp = parse_replay(session_id_prefixed)
+                    logging.info(f"Replay parsed for session {session_id_prefixed}: {full_comp}")
+
+                    shortname = get_shortname_from_long(squadron_name)
+                    victor = get_winning_team(session_id_prefixed)
+                    logging.info(f"VICTOR: {victor}")
+
+                    key = f"{guild_id}.comp"
+                    try:
+                        friendly_comp = client.download_as_text(key).splitlines()
+                        logging.info(f"Friendly Comp: {friendly_comp}")
+                    except (ObjectNotFoundError, FileNotFoundError):
+                        logging.error(f"Friendly comp for guild {guild_id} not found.")
+                        friendly_comp = []
+
+                    for vehicle in friendly_comp:
+                        if vehicle in full_comp:
+                            full_comp.remove(vehicle)
+
+                    enemy_comp = full_comp
+
+                    if enemy_comp:
+                        embed = discord.Embed(
+                            title=f"{victor}",
+                            description=f"Session ID: {session_id}",
+                            color=discord.Color.blue(),
+                        )
+
+                        vehicle_list = "\n".join(enemy_comp)
+                        embed.add_field(name="Enemy Comp", value=vehicle_list, inline=False)
+                        embed.set_footer(text="IGNORE THIS FOR NOW")
+
+                        channel = bot.get_channel(int(channel_id.strip('<#>')))
+                        if channel:
+                            await channel.send(embed=embed)
+                            logging.info(f"Replay summary sent to channel {channel_id}")
+                        else:
+                            logging.error(f"Channel ID {channel_id} not found.")
+
+        # After processing all squadrons, update the sessions.json with the found sessions
+        if all_found_sessions:
+            existing_sessions = sessions.get(str(guild_id), [])
+            updated_sessions = list(set(existing_sessions + all_found_sessions))  # Remove duplicates
+            sessions[str(guild_id)] = updated_sessions
+
+            # Upload the updated sessions.json file back to storage
+            client.upload_from_text("SESSIONS.json", json.dumps(sessions, indent=4))
+            logging.info(f"Updated SESSIONS.json for guild {guild_id} with new sessions: {all_found_sessions}")
+
+
+
+                
 @logs_snapshot.before_loop
 async def before_logs_snapshot():
     await bot.wait_until_ready()
@@ -989,6 +1050,40 @@ async def session(interaction: discord.Interaction):
         await interaction.followup.send(f"An unexpected error occurred: {e}", ephemeral=True)
 
 
+@bot.tree.command(name="setcomp", description="Set your current team lineup")
+@app_commands.describe(vehicle1="Name of Vehicle 1",
+                       vehicle2="Name of Vehicle 2",
+                       vehicle3="Name of Vehicle 3",
+                       vehicle4="Name of Vehicle 4",
+                       vehicle5="Name of Vehicle 5",
+                       vehicle6="Name of Vehicle 6",
+                       vehicle7="Name of Vehicle 7",
+                       vehicle8="Name of Vehicle 8")
+@has_roles_or_admin("Session")
+async def setComp(interaction: discord.Interaction,
+              vehicle1: str,
+              vehicle2: str,
+              vehicle3: str,
+              vehicle4: str,
+              vehicle5: str,
+              vehicle6: str,
+              vehicle7: str,
+              vehicle8: str):
+    await interaction.response.defer(ephemeral=True)
+
+    try:
+        await handle_comp_command(interaction,
+              vehicle1,
+              vehicle2,
+              vehicle3,
+              vehicle4,
+              vehicle5,
+              vehicle6,
+              vehicle7,
+              vehicle8)
+    except Exception as e:
+        logging.error(f"Error setting team comp: {e}")
+        await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
 
 
 @bot.tree.command(name="win", description="Log a win for a team")
