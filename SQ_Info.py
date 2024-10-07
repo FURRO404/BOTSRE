@@ -1,21 +1,22 @@
 import re
-import requests
+import aiohttp
 import discord
 from bs4 import BeautifulSoup
 
 # Target URL
 baseURL = 'https://warthunder.com/en/community/claninfo/'
 
-def getData(squad):
-    return scraper(baseURL + squad)
+async def getData(squad):
+    return await scraper(baseURL + squad)
 
-# Scrapes data from the provided URL
-def scraper(url):
+# Scrapes data from the provided URL using aiohttp
+async def scraper(url):
     try:
-        response = requests.get(url, timeout=60)
-        content = BeautifulSoup(response.content, "lxml")
-        return parser(content)
-    except (requests.exceptions.RequestException, Exception) as e:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=60) as response:
+                content = BeautifulSoup(await response.text(), "lxml")
+                return parser(content)
+    except (aiohttp.ClientError, Exception) as e:
         print(f"Error raised in 'scraper' function: {e}")
         return None
 
@@ -109,12 +110,10 @@ def create_embed(players, summary, squadron_name, embed_type=None):
 
     return embed
 
-
-
-# Main function to fetch and format squadron data
-def fetch_squadron_info(squadron_name, embed_type=None):
+# Main function to fetch and format squadron data asynchronously
+async def fetch_squadron_info(squadron_name, embed_type=None):
     squad = squadron_name.replace(" ", "%20")
-    players, total_points = getData(squad)
+    players, total_points = await getData(squad)
     if players is not None:
         summary = generate_summary(players, total_points)
         embed = create_embed(players, summary, squadron_name, embed_type)

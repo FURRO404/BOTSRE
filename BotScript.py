@@ -107,7 +107,7 @@ async def snapshot_task():
 
         for squadron_name, squadron_preferences in preferences.items():
             old_snapshot = Alarms.load_snapshot(guild_id, squadron_name)
-            new_snapshot = Alarms.take_snapshot(squadron_name)
+            new_snapshot = await Alarms.take_snapshot(squadron_name)
 
             if old_snapshot:
                 left_members = Alarms.compare_snapshots(old_snapshot, new_snapshot)
@@ -178,14 +178,14 @@ async def execute_points_alarm_task(region):
             logging.info(f"Checking squadron: {squadron_name} for points alarm")
 
             # Fetch the current squadron points using SQ_Info.py functions
-            squadron_info = fetch_squadron_info(squadron_name, embed_type="points")
+            squadron_info = await fetch_squadron_info(squadron_name, embed_type="points")
             sq_total_points = squadron_info.fields[0].value if squadron_info else "N/A"
             logging.info(f"{squadron_name} points at {sq_total_points}.")
 
             if "Points" in squadron_preferences:
                 opposite_region = "EU" if region == "US" else "US"
                 old_snapshot = Alarms.load_snapshot(guild_id, squadron_name, opposite_region)
-                new_snapshot = Alarms.take_snapshot(squadron_name)
+                new_snapshot = await Alarms.take_snapshot(squadron_name)
 
                 if old_snapshot:
                     logging.info(f"Loaded old snapshot for {squadron_name}, region {opposite_region}")
@@ -312,7 +312,7 @@ async def logs_snapshot():
                 channel_id = squadron_preferences.get("Logs")
                 logging.info(f"Logs are enabled for squadron: {squadron_name} in guild: {guild_id}")
 
-                squadron_info = fetch_squadron_info(squadron_name, embed_type="logs")
+                squadron_info = await fetch_squadron_info(squadron_name, embed_type="logs")
 
                 found_sessions = []
 
@@ -1227,7 +1227,7 @@ async def sq_info(interaction: discord.Interaction, squadron: str = None, type: 
             return
 
         # Fetch squadron information using the resolved squadron name
-        embed = fetch_squadron_info(squadron, type)
+        embed = await fetch_squadron_info(squadron, type)
         if embed:
             embed.set_footer(text="Meow :3")
             await interaction.followup.send(embed=embed)
@@ -1754,22 +1754,20 @@ async def set_squadron(interaction: discord.Interaction, sq_short_hand_name: str
         await interaction.followup.send(embed=embed, ephemeral=True)
 
 
-
-
 @bot.tree.command(name='top', description='Get the top 20 squadrons with detailed stats')
 async def top(interaction: discord.Interaction):
     await interaction.response.defer()
 
     squadron_data = process_all_squadrons()
-    
+
     if not squadron_data:
         await interaction.followup.send("No squadron data available.", ephemeral=True)
         return
 
     embed = discord.Embed(title="**Top 20 Squadrons**", color=discord.Color.purple())
-    
-    for squadron in squadron_data:
-        embed.add_field(name=f"**{squadron['Squadron Name']}**", value=(
+
+    for idx, squadron in enumerate(squadron_data, start=1):
+        embed.add_field(name=f"**{idx} - {squadron['Squadron Name']}**", value=(
         f"**Squadron Score:** {squadron['Squadron Score']}\n"
         f"**Air Kills:** {squadron['Air Kills']}\n"
         f"**Ground Kills:** {squadron['Ground Kills']}\n"
@@ -1778,9 +1776,10 @@ async def top(interaction: discord.Interaction):
         f"**Playtime:** {squadron['Playtime']}\n"
         "\u200b"  # Adds a small amount of space between each squadron
     ), inline=True)
-    
+
     embed.set_footer(text="Meow :3")
     await interaction.followup.send(embed=embed, ephemeral=False)
+
 
 
 

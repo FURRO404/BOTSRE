@@ -1,3 +1,4 @@
+#Alarms.py
 import json
 import discord
 from replit.object_storage import Client
@@ -6,8 +7,8 @@ from SQ_Info import fetch_squadron_info
 
 client = Client()
 # Function to take a snapshot of the members and their scores
-def take_snapshot(squadron_name):
-    snapshot = fetch_squadron_info(squadron_name, embed_type="members")
+async def take_snapshot(squadron_name):
+    snapshot = await fetch_squadron_info(squadron_name, embed_type="members")
     return snapshot
 
 # Function to save the snapshot using Replit object storage
