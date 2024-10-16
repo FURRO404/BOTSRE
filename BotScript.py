@@ -1781,8 +1781,6 @@ async def top(interaction: discord.Interaction):
     await interaction.followup.send(embed=embed, ephemeral=False)
 
 
-
-
 @bot.tree.command(name="help", description="Get a guide on how to use the bot")
 async def help(interaction: discord.Interaction):
     guide_text = (
@@ -1802,12 +1800,13 @@ async def help(interaction: discord.Interaction):
         "13. **/guessing-game** - Start a guessing game.\n"
         "14. **/trivia [difficulty]** - Play a War Thunder vehicle trivia game. A higher difficulty means more points.\n"
         "15. **/leaderboard** - Show the leaderboard.\n"
-        "16. **/console** - Manage the metalist.\n"
-        "17. **/viewmeta** - View the metalist.\n"
-        "18. **/time** - Get the current UTC time and your local time.\n"
-        "19. **/help** - Get a guide on how to use the bot.\n"
-        "20. **/set-squadron {short hand} {long hand}** - Store squadron name for the discord server (used for logging).\n\n"
-        "*For detailed information on each command, please refer to the respective command descriptions.*"
+        "16. **/top** - Display the top 20 squadrons currently and their stats.\n"
+        "17. **/console** - Manage the metalist.\n"
+        "18. **/viewmeta** - View the metalist.\n"
+        "19. **/time** - Get the current UTC time and your local time.\n"
+        "20. **/help** - Get a guide on how to use the bot.\n"
+        "21. **/set-squadron {short hand} {long hand}** - Store squadron name for the discord server (used for logging).\n\n"
+        "*For detailed information on each command, please read the input descriptions of each command, or reach out to not_so_toothless.*"
     )
 
     embed = discord.Embed(
