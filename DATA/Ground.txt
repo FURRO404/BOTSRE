@@ -2218,6 +2218,9 @@ VK 3002 (M)
 Germany	Medium tank	
 Panther D
 5.7	5.3	5.3
+Germany SPAA
+Zerstorer 45
+6.0 6.0 6.0
 Germany	SPAA	
 Wirbelwind
 4.7	3.7	3.7

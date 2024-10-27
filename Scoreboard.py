@@ -76,8 +76,8 @@ class Scoreboard:
             embed = fetch_squadron_info(long_hand_name, "points")
             if embed is not None:
                 # Extract the points from the embed's field
-                points_field = embed.fields[0]  # Assuming the first field contains the points
-                points_value = points_field.value.replace(',', '')  # Remove commas for large numbers
+                points_field = embed.fields[0] 
+                points_value = points_field.value.replace(',', '')
                 return int(points_value)
             else:
                 logging.error(f"Could not fetch points for squadron {long_hand_name}")
