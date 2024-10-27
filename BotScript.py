@@ -1781,6 +1781,14 @@ async def top(interaction: discord.Interaction):
     await interaction.followup.send(embed=embed, ephemeral=False)
 
 
+@bot.tree.command(name='taaerota', description=':3')
+async def taaerota(interaction: discord.Interaction):
+    await interaction.response.defer(ephemeral=False)
+    await interaction.delete_original_response()
+    await interaction.channel.send("meow")
+
+
+
 @bot.tree.command(name="help", description="Get a guide on how to use the bot")
 async def help(interaction: discord.Interaction):
     guide_text = (
@@ -1804,8 +1812,9 @@ async def help(interaction: discord.Interaction):
         "17. **/console** - Manage the metalist.\n"
         "18. **/viewmeta** - View the metalist.\n"
         "19. **/time** - Get the current UTC time and your local time.\n"
-        "20. **/help** - Get a guide on how to use the bot.\n"
-        "21. **/set-squadron {short hand} {long hand}** - Store squadron name for the discord server (used for logging).\n\n"
+        "20. **/taaerota** - Meow~\n"
+        "21. **/help** - Get a guide on how to use the bot.\n"
+        "22. **/set-squadron {short hand} {long hand}** - Store squadron name for the discord server (used for logging).\n\n"
         "*For detailed information on each command, please read the input descriptions of each command, or reach out to not_so_toothless.*"
     )
 
