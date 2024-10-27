@@ -1658,13 +1658,13 @@ async def quick_log(interaction: discord.Interaction,
 
 
 
-@bot.tree.command(name='time', description='Get the current UTC time')
+@bot.tree.command(name='time', description='Get the current UTC and local time')
 async def time(interaction: discord.Interaction):
     utc_time = DT.datetime.utcnow().strftime('%I:%M %p')
     timestamp = int(DT.datetime.utcnow().timestamp())
 
     embed = discord.Embed(
-        title="Current UTC Time",
+        title="Current UTC and local Time",
         description=f"**UTC Time:** {utc_time}\n**Local Time:** <t:{timestamp}:t>",
         color=discord.Color.blue()
     )
