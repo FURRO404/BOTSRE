@@ -18,6 +18,7 @@ async def scraper(url):
             async with session.get(url, timeout=60) as response:
                 content = BeautifulSoup(await response.text(), "lxml")
                 return parser(content)
+                
     except (aiohttp.ClientError, Exception) as e:
         print(f"Error raised in 'scraper' function: {e}")
         return None
@@ -134,7 +135,6 @@ def create_embed(players, summary, squadron_name, embed_type=None):
     return embed
 
 
-# Main function to fetch and format squadron data asynchronously
 async def fetch_squadron_info(squadron_name, embed_type=None):
     squad = squadron_name.replace(" ", "%20")
     players, total_points = await getData(squad)
