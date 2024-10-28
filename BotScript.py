@@ -1794,7 +1794,7 @@ async def help(interaction: discord.Interaction):
     guide_text = (
         "**Commands Overview**\n"
         "1. **/grant [target] [permission_type]** - Grant a user or role permission.\n"
-        "2. **/revoke [target] [permission_type]** - Revoke a user or role's permission.\n"
+        "2. **/revoke [target] [permission_type]** - Revoke a user or role permission.\n"
         "3. **/clear** - Clear the entire Meta list (Owner only).\n"
         "4. **/session** - Start a new session.\n"
         "5. **/win [team_name] [bombers] [fighters] [helis] [tanks] [spaa] [comment]** - Log a win for a team.\n"
@@ -1813,8 +1813,8 @@ async def help(interaction: discord.Interaction):
         "18. **/viewmeta** - View the metalist.\n"
         "19. **/time** - Get the current UTC time and your local time.\n"
         "20. **/taaerota** - Meow~\n"
-        "21. **/help** - Get a guide on how to use the bot.\n"
-        "22. **/set-squadron {short hand} {long hand}** - Store squadron name for the discord server (used for logging).\n\n"
+        "21. **/set-squadron {short hand} {long hand}** - Store squadron name for the discord server (used for logging).\n"
+        "22. **/help** - Get a guide on how to use the bot.\n\n"
         "*For detailed information on each command, please read the input descriptions of each command, or reach out to not_so_toothless.*"
     )
 
