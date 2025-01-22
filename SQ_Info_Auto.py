@@ -146,3 +146,6 @@ def process_all_squadrons():
         print("No data found on the first page of the leaderboard.")
 
     return all_squadron_stats if all_squadron_stats else None
+
+
+

@@ -2,6 +2,7 @@ import re
 import aiohttp
 import discord
 from bs4 import BeautifulSoup
+import asyncio
 
 # Target URL
 baseURL = 'https://warthunder.com/en/community/claninfo/'
@@ -18,7 +19,7 @@ async def scraper(url):
             async with session.get(url, timeout=60) as response:
                 content = BeautifulSoup(await response.text(), "lxml")
                 return parser(content)
-                
+
     except (aiohttp.ClientError, Exception) as e:
         print(f"Error raised in 'scraper' function: {e}")
         return None
@@ -144,3 +145,16 @@ async def fetch_squadron_info(squadron_name, embed_type=None):
         return embed
     else:
         return None
+
+
+def test_main():
+    try:
+        embed = asyncio.run(fetch_squadron_info("EXLY", "logs"))
+        if embed:
+            print(embed.to_dict())  # Debug output
+        else:
+            print("Failed to fetch squadron info.")
+    except RuntimeError as e:
+        print(f"Runtime error: {e}")
+
+#test_main()

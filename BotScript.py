@@ -4,16 +4,18 @@ import sys
 import json
 import logging
 import asyncio
+from asyncio import *
+import aiofiles
 import random
 import datetime as DT
 from datetime import datetime, time, timezone
 import re
 from io import StringIO
-import time as T
 
 # Third-Party Library Imports
 import discord
 from discord.ext import commands, tasks
+from discord.utils import escape_markdown
 from discord import app_commands, ui, Interaction, SelectOption
 from replit.object_storage import Client
 from replit.object_storage.errors import ObjectNotFoundError
@@ -30,8 +32,7 @@ from SQ_Info import fetch_squadron_info
 from AutoLog import fetch_games_for_user
 from SQ_Info_Auto import process_all_squadrons
 from Searcher import normalize_name, get_vehicle_type, get_vehicle_country, autofill_search
-from SQB_Parser import parse_logs, separate_games, read_logs_from_file
-#from Parse_Replay import get_winning_team, parse_replay
+from Parse_Replay import save_replay_data
 from FriendlyComp import handle_comp_command
 
 logging.basicConfig(level=logging.DEBUG)
@@ -172,6 +173,7 @@ async def points_alarm_task():
 
 
 async def execute_points_alarm_task(region):
+    logging.info("Running points-update alarm")
     for guild in bot.guilds:
         guild_id = guild.id
         key = f"{guild_id}-preferences.json"
@@ -212,84 +214,80 @@ async def execute_points_alarm_task(region):
                         old_snapshot, new_snapshot)
 
                     if points_changes:
-                        channel_id = squadron_preferences.get("Points")
-                        if channel_id:
-                            channel_id = ''.join(
-                                filter(str.isdigit, channel_id))
-                            if channel_id.isdigit():
-                                channel = bot.get_channel(int(channel_id))
-                                if channel:
-                                    logging.info(
-                                        f"Sending points update to channel {channel_id} for squadron {squadron_name}"
+                        channel_id = squadron_preferences.get("Points", "")
+                        channel_id = int(channel_id.strip("<#>"))
+                        if channel_id.isdigit():
+                            channel = bot.get_channel(channel_id)
+                            if channel:
+                                logging.info(
+                                    f"Sending points update to channel {channel_id} for squadron {squadron_name}"
+                                )
+
+                                # Prepare the changes text by lines
+                                changes_lines = []
+                                for member, (points_change, current_points) in points_changes.items():
+                                    safe_member_name = discord.utils.escape_markdown(
+                                        member)
+                                    change_type = "gained" if points_change > 0 else "lost"
+                                    changes_lines.append(
+                                        f"{safe_member_name} {change_type} {abs(points_change)} points, now at {current_points} points."
                                     )
 
-                                    # Prepare the changes text by lines
-                                    changes_lines = []
-                                    for member, (points_change, current_points
-                                                 ) in points_changes.items():
-                                        safe_member_name = discord.utils.escape_markdown(
-                                            member)
-                                        change_type = "gained" if points_change > 0 else "lost"
-                                        changes_lines.append(
-                                            f"{safe_member_name} {change_type} {abs(points_change)} points, now at {current_points} points."
-                                        )
+                                # Chunk the lines into sections that fit within the max_field_length limit
+                                max_field_length = 1024
+                                chunks = []
+                                current_chunk = ""
 
-                                    # Chunk the lines into sections that fit within the max_field_length limit
-                                    max_field_length = 1024
-                                    chunks = []
-                                    current_chunk = ""
-
-                                    for line in changes_lines:
-                                        if len(current_chunk) + len(
-                                                line) + 1 > max_field_length:
-                                            chunks.append(current_chunk)
-                                            current_chunk = line + "\n"
-                                        else:
-                                            current_chunk += line + "\n"
-
-                                    # Add any remaining text in the last chunk
-                                    if current_chunk:
+                                for line in changes_lines:
+                                    if len(current_chunk) + len(
+                                            line) + 1 > max_field_length:
                                         chunks.append(current_chunk)
+                                        current_chunk = line + "\n"
+                                    else:
+                                        current_chunk += line + "\n"
 
-                                    # Create the embed and add fields for each chunk
-                                    embed = discord.Embed(
-                                        title=
-                                        f"**{squadron_name} {opposite_region} Points Update**",
-                                        description=
-                                        f"**Current Points:** {sq_total_points}\n\n**Player Changes:**",
-                                        color=discord.Color.blue())
+                                # Add any remaining text in the last chunk
+                                if current_chunk:
+                                    chunks.append(current_chunk)
 
-                                    for chunk in chunks:
-                                        embed.add_field(name="\u200A",
-                                                        value=chunk,
-                                                        inline=False)
+                                # Create the embed and add fields for each chunk
+                                embed = discord.Embed(
+                                    title=
+                                    f"**{squadron_name} {opposite_region} Points Update**",
+                                    description=
+                                    f"**Current Points:** {sq_total_points}\n\n**Player Changes:**",
+                                    color=discord.Color.blue())
 
-                                    embed.set_footer(text="Meow :3")
-                                    # Send the combined embed
-                                    await channel.send(embed=embed)
-                                    logging.info(
-                                        f"Points update sent successfully for {squadron_name} in {guild_id}"
-                                    )
+                                for chunk in chunks:
+                                    embed.add_field(name="\u200A",
+                                                    value=chunk,
+                                                    inline=False)
 
-                                else:
-                                    logging.error(
-                                        f"Channel ID {channel_id} not found for guild {guild_id}"
-                                    )
+                                embed.set_footer(text="Meow :3")
+                                # Send the combined embed
+                                await channel.send(embed=embed)
+                                logging.info(
+                                    f"Points update sent successfully for {squadron_name} in {guild_id}"
+                                )
+
                             else:
                                 logging.error(
-                                    f"Invalid channel ID format: {channel_id} for squadron {squadron_name}"
+                                    f"Channel ID {channel_id} not found for guild {guild_id}"
                                 )
                         else:
-                            logging.info(
-                                f"No channel set for 'Points' type Alarms for squadron {squadron_name}"
+                            logging.error(
+                                f"Invalid channel ID format: {channel_id} for squadron {squadron_name}"
                             )
+                    else:
+                        logging.info(
+                            f"No channel set for 'Points' type Alarms for squadron {squadron_name}"
+                        )
 
-                # Save the new snapshot with the region specified
-                Alarms.save_snapshot(new_snapshot, guild_id, squadron_name,
-                                     region)
-                logging.info(
-                    f"New snapshot saved for {squadron_name} in region {region}"
-                )
+            # Save the new snapshot with the region specified
+            Alarms.save_snapshot(new_snapshot, guild_id, squadron_name,region)
+            logging.info(
+                f"New snapshot saved for {squadron_name} in region {region}"
+            )
 
 
 @points_alarm_task.before_loop
@@ -312,8 +310,9 @@ def get_shortname_from_long(longname):
     return None
 
 
-@tasks.loop(minutes=7)
+@tasks.loop(minutes=10)
 async def logs_snapshot():
+    logging.info("Running auto-logs")
     for guild in bot.guilds:
         guild_id = guild.id
         key = f"{guild_id}-preferences.json"
@@ -322,8 +321,7 @@ async def logs_snapshot():
         try:
             data = client.download_as_text(key)
             preferences = json.loads(data)
-            logging.info(
-                f"Successfully loaded preferences for guild: {guild_id}")
+            logging.info(f"Successfully loaded preferences for guild: {guild_id}")
         except (ObjectNotFoundError, FileNotFoundError):
             preferences = {}
             logging.warning(f"No preferences found for guild: {guild_id}")
@@ -338,6 +336,7 @@ async def logs_snapshot():
 
         try:
             sessions_data = client.download_as_text("SESSIONS.json")
+            logging.info(f"Successfully loaded Session Data")
             sessions = json.loads(sessions_data)
         except (ObjectNotFoundError, FileNotFoundError):
             logging.info("SESSIONS.json not found, creating a new one.")
@@ -346,129 +345,185 @@ async def logs_snapshot():
         # Check if the guild_id exists in sessions.json, if not, create an empty list
         if str(guild_id) not in sessions:
             sessions[str(guild_id)] = []
-            logging.info(
-                f"Added new guild entry for guild: {guild_id} in sessions.json"
-            )
+            logging.info(f"Added new guild entry for guild: {guild_id} in sessions.json")
 
         all_found_sessions = []  # Collect all sessions found for this guild
 
         # Iterate through the preferences to check if logging is set up
         for squadron_name, squadron_preferences in preferences.items():
-
             if "Logs" in squadron_preferences:
-                channel_id = squadron_preferences.get("Logs")
-                logging.info(
-                    f"Logs are enabled for squadron: {squadron_name} in guild: {guild_id}"
-                )
-
-                squadron_info = await fetch_squadron_info(squadron_name,
-                                                          embed_type="logs")
+                logging.info(f"Logs are enabled for squadron: {squadron_name} in guild: {guild_id}")
+                shortname = get_shortname_from_long(squadron_name)
+                squadron_info = await fetch_squadron_info(squadron_name, embed_type="logs")
 
                 found_sessions = []
-
                 if squadron_info:
                     for field in squadron_info.fields:
                         usernames = field.value.split("\n")
                         for username in usernames:
                             games = await fetch_games_for_user(username)
-
                             for game in games:
-                                session_id = game.get('sessionIdHex')
-
-                                # Append each new session ID to the found_sessions list if not in old_replay_ids
-                                if session_id and session_id not in sessions[
-                                        str(guild_id)]:
+                                session_id = game.get("sessionIdHex")
+                                if session_id and session_id not in sessions[str(guild_id)]:
                                     found_sessions.append(session_id)
 
                 # Count occurrences of each session_id in found_sessions
                 session_counts = {}
                 for session in found_sessions:
-                    if session in session_counts:
-                        session_counts[session] += 1
-                    else:
-                        session_counts[session] = 1
+                    session_counts[session] = session_counts.get(session, 0) + 1
 
                 # Collect sessions that appear more than 3 times
-                valid_sessions = [
-                    session for session, count in session_counts.items()
-                    if count >= 3
-                ]
-                logging.info(
-                    f"Valid session IDs (found 3 or more times): {valid_sessions}"
+                valid_sessions = [session for session, count in session_counts.items() if count >= 3]
+                logging.info(f"Valid session IDs (found 3 or more times): {valid_sessions}")
+
+                all_found_sessions.extend(found_sessions)  # Add found sessions to the overall list
+
+                # Process valid sessions concurrently
+                await asyncio.gather(
+                    *[
+                        process_session(bot, session_id, shortname, guild, guild_id, squadron_preferences)
+                        for session_id in valid_sessions
+                    ]
                 )
-
-                all_found_sessions.extend(
-                    found_sessions)  # Add found sessions to the overall list
-
-                # Process each valid session ID one by one
-                for session_id in valid_sessions:
-                    session_id_prefixed = '0' + session_id
-                    full_comp = parse_replay(session_id_prefixed)
-                    logging.info(
-                        f"Replay parsed for session {session_id_prefixed}: {full_comp}"
-                    )
-
-                    shortname = get_shortname_from_long(squadron_name)
-                    victor = get_winning_team(session_id_prefixed)
-                    logging.info(f"VICTOR: {victor}")
-
-                    key = f"{guild_id}.comp"
-                    try:
-                        friendly_comp = client.download_as_text(
-                            key).splitlines()
-                        logging.info(f"Friendly Comp: {friendly_comp}")
-                    except (ObjectNotFoundError, FileNotFoundError):
-                        logging.error(
-                            f"Friendly comp for guild {guild_id} not found.")
-                        friendly_comp = []
-
-                    for vehicle in friendly_comp:
-                        if vehicle in full_comp:
-                            full_comp.remove(vehicle)
-
-                    enemy_comp = full_comp
-
-                    if enemy_comp:
-                        embed = discord.Embed(
-                            title=f"{victor}",
-                            description=f"Session ID: {session_id}",
-                            color=discord.Color.blue(),
-                        )
-
-                        vehicle_list = "\n".join(enemy_comp)
-                        embed.add_field(name="Enemy Comp",
-                                        value=vehicle_list,
-                                        inline=False)
-                        embed.set_footer(text="IGNORE THIS FOR NOW")
-
-                        channel = bot.get_channel(int(channel_id.strip('<#>')))
-                        if channel:
-                            await channel.send(embed=embed)
-                            logging.info(
-                                f"Replay summary sent to channel {channel_id}")
-                        else:
-                            logging.error(
-                                f"Channel ID {channel_id} not found.")
 
         # After processing all squadrons, update the sessions.json with the found sessions
         if all_found_sessions:
             existing_sessions = sessions.get(str(guild_id), [])
-            updated_sessions = list(
-                set(existing_sessions +
-                    all_found_sessions))  # Remove duplicates
+            updated_sessions = list(set(existing_sessions + all_found_sessions))  # Remove duplicates
             sessions[str(guild_id)] = updated_sessions
 
             # Upload the updated sessions.json file back to storage
-            client.upload_from_text("SESSIONS.json",
-                                    json.dumps(sessions, indent=4))
-            logging.info(
-                f"Updated SESSIONS.json for guild {guild_id} with new sessions: {all_found_sessions}"
-            )
+            client.upload_from_text("SESSIONS.json", json.dumps(sessions, indent=4))
+            logging.info(f"Updated SESSIONS.json for guild {guild_id} with new sessions: {all_found_sessions}")
+
+
+async def process_session(bot, session_id, shortname, guild, guild_id, squadron_preferences):
+    """Processes a single session, saves replay data, and sends embeds to the specified Discord channel."""
+    await save_replay_data(session_id)
+
+    replay_file_path = f"replays/0{session_id}/replay_data.json"
+    try:
+        with open(replay_file_path, "r") as replay_file:
+            replay_data = json.load(replay_file)
+    except FileNotFoundError:
+        logging.error(f"Replay file not found for session ID {session_id}")
+        return
+    except json.JSONDecodeError:
+        logging.error(f"Replay file for session ID {session_id} is invalid JSON")
+        return
+
+    squadrons = replay_data.get("squadrons", [])
+    weather = replay_data.get("weather", "Unknown")
+    time_of_day = replay_data.get("time_of_day", "Unknown")
+    winner = "MEOW"
+    teams = replay_data.get("teams", [])
+
+    embed = discord.Embed(
+        title=f"**{squadrons[0]} vs {squadrons[1]}**",
+        description=f"Weather: {weather}\nTime of Day: {time_of_day}\nWinner: {winner}\nGame ID: {session_id}",
+        color=discord.Color.blue(),
+    )
+
+    for team in teams:
+        squadron_name = team.get("squadron", "Unknown")
+        players = team.get("players", [])
+
+        player_details = "\n".join(
+            f"{escape_markdown(player['nick'])} ({player['vehicle']})"
+            for player in players
+        )
+
+        embed.add_field(name=f"{squadron_name}", value=player_details or "No players found.", inline=False)
+
+    channel_id = squadron_preferences.get("Logs", "")
+    channel_id = int(channel_id.strip("<#>"))
+    try:
+        channel = bot.get_channel(channel_id)
+        if channel:
+            await channel.send(embed=embed)
+            logging.info(f"Embed sent for session {session_id} in guild {guild_id}")
+        else:
+            logging.warning(f"Channel ID {channel_id} not found in guild {guild_id}")
+    except Exception as e:
+        logging.error(f"Failed to send embed for session {session_id}: {e}")
+
 
 
 @logs_snapshot.before_loop
 async def before_logs_snapshot():
     await bot.wait_until_ready()
+
+@bot.tree.command(name='find-comp', description='Find the last known comp for a given team')
+@app_commands.describe(username='The username of an enemy player')
+async def find_comp(interaction: discord.Interaction, username: str):
+    await interaction.response.defer()  # Defer response to handle potential long-running operations
+
+    try:
+        # Fetch games for the given username
+        games = await fetch_games_for_user(username)
+        if not games:
+            await interaction.followup.send(f"No games found for user `{username}`.")
+            return
+
+        # Process the first game (you can adjust to loop through games if needed)
+        game = games[0]
+        session_id = game.get('sessionIdHex')
+        if not session_id:
+            await interaction.followup.send(f"Could not retrieve session ID for user `{username}`.")
+            return
+
+        # Save replay data for the session
+        await save_replay_data(session_id)
+
+        # Load the replay data saved for the session
+        replay_file_path = f"replays/0{session_id}/replay_data.json"
+        try:
+            with open(replay_file_path, "r") as replay_file:
+                replay_data = json.load(replay_file)
+        except FileNotFoundError:
+            logging.error(f"Replay file not found for session ID {session_id}")
+            await interaction.followup.send(f"Replay data not found for session `{session_id}`.")
+            return
+
+        # Extract relevant data from the replay JSON
+        squadrons = replay_data.get("squadrons", [])
+        weather = replay_data.get("weather", "Unknown")
+        time_of_day = replay_data.get("time_of_day", "Unknown")
+        winner = replay_data.get("winner", "Unknown")
+        teams = replay_data.get("teams", [])
+
+        # Create the embed
+        embed = discord.Embed(
+            title=f"Game Summary: {session_id}",
+            description=f"Weather: {weather}\nTime of Day: {time_of_day}\nWinner: {winner}",
+            color=discord.Color.blue()
+        )
+        if len(squadrons) == 2:
+            embed.add_field(name=f"**{squadrons[0]} vs {squadrons[1]}**", value="", inline=False)
+
+        # Add team details
+        for team in teams:
+            squadron_name = team.get("squadron", "Unknown")
+            players = team.get("players", [])
+
+            player_details = "\n".join(
+                f"{escape_markdown(player['nick'])} ({player['vehicle']})"
+                for player in players
+            )
+
+            embed.add_field(
+                name=f"{squadron_name}",
+                value=player_details or "No players found.",
+                inline=False
+            )
+
+        # Send the embed as a reply
+        await interaction.followup.send(embed=embed)
+
+    except Exception as e:
+        logging.error(f"An error occurred in the find-comp command: {e}")
+        await interaction.followup.send("An error occurred while processing the command. Please try again.")
+
 
 
 @bot.tree.command(name="alarm",
@@ -617,7 +672,7 @@ AIR_DATA_FILE = 'DATA/Air.txt'
 BR_OPTIONS = [
     "4.3", "4.7", "5.0", "5.3", "5.7", "6.0", "6.3", "6.7", "7.0", "7.3",
     "7.7", "8.0", "8.3", "8.7", "9.0", "9.3", "9.7", "10.0", "10.3", "10.7",
-    "11.0", "11.3", "11.7", "12.0", "12.3", "12.7", "13.0", "13.3", "13.7"
+    "11.0", "11.3", "11.7", "12.0", "12.3", "12.7", "13.0", "13.3", "13.7", "14.0"
 ]
 
 
@@ -1879,75 +1934,6 @@ async def top(interaction: discord.Interaction):
     embed.set_footer(text="Meow :3")
     await interaction.followup.send(embed=embed, ephemeral=False)
 
-
-@bot.tree.command(name='taaerota', description=':3')
-async def taaerota(interaction: discord.Interaction):
-    await interaction.response.defer(ephemeral=False)
-    await interaction.delete_original_response()
-    await interaction.channel.send("meow")
-
-
-active_annoyances = {}
-
-
-@bot.tree.command(name='annoy', description= 'Annoy a specific user with a custom message or disable annoyance')
-@app_commands.describe(
-    user='The person you want to annoy',
-    message='Text to annoy them with, or "disable" to stop annoying them')
-async def annoy(interaction: discord.Interaction, user: discord.Member,
-                message: str):
-    guild_id = interaction.guild_id
-    bot_owner_id = 809619070639013888
-
-    # Check if the user has admin permissions or is the bot owner
-    if not (interaction.user.guild_permissions.administrator
-            or interaction.user.id == bot_owner_id):
-        await interaction.response.send_message(
-            "You don't have permission to use this command.", ephemeral=True)
-        return
-
-    # Check if the message is "disable" to turn off annoyance
-    if message.lower() == "disable":
-        if guild_id in active_annoyances and user.id in active_annoyances[
-                guild_id]:
-            del active_annoyances[guild_id][user.id]
-            await interaction.response.send_message(
-                f"Stopped annoying {user.mention}.", ephemeral=True)
-        else:
-            await interaction.response.send_message(
-                f"{user.mention} is not being annoyed.", ephemeral=True)
-        return
-
-    # Check if user is already being annoyed in this server
-    if guild_id in active_annoyances and user.id in active_annoyances[guild_id]:
-        # Update the message instead of creating a new listener
-        active_annoyances[guild_id][user.id] = message
-        await interaction.response.send_message(
-            f"Updated annoyance message for {user.mention}.", ephemeral=True)
-        return
-
-    # Initialize server entry in active_annoyances if needed
-    if guild_id not in active_annoyances:
-        active_annoyances[guild_id] = {}
-
-    # Store the annoyance message
-    active_annoyances[guild_id][user.id] = message
-    await interaction.response.send_message(f"Now annoying {user.mention}!",
-                                            ephemeral=True)
-
-    def check(msg):
-        # Check if the message is from the targeted user in the same server
-        return msg.author.id == user.id and msg.guild.id == guild_id
-
-    # Listener loop to send the message after each user message
-    while guild_id in active_annoyances and user.id in active_annoyances[
-            guild_id]:
-        try:
-            msg = await bot.wait_for('message', check=check, timeout=None)
-            await msg.channel.send(
-                f"{active_annoyances[guild_id][user.id]}")
-        except Exception as e:
-            break
 
 
 @bot.tree.command(name="help", description="Get a guide on how to use the bot")
