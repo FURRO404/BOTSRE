@@ -15,5 +15,9 @@ run = ["sh", "-c", "python3 BotScript.py"]
 deploymentTarget = "gce"
 ignorePorts = true
 
+[env]
+REPLIT_KEEP_PACKAGE_DEV_DEPENDENCIES = "1"
+REPLIT_DISABLE_PACKAGE_LAYER = "1"
+
 [objectStorage]
 defaultBucketID = "replit-objstore-b5261a8a-c768-4543-975e-dfce1cd7077d"
