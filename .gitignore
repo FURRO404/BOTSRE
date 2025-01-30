@@ -159,13 +159,9 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-Data_Cleaner.py
 EXTRA_STUFF/
 AutoLog.py
 replays/
 CDKnameParser.py
-Download_Replay.py
-FriendlyComp.py
 Parse_Replay.py
-Parse_replaytest.py
 generated-icon.png

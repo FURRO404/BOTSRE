@@ -381,7 +381,7 @@ async def logs_snapshot():
                 # Process valid sessions concurrently
                 await asyncio.gather(
                     *[
-                        process_session(bot, session_id, shortname, guild, guild_id, squadron_preferences)
+                        process_session(bot, session_id, guild_id, squadron_preferences)
                         for session_id in valid_sessions
                     ]
                 )
@@ -397,7 +397,7 @@ async def logs_snapshot():
             logging.info(f"Updated SESSIONS.json for guild {guild_id} with new sessions: {all_found_sessions}")
 
 
-async def process_session(bot, session_id, shortname, guild, guild_id, squadron_preferences):
+async def process_session(bot, session_id, guild_id, squadron_preferences):
     """Processes a single session, saves replay data, and sends embeds to the specified Discord channel."""
     await save_replay_data(session_id)
 
@@ -457,6 +457,7 @@ async def before_logs_snapshot():
 @app_commands.describe(username='The username of an enemy player')
 async def find_comp(interaction: discord.Interaction, username: str):
     await interaction.response.defer()  # Defer response to handle potential long-running operations
+    logging.info(f"Running FIND-COMP for username {username}")
 
     try:
         # Fetch games for the given username
@@ -494,14 +495,11 @@ async def find_comp(interaction: discord.Interaction, username: str):
 
         # Create the embed
         embed = discord.Embed(
-            title=f"Game Summary: {session_id}",
-            description=f"Weather: {weather}\nTime of Day: {time_of_day}\nWinner: {winner}",
-            color=discord.Color.blue()
+            title=f"**{squadrons[0]} vs {squadrons[1]}**",
+            description=f"Weather: {weather}\nTime of Day: {time_of_day}\nWinner: {winner}\nGame ID: {session_id}",
+            color=discord.Color.blue(),
         )
-        if len(squadrons) == 2:
-            embed.add_field(name=f"**{squadrons[0]} vs {squadrons[1]}**", value="", inline=False)
 
-        # Add team details
         for team in teams:
             squadron_name = team.get("squadron", "Unknown")
             players = team.get("players", [])
@@ -511,14 +509,14 @@ async def find_comp(interaction: discord.Interaction, username: str):
                 for player in players
             )
 
-            embed.add_field(
-                name=f"{squadron_name}",
-                value=player_details or "No players found.",
-                inline=False
-            )
+            embed.add_field(name=f"{squadron_name}", value=player_details or "No players found.", inline=False)
 
-        # Send the embed as a reply
-        await interaction.followup.send(embed=embed)
+        
+        try:
+            await interaction.followup.send(embed=embed)
+            logging.info(f"Comp sent for session {session_id}")
+        except Exception as e:
+            logging.error(f"Failed to send embed for session {session_id}: {e}")
 
     except Exception as e:
         logging.error(f"An error occurred in the find-comp command: {e}")
