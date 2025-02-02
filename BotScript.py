@@ -33,7 +33,7 @@ from SQ_Info_Auto import process_all_squadrons
 from Searcher import normalize_name, get_vehicle_type, get_vehicle_country, autofill_search
 from Parse_Replay import save_replay_data
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 client = Client(
     bucket_id="replit-objstore-b5261a8a-c768-4543-975e-dfce1cd7077d")
 
@@ -1928,24 +1928,18 @@ async def help(interaction: discord.Interaction):
         "2. **/revoke [target] [permission_type]** - Revoke a user or role permission.\n"
         "3. **/clear** - Clear the entire Meta list (Owner only).\n"
         "4. **/session** - Start a new session.\n"
-        "5. **/win [team_name] [bombers] [fighters] [helis] [tanks] [spaa] [comment]** - Log a win for a team.\n"
-        "6. **/loss [team_name] [bombers] [fighters] [helis] [tanks] [spaa] [comment]** - Log a loss for a team.\n"
-        "7. **/end** - End the current session.\n"
-        "8. **/edit [status] [team_name] [bombers] [fighters] [helis] [tanks] [spaa] [comment]** - Edit the details of the last logged game.\n"
-        "9. **/quick-log [status] [enemy team name]** - Quickly log a game using vehicle data from the game log.\n"
-        "10. **/randomizer** - returns a random vehicle at its BR.\n"
-        "11. **/alarm [type] [channel_id] [squadron_name]** - Set an alarm to monitor squadron changes.\n"
-        "12. **/stat [username]** - Get the ThunderSkill stats URL for a user.\n"
-        "13. **/guessing-game** - Start a guessing game.\n"
-        "14. **/trivia [difficulty]** - Play a War Thunder vehicle trivia game. A higher difficulty means more points.\n"
-        "15. **/leaderboard** - Show the leaderboard.\n"
-        "16. **/top** - Display the top 20 squadrons currently and their stats.\n"
-        "17. **/console** - Manage the metalist.\n"
-        "18. **/viewmeta** - View the metalist.\n"
-        "19. **/time** - Get the current UTC time and your local time.\n"
-        "20. **/taaerota** - Meow~\n"
-        "21. **/set-squadron {short hand} {long hand}** - Store squadron name for the discord server (used for logging).\n"
-        "22. **/help** - Get a guide on how to use the bot.\n\n"
+        "5. **/randomizer** - returns a random vehicle at its BR.\n"
+        "6. **/alarm [type] [channel_id] [squadron_name]** - Set an alarm to monitor squadron changes.\n"
+        "7. **/stat [username]** - Get the ThunderSkill stats URL for a user.\n"
+        "8. **/guessing-game** - Start a guessing game.\n"
+        "9. **/trivia [difficulty]** - Play a War Thunder vehicle trivia game. A higher difficulty means more points.\n"
+        "10. **/leaderboard** - Show the leaderboard.\n"
+        "11. **/top** - Display the top 20 squadrons currently and their stats.\n"
+        "12. **/console** - Manage the metalist.\n"
+        "13. **/viewmeta** - View the metalist.\n"
+        "14. **/time** - Get the current UTC time and your local time.\n"
+        "15. **/set-squadron {short hand} {long hand}** - Store squadron name for the discord server (used for logging).\n"
+        "16. **/help** - Get a guide on how to use the bot.\n\n"
         "*For detailed information on each command, please read the input descriptions of each command, or reach out to not_so_toothless.*"
     )
 
