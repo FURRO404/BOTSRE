@@ -8,7 +8,7 @@ from SQ_Info import fetch_squadron_info
 client = Client()
 # Function to take a snapshot of the members and their scores
 async def take_snapshot(squadron_name):
-    snapshot = await fetch_squadron_info(squadron_name, embed_type="members")
+    snapshot = await fetch_squadron_info(squadron_name)
     return snapshot
 
 # Function to save the snapshot using Replit object storage
@@ -41,7 +41,7 @@ def compare_snapshots(old_snapshot, new_snapshot):
 
     # Extract old members
     for field in old_snapshot.fields:
-        if field.name == "\u00A0":
+        if field.name == "\xa0":
             values = field.value.split("\n")
             for value in values:
                 try:
@@ -53,7 +53,7 @@ def compare_snapshots(old_snapshot, new_snapshot):
 
     # Extract new members
     for field in new_snapshot.fields:
-        if field.name == "\u00A0":
+        if field.name == "\xa0":
             values = field.value.split("\n")
             for value in values:
                 try:
@@ -64,8 +64,8 @@ def compare_snapshots(old_snapshot, new_snapshot):
                     print(f"Error parsing new snapshot field: {value}, error: {e}")
 
     # Log the old and new members
-    print(f"Old members: {old_members}")
-    print(f"New members: {new_members}")
+    #print(f"Old members: {old_members}")
+    #print(f"New members: {new_members}")
     
 
     # If new_members is empty, return an empty dictionary and skip further processing
@@ -80,15 +80,20 @@ def compare_snapshots(old_snapshot, new_snapshot):
     return left_members
 
 
-
-
 def compare_points(old_snapshot, new_snapshot):
     old_members = {}
     new_members = {}
+    old_total_points = 0  # Store old total points
 
-    # Extract old members' points
+    # Extract old total points & members' points
     for field in old_snapshot.fields:
-        if field.name == "\u00A0":
+        if field.name == "Total Points":
+            try:
+                old_total_points = int(field.value)
+            except ValueError as e:
+                print(f"Error parsing total points: {field.value}, error: {e}")
+
+        if field.name == "\xa0":  # Member points data
             values = field.value.split("\n")
             for value in values:
                 try:
@@ -100,7 +105,7 @@ def compare_points(old_snapshot, new_snapshot):
 
     # Extract new members' points
     for field in new_snapshot.fields:
-        if field.name == "\u00A0":
+        if field.name == "\xa0":
             values = field.value.split("\n")
             for value in values:
                 try:
@@ -110,15 +115,13 @@ def compare_points(old_snapshot, new_snapshot):
                 except (IndexError, ValueError) as e:
                     print(f"Error parsing new snapshot field: {value}, error: {e}")
 
-    print(f"Old members: {old_members}")
-    print(f"New members: {new_members}")
-
+    # Compare old and new points to detect changes
     points_changes = {}
     for member, old_points in old_members.items():
         if member in new_members:
             new_points = new_members[member]
             if new_points != old_points:
-                points_changes[member] = (new_points - old_points, new_points)
+                points_changes[member] = (new_points - old_points, old_points, new_points)
 
-    return points_changes
+    return points_changes, old_total_points
 

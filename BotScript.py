@@ -5,7 +5,6 @@ import json
 import logging
 import asyncio
 from asyncio import *
-import aiofiles
 import random
 import datetime as DT
 from datetime import datetime, time, timezone
@@ -33,7 +32,6 @@ from AutoLog import fetch_games_for_user
 from SQ_Info_Auto import process_all_squadrons
 from Searcher import normalize_name, get_vehicle_type, get_vehicle_country, autofill_search
 from Parse_Replay import save_replay_data
-from FriendlyComp import handle_comp_command
 
 logging.basicConfig(level=logging.DEBUG)
 client = Client(
@@ -125,29 +123,28 @@ async def snapshot_task():
                     continue
 
                 if left_members:
-                    channel_id = squadron_preferences.get("Leave")
-                    if channel_id:
-                        # Remove non-numeric characters from channel_id
-                        channel_id = ''.join(filter(str.isdigit, channel_id))
-                        if channel_id.isdigit():
-                            channel = bot.get_channel(int(channel_id))
+                    channel_id = squadron_preferences.get("Leave", "").strip("<#>")
+
+                    logging.info(f"squadron_preferences: {squadron_preferences}")
+                    logging.info(f"key: {key}")
+                    logging.info(f"Extracted channel_id: {channel_id}")
+
+                    if channel_id:  # Ensure channel_id is not empty
+                        try:
+                            channel_id = int(channel_id)
+                            channel = bot.get_channel(channel_id)
                             if channel:
                                 for member, points in left_members.items():
-                                    safe_member_name = discord.utils.escape_markdown(
-                                        member)
+                                    safe_member_name = discord.utils.escape_markdown(member)
                                     await channel.send(
                                         f"{safe_member_name} left {squadron_name} with {points} points"
                                     )
                             else:
-                                logging.error(
-                                    f"Channel ID {channel_id} not found")
-                        else:
-                            logging.error(
-                                f"Invalid channel ID format: {channel_id}")
+                                logging.error(f"Channel ID {channel_id} not found")
+                        except ValueError:
+                            logging.error(f"Invalid channel ID format: {channel_id} for squadron {squadron_name}")
                     else:
-                        logging.info(
-                            f"No channel set for 'Leave' type Alarms for squadron {squadron_name}"
-                        )
+                        logging.error(f"'Leave' channel ID is missing or empty for squadron {squadron_name}.")
 
             Alarms.save_snapshot(new_snapshot, guild_id, squadron_name)
 
@@ -164,12 +161,10 @@ async def points_alarm_task():
     # Define the region based on the current time
     if now_utc.hour == 22 and now_utc.minute == 10:
         region = "US"
+        await execute_points_alarm_task(region)
     elif now_utc.hour == 7 and now_utc.minute == 10:
         region = "EU"
-    else:
-        return  # Not a scheduled time
-
-    await execute_points_alarm_task(region)
+        await execute_points_alarm_task(region)
 
 
 async def execute_points_alarm_task(region):
@@ -193,11 +188,8 @@ async def execute_points_alarm_task(region):
             logging.info(
                 f"Checking squadron: {squadron_name} for points alarm")
 
-            # Fetch the current squadron points using SQ_Info.py functions
-            squadron_info = await fetch_squadron_info(squadron_name,
-                                                      embed_type="points")
-            sq_total_points = squadron_info.fields[
-                0].value if squadron_info else "N/A"
+            squadron_info = await fetch_squadron_info(squadron_name,embed_type="points")
+            sq_total_points = squadron_info.fields[0].value if squadron_info else "N/A"
             logging.info(f"{squadron_name} points at {sq_total_points}.")
 
             if "Points" in squadron_preferences:
@@ -210,13 +202,12 @@ async def execute_points_alarm_task(region):
                     logging.info(
                         f"Loaded old snapshot for {squadron_name}, region {opposite_region}"
                     )
-                    points_changes = Alarms.compare_points(
-                        old_snapshot, new_snapshot)
+                    points_changes, old_total_points = Alarms.compare_points(old_snapshot, new_snapshot)
 
                     if points_changes:
                         channel_id = squadron_preferences.get("Points", "")
                         channel_id = int(channel_id.strip("<#>"))
-                        if channel_id.isdigit():
+                        if channel_id > 0:
                             channel = bot.get_channel(channel_id)
                             if channel:
                                 logging.info(
@@ -226,49 +217,45 @@ async def execute_points_alarm_task(region):
                                 # Prepare the changes text by lines
                                 changes_lines = []
                                 for member, (points_change, current_points) in points_changes.items():
-                                    safe_member_name = discord.utils.escape_markdown(
-                                        member)
-                                    change_type = "gained" if points_change > 0 else "lost"
-                                    changes_lines.append(
-                                        f"{safe_member_name} {change_type} {abs(points_change)} points, now at {current_points} points."
-                                    )
+                                    safe_member_name = discord.utils.escape_markdown(member)
+                                    arrow = "🔺" if points_change > 0 else "🔻"
+                                    change_color = f"**{arrow} {abs(points_change)}**"
+
+                                    changes_lines.append(f"{safe_member_name.ljust(20)} {change_color.ljust(10)} {current_points}")
 
                                 # Chunk the lines into sections that fit within the max_field_length limit
                                 max_field_length = 1024
                                 chunks = []
-                                current_chunk = ""
+                                current_chunk = "```\nName                 Change    Current Points\n"  # Header
 
                                 for line in changes_lines:
-                                    if len(current_chunk) + len(
-                                            line) + 1 > max_field_length:
+                                    if len(current_chunk) + len(line) + 1 > max_field_length:
+                                        current_chunk += "```"
                                         chunks.append(current_chunk)
-                                        current_chunk = line + "\n"
+                                        current_chunk = "```\n" + line + "\n"
                                     else:
                                         current_chunk += line + "\n"
 
                                 # Add any remaining text in the last chunk
                                 if current_chunk:
+                                    current_chunk += "```"
                                     chunks.append(current_chunk)
 
                                 # Create the embed and add fields for each chunk
                                 embed = discord.Embed(
-                                    title=
-                                    f"**{squadron_name} {opposite_region} Points Update**",
-                                    description=
-                                    f"**Current Points:** {sq_total_points}\n\n**Player Changes:**",
-                                    color=discord.Color.blue())
+                                    title=f"**{squadron_name} {opposite_region} Points Update**",
+                                    description=f"**Point Change:** {old_total_points} -> {sq_total_points}\n\n**Player Changes:**",
+                                    color=discord.Color.blue()
+                                )
 
                                 for chunk in chunks:
-                                    embed.add_field(name="\u200A",
-                                                    value=chunk,
-                                                    inline=False)
+                                    embed.add_field(name="\u200A", value=chunk, inline=False)
 
                                 embed.set_footer(text="Meow :3")
-                                # Send the combined embed
+
+                                # Send the embed
                                 await channel.send(embed=embed)
-                                logging.info(
-                                    f"Points update sent successfully for {squadron_name} in {guild_id}"
-                                )
+                                logging.info(f"Points update sent successfully for {squadron_name} in {guild_id}")
 
                             else:
                                 logging.error(
@@ -649,7 +636,6 @@ async def revoke(interaction: discord.Interaction, target: str,
 
 
 def has_roles_or_admin(permission_type):
-
     async def predicate(interaction: discord.Interaction):
         if interaction.user.id == bot.owner_id:
             return True
