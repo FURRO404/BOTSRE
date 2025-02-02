@@ -8,6 +8,7 @@ from asyncio import *
 import random
 import datetime as DT
 from datetime import datetime, time, timezone
+import textwrap
 import re
 from io import StringIO
 
@@ -74,6 +75,8 @@ async def on_ready():
     snapshot_task.start()
     points_alarm_task.start()
     #logs_snapshot.start()
+    #region = "EU"
+    #await execute_points_alarm_task(region)
 
 
 @bot.event
@@ -189,13 +192,16 @@ async def execute_points_alarm_task(region):
                 f"Checking squadron: {squadron_name} for points alarm")
 
             squadron_info = await fetch_squadron_info(squadron_name,embed_type="points")
-            sq_total_points = squadron_info.fields[0].value if squadron_info else "N/A"
+            if squadron_info.fields and squadron_info.fields[0].value:
+                sq_total_points = int(squadron_info.fields[0].value.replace(",", ""))
+            else:
+                sq_total_points = 0  # Default value if no valid data
+                
             logging.info(f"{squadron_name} points at {sq_total_points}.")
 
             if "Points" in squadron_preferences:
                 opposite_region = "EU" if region == "US" else "US"
-                old_snapshot = Alarms.load_snapshot(guild_id, squadron_name,
-                                                    opposite_region)
+                old_snapshot = Alarms.load_snapshot(guild_id, squadron_name, opposite_region)
                 new_snapshot = await Alarms.take_snapshot(squadron_name)
 
                 if old_snapshot:
@@ -216,17 +222,22 @@ async def execute_points_alarm_task(region):
 
                                 # Prepare the changes text by lines
                                 changes_lines = []
+                                MAX_NAME_LENGTH = 25
+
                                 for member, (points_change, current_points) in points_changes.items():
                                     safe_member_name = discord.utils.escape_markdown(member)
-                                    arrow = "🔺" if points_change > 0 else "🔻"
-                                    change_color = f"**{arrow} {abs(points_change)}**"
 
-                                    changes_lines.append(f"{safe_member_name.ljust(20)} {change_color.ljust(10)} {current_points}")
+                                    # Truncate names cleanly
+                                    safe_member_name = textwrap.shorten(safe_member_name, width=MAX_NAME_LENGTH, placeholder="…")
+
+                                    arrow = "🔼" if points_change > 0 else "🔽"
+                                    change_color = f"{abs(points_change)} {arrow}"
+                                    changes_lines.append(f"{safe_member_name:<{MAX_NAME_LENGTH}} {change_color:<10} {current_points}")
 
                                 # Chunk the lines into sections that fit within the max_field_length limit
                                 max_field_length = 1024
                                 chunks = []
-                                current_chunk = "```\nName                 Change    Current Points\n"  # Header
+                                current_chunk = "```\nName                 Change      Now\n"  # Header
 
                                 for line in changes_lines:
                                     if len(current_chunk) + len(line) + 1 > max_field_length:
@@ -241,10 +252,11 @@ async def execute_points_alarm_task(region):
                                     current_chunk += "```"
                                     chunks.append(current_chunk)
 
-                                # Create the embed and add fields for each chunk
+                                chart = "📈" if old_total_points > int(sq_total_points) else "📉"
+                                    
                                 embed = discord.Embed(
-                                    title=f"**{squadron_name} {opposite_region} Points Update**",
-                                    description=f"**Point Change:** {old_total_points} -> {sq_total_points}\n\n**Player Changes:**",
+                                    title=f"**{squadron_name} {region} Points Update**",
+                                    description=f"# **Point Change:** {old_total_points} -> {sq_total_points} {chart}\n\n**Player Changes:**",
                                     color=discord.Color.blue()
                                 )
 
@@ -270,11 +282,11 @@ async def execute_points_alarm_task(region):
                             f"No channel set for 'Points' type Alarms for squadron {squadron_name}"
                         )
 
-            # Save the new snapshot with the region specified
-            Alarms.save_snapshot(new_snapshot, guild_id, squadron_name,region)
-            logging.info(
-                f"New snapshot saved for {squadron_name} in region {region}"
-            )
+                # Save the new snapshot with the region specified
+                Alarms.save_snapshot(new_snapshot, guild_id, squadron_name,region)
+                logging.info(
+                    f"New snapshot saved for {squadron_name} in region {region}"
+                )
 
 
 @points_alarm_task.before_loop

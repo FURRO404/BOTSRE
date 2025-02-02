@@ -149,7 +149,7 @@ async def fetch_squadron_info(squadron_name, embed_type=None):
 
 def test_main():
     try:
-        embed = asyncio.run(fetch_squadron_info("EXLY"))
+        embed = asyncio.run(fetch_squadron_info("EXLY", embed_type="points"))
         if embed:
             print(embed.to_dict())  # Debug output
         else:
