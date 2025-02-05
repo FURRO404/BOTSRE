@@ -7,10 +7,8 @@ import asyncio
 # Target URL
 baseURL = 'https://warthunder.com/en/community/claninfo/'
 
-
 async def getData(squad):
     return await scraper(baseURL + squad)
-
 
 # Scrapes data from the provided URL using aiohttp
 async def scraper(url):
@@ -30,6 +28,7 @@ def parser(content):
     players = []
     total_points = 0
     counter = 0
+    name, points = None, None  # Initialize variables
 
     # Extract total points
     total_points_tag = content.find('div', class_='squadrons-counter__value')
@@ -44,14 +43,19 @@ def parser(content):
         elif counter == 8:  # Get player points
             points = re.sub(r'\s+', '', dataItem.text)
         elif counter == 12:
-            # Create an object using the previous variables, append it to the playerArray.
-            players.append({
-                'name': name,
-                'points': int(points) if points.isdigit() else 0
-            })
-            counter = 6
+            if name and points:
+                players.append({
+                    'name': name,
+                    'points': int(points) if points.isdigit() else 0
+                })
+            counter = 6  # Reset counter for the next entry
         counter += 1
 
+    # Ensure the last player is included
+    if name and points and {'name': name, 'points': int(points) if points.isdigit() else 0} not in players:
+        players.append({'name': name, 'points': int(points) if points.isdigit() else 0})
+
+    #print(f"Players: {players}")
     return players, total_points
 
 
@@ -149,7 +153,7 @@ async def fetch_squadron_info(squadron_name, embed_type=None):
 
 def test_main():
     try:
-        embed = asyncio.run(fetch_squadron_info("EXLY", embed_type="points"))
+        embed = asyncio.run(fetch_squadron_info("EXLY"))
         if embed:
             print(embed.to_dict())  # Debug output
         else:
