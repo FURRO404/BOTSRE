@@ -75,10 +75,10 @@ async def on_ready():
     if not bot.synced:
         await bot.tree.sync()
         bot.synced = True
-    #snapshot_task.start()
-    #points_alarm_task.start()
+    snapshot_task.start()
+    points_alarm_task.start()
     logs_snapshot.start()
-    #region = "EU"
+    #region = "US"
     #await execute_points_alarm_task(region)
 
 
@@ -147,6 +147,7 @@ async def snapshot_task():
                                         description=f"**{safe_member_name}** left **{squadron_name}** with **{points}** points.",
                                         color=discord.Color.red(),
                                     )
+                                    embed.set_footer(text=f"!!!This can be caused by name changes!!! Always verify.")
                                     await channel.send(embed=embed)
                             else:
                                 logging.error(f"Channel ID {channel_id} not found")
@@ -169,10 +170,10 @@ async def points_alarm_task():
 
     # Define the region based on the current time
     if now_utc.hour == 22 and now_utc.minute == 10:
-        region = "US"
+        region = "EU"
         await execute_points_alarm_task(region)
     elif now_utc.hour == 7 and now_utc.minute == 10:
-        region = "EU"
+        region = "US"
         await execute_points_alarm_task(region)
 
 
@@ -212,7 +213,7 @@ async def execute_points_alarm_task(region):
 
                 if old_snapshot:
                     logging.info(
-                        f"Loaded old snapshot for {squadron_name}, region {opposite_region}"
+                        f"Loaded old snapshot for {squadron_name}, region {region}"
                     )
                     points_changes, old_total_points = Alarms.compare_points(old_snapshot, new_snapshot)
 
@@ -230,8 +231,9 @@ async def execute_points_alarm_task(region):
                                 MAX_NAME_LENGTH = 15
 
                                 for member, (points_change, current_points) in points_changes.items():
-                                    safe_member_name = discord.utils.escape_markdown(member)
-
+                                    #safe_member_name = discord.utils.escape_markdown(member)
+                                    safe_member_name = member
+                                    
                                     # Calculate display width accounting for Unicode character widths
                                     display_width = sum(2 if unicodedata.east_asian_width(char) in "WF" else 1 for char in safe_member_name)
 
@@ -248,16 +250,16 @@ async def execute_points_alarm_task(region):
 
                                     safe_member_name = truncated_name.ljust(MAX_NAME_LENGTH)
 
-                                    arrow = "⬆️" if points_change > 0 else "⬇️"
-                                    change_color = f"{arrow} {abs(points_change):<4}"  # Left-align change column
-                                    current_points_str = f"{current_points:>5}"  # Right-align points column
+                                    arrow = "🌲" if points_change > 0 else "🔻"
+                                    change_color = f"{arrow} {abs(points_change):<8}"  # Left-align change column
+                                    current_points_str = f"{current_points:>4}"  # Right-align points column
 
                                     changes_lines.append(f"{safe_member_name} {change_color} {current_points_str}")
 
                                 # Chunk the lines into sections that fit within the max_field_length limit
                                 max_field_length = 1024
                                 chunks = []
-                                current_chunk = "```\nName           Change      Now\n"
+                                current_chunk = "```\nName             Change        Now\n"
                                 for line in changes_lines:
                                     if len(current_chunk) + len(line) + 1 > max_field_length:
                                         current_chunk += "```"
@@ -431,7 +433,7 @@ async def process_session(bot, session_id, guild_id, squadron_preferences):
         logging.error(f"Replay file for session ID {session_id} is invalid JSON")
         return
 
-    winner = replay_data.get("winning_team_squadron")
+    winner = replay_data.get("winning_team_squadron", None)
 
     # Skip if winner is None (null in JSON)
     if winner is None:
@@ -440,6 +442,7 @@ async def process_session(bot, session_id, guild_id, squadron_preferences):
 
     squadrons = replay_data.get("squadrons", [])
     weather = replay_data.get("weather", "Unknown")
+    mission = replay_data.get("mission", "In Progress")
     time_of_day = replay_data.get("time_of_day", "Unknown")
     teams = replay_data.get("teams", [])
 
@@ -452,18 +455,26 @@ async def process_session(bot, session_id, guild_id, squadron_preferences):
 
     # Get the expected squadron shortname for this guild
     guild_data = squadrons_data.get(str(guild_id), {})
-    guild_squadron = guild_data.get("SQ_ShortHand_Name", None)
+    guild_squadron = guild_data.get("SQ_ShortHand_Name", None) #EXLY
+
+    # Determine the losing squadron
+    if len(squadrons) >= 2:
+        loser = squadrons[0] if squadrons[1] == winner else squadrons[1]
+    else:
+        loser = None  # Fallback in case of unexpected data
 
     if guild_squadron is None:
         embed_color = discord.Color.blue()  # No squadron set 🟦
     elif winner == guild_squadron:
-        embed_color = discord.Color.green()  # Match 🟩
+        embed_color = discord.Color.green()  # Win 🟩
+    elif loser == guild_squadron:
+        embed_color = discord.Color.red()  # Loss 🟥
     else:
-        embed_color = discord.Color.red()  # No match 🟥
-
+        embed_color = discord.Color.purple()  # Not involved, but squadron is set 🟪
+    
     embed = discord.Embed(
-        title=f"**{squadrons[0]} vs {squadrons[1]}**",
-        description=f"Weather: {weather}\nTime of Day: {time_of_day}\nWinner: {winner}\nGame ID: {session_id}",
+        title=f"**{winner} vs {loser}**",
+        description=f"# Winner: {winner}\nMap: {mission}\nGame ID: {session_id}",
         color=embed_color,
     )
 
@@ -552,7 +563,7 @@ async def find_comp(interaction: discord.Interaction, username: str):
         embed = discord.Embed(
             title=f"**{squadrons[0]} vs {squadrons[1]}**",
             description=f"Weather: {weather}\nTime of Day: {time_of_day}\nWinner: {winner}\nGame ID: {session_id}",
-            color=discord.Color.blue(),
+            color=discord.Color.purple(),
         )
 
         for team in teams:
