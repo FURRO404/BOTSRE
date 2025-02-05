@@ -6,6 +6,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
+import re
 import requests
 from bs4 import BeautifulSoup
 
@@ -105,13 +106,17 @@ def process_sq(squadron_full_name):
             air_kills = stat_values[0]
             ground_kills = stat_values[1]
             deaths = stat_values[2]
-
+            squadron_short_name = soup.find('div', class_='squadrons-info__title').text.strip()
+            match = re.search(r'\[.*?([A-Za-z0-9]+).*?\]', squadron_short_name)
+            squadron_short_name = match.group(1) if match else squadron_short_name  # Reassign to the same variable
+            
             squadron_score_div = soup.find('div', class_='squadrons-counter__value')
             squadron_score = int(squadron_score_div.text.strip()) if squadron_score_div else 'N/A'
 
             kd_ratio = round((air_kills + ground_kills) / deaths, 2) if deaths > 0 else 'N/A'
 
             return {
+                'Short Name': squadron_short_name,
                 'Squadron Name': squadron_full_name,
                 'Squadron Score': squadron_score,
                 'Air Kills': air_kills,
