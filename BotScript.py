@@ -75,8 +75,8 @@ async def on_ready():
     if not bot.synced:
         await bot.tree.sync()
         bot.synced = True
-    snapshot_task.start()
-    points_alarm_task.start()
+    #snapshot_task.start()
+    #points_alarm_task.start()
     logs_snapshot.start()
     #region = "EU"
     #await execute_points_alarm_task(region)
@@ -248,7 +248,7 @@ async def execute_points_alarm_task(region):
 
                                     safe_member_name = truncated_name.ljust(MAX_NAME_LENGTH)
 
-                                    arrow = "🔼" if points_change > 0 else "🔽"
+                                    arrow = "⬆️" if points_change > 0 else "⬇️"
                                     change_color = f"{arrow} {abs(points_change):<4}"  # Left-align change column
                                     current_points_str = f"{current_points:>5}"  # Right-align points column
 
@@ -327,7 +327,7 @@ def get_shortname_from_long(longname):
     return None
 
 
-@tasks.loop(minutes=15)
+@tasks.loop(minutes=30)
 async def logs_snapshot():
     logging.info("Running auto-logs")
     for guild in bot.guilds:
@@ -378,6 +378,7 @@ async def logs_snapshot():
                     for field in squadron_info.fields:
                         usernames = field.value.split("\n")
                         for username in usernames:
+                            #logging.info(f"Checking games for: {username}")
                             games = await fetch_games_for_user(username)
                             for game in games:
                                 session_id = game.get("sessionIdHex")
@@ -395,13 +396,10 @@ async def logs_snapshot():
 
                 all_found_sessions.extend(found_sessions)  # Add found sessions to the overall list
 
-                # Process valid sessions concurrently
-                await asyncio.gather(
-                    *[
-                        process_session(bot, session_id, guild_id, squadron_preferences)
-                        for session_id in valid_sessions
-                    ]
-                )
+                # Process valid sessions sequentially instead of concurrently
+                for session_id in valid_sessions:
+                    await process_session(bot, session_id, guild_id, squadron_preferences)
+
 
         # After processing all squadrons, update the sessions.json with the found sessions
         if all_found_sessions:
@@ -416,7 +414,11 @@ async def logs_snapshot():
 
 async def process_session(bot, session_id, guild_id, squadron_preferences):
     """Processes a single session, saves replay data, and sends embeds to the specified Discord channel."""
-    await save_replay_data(session_id)
+    try:
+        await save_replay_data(session_id)
+    except Exception as e:
+        logging.error(f"Failed to save replay data for session {session_id}: {e}")
+        return  # Skip this session but continue with others
 
     replay_file_path = f"replays/0{session_id}/replay_data.json"
     try:
@@ -429,16 +431,40 @@ async def process_session(bot, session_id, guild_id, squadron_preferences):
         logging.error(f"Replay file for session ID {session_id} is invalid JSON")
         return
 
+    winner = replay_data.get("winning_team_squadron")
+
+    # Skip if winner is None (null in JSON)
+    if winner is None:
+        logging.warning(f"Skipping session {session_id} as 'winning_team_squadron' is null.")
+        return
+
     squadrons = replay_data.get("squadrons", [])
     weather = replay_data.get("weather", "Unknown")
     time_of_day = replay_data.get("time_of_day", "Unknown")
-    winner = replay_data.get("winning_team_squadron", "ERROR")
     teams = replay_data.get("teams", [])
+
+    try:
+        squadrons_json = client.download_as_text("SQUADRONS.json")
+        squadrons_data = json.loads(squadrons_json)
+    except Exception:
+        logging.warning("SQUADRONS.json not found. Creating a new one.")
+        squadrons_data = {}
+
+    # Get the expected squadron shortname for this guild
+    guild_data = squadrons_data.get(str(guild_id), {})
+    guild_squadron = guild_data.get("SQ_ShortHand_Name", None)
+
+    if guild_squadron is None:
+        embed_color = discord.Color.blue()  # No squadron set 🟦
+    elif winner == guild_squadron:
+        embed_color = discord.Color.green()  # Match 🟩
+    else:
+        embed_color = discord.Color.red()  # No match 🟥
 
     embed = discord.Embed(
         title=f"**{squadrons[0]} vs {squadrons[1]}**",
         description=f"Weather: {weather}\nTime of Day: {time_of_day}\nWinner: {winner}\nGame ID: {session_id}",
-        color=discord.Color.blue(),
+        color=embed_color,
     )
 
     for team in teams:
@@ -458,11 +484,12 @@ async def process_session(bot, session_id, guild_id, squadron_preferences):
         channel = bot.get_channel(channel_id)
         if channel:
             await channel.send(embed=embed)
-            logging.info(f"Embed sent for session {session_id} in guild {guild_id}")
+            logging.info(f"Embed sent for session {session_id} in guild {guild_id} with color {embed_color}")
         else:
             logging.warning(f"Channel ID {channel_id} not found in guild {guild_id}")
     except Exception as e:
         logging.error(f"Failed to send embed for session {session_id}: {e}")
+
 
 
 @logs_snapshot.before_loop
