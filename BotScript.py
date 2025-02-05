@@ -437,8 +437,8 @@ async def process_session(bot, session_id, guild_id, squadron_preferences):
 
     # Skip if winner is None (null in JSON)
     if winner is None:
-        logging.warning(f"Skipping session {session_id} as 'winning_team_squadron' is null.")
-        return
+        logging.warning(f"Session {session_id} as 'winning_team_squadron' is null.")
+        #return
 
     squadrons = replay_data.get("squadrons", [])
     weather = replay_data.get("weather", "Unknown")
@@ -474,7 +474,7 @@ async def process_session(bot, session_id, guild_id, squadron_preferences):
     
     embed = discord.Embed(
         title=f"**{winner} vs {loser}**",
-        description=f"# Winner: {winner}\nMap: {mission}\nGame ID: {session_id}",
+        description=f"**👑 - {winner}**\nMap: {mission}\nGame ID: {session_id}",
         color=embed_color,
     )
 
@@ -501,8 +501,6 @@ async def process_session(bot, session_id, guild_id, squadron_preferences):
     except Exception as e:
         logging.error(f"Failed to send embed for session {session_id}: {e}")
 
-
-
 @logs_snapshot.before_loop
 async def before_logs_snapshot():
     await bot.wait_until_ready()
@@ -516,8 +514,7 @@ async def find_comp(interaction: discord.Interaction, username: str):
     # Get command invocation details
     user = interaction.user
     server = interaction.guild  # Can be None in DMs
-    timestamp = DT.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
-    
+    timestamp = DT.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')    
 
     logging.info(
         f"[{timestamp}] FIND-COMP used by {user.name} (ID: {user.id}) in server '{server.name}' (ID: {server.id}) for username '{username}'"
@@ -539,6 +536,10 @@ async def find_comp(interaction: discord.Interaction, username: str):
             await interaction.followup.send(f"Could not retrieve session ID for user `{username}`.")
             return
 
+        timestamp = game.get("startTime", "ERR")
+        if timestamp != "ERR":
+            timestamp = f"<t:{timestamp}:R>"
+        
         # Save replay data for the session
         await save_replay_data(session_id)
 
@@ -551,18 +552,20 @@ async def find_comp(interaction: discord.Interaction, username: str):
             logging.error(f"Replay file not found for session ID {session_id}")
             await interaction.followup.send(f"Replay data not found for session `{session_id}`.")
             return
-
+        
         # Extract relevant data from the replay JSON
         squadrons = replay_data.get("squadrons", [])
         weather = replay_data.get("weather", "Unknown")
         time_of_day = replay_data.get("time_of_day", "Unknown")
-        winner = replay_data.get("winning_team_squadron", "ERROR")
+        winner = replay_data.get("winning_team_squadron")
+        logging.info(winner)
+        mission = replay_data.get("mission", "In Progress")
         teams = replay_data.get("teams", [])
 
         # Create the embed
         embed = discord.Embed(
             title=f"**{squadrons[0]} vs {squadrons[1]}**",
-            description=f"Weather: {weather}\nTime of Day: {time_of_day}\nWinner: {winner}\nGame ID: {session_id}",
+            description=f"**👑 - {winner} **\nMap: {mission}\nTimeStamp: {timestamp}",
             color=discord.Color.purple(),
         )
 
