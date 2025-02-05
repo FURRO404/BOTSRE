@@ -1,16 +1,15 @@
 # Standard Library Imports
 import os
-import sys
 import json
 import logging
 import asyncio
 from asyncio import *
 import random
 import datetime as DT
+import time as T
 from datetime import datetime, time, timezone
-import textwrap
+import unicodedata
 import re
-from io import StringIO
 
 # Third-Party Library Imports
 import discord
@@ -20,21 +19,24 @@ from discord import app_commands, ui, Interaction, SelectOption
 from replit.object_storage import Client
 from replit.object_storage.errors import ObjectNotFoundError
 import requests
+from googletrans import Translator
+
 
 # Local Module Imports
 from Meta_Add import add_to_metas
 from Meta_Remove import remove_from_metas, find_vehicles_in_meta
-from Scoreboard import Scoreboard
 from permissions import grant_permission, revoke_permission, has_permission
 import Alarms
 from Games import guessing_game, choose_random_vehicle, normalize_name, randomizer_game
 from SQ_Info import fetch_squadron_info
 from AutoLog import fetch_games_for_user
 from SQ_Info_Auto import process_all_squadrons
-from Searcher import normalize_name, get_vehicle_type, get_vehicle_country, autofill_search
+from Searcher import normalize_name, get_vehicle_type, get_vehicle_country
 from Parse_Replay import save_replay_data
 
 logging.basicConfig(level=logging.INFO)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("hpack").setLevel(logging.WARNING)
 client = Client(
     bucket_id="replit-objstore-b5261a8a-c768-4543-975e-dfce1cd7077d")
 
@@ -42,6 +44,7 @@ TOKEN = os.environ.get('DISCORD_KEY')
 
 intents = discord.Intents.default()
 intents.message_content = True
+intents.reactions = True
 intents.members = True
 intents.messages = True
 intents.dm_messages = True
@@ -74,7 +77,7 @@ async def on_ready():
         bot.synced = True
     snapshot_task.start()
     points_alarm_task.start()
-    #logs_snapshot.start()
+    logs_snapshot.start()
     #region = "EU"
     #await execute_points_alarm_task(region)
 
@@ -128,9 +131,9 @@ async def snapshot_task():
                 if left_members:
                     channel_id = squadron_preferences.get("Leave", "").strip("<#>")
 
-                    logging.info(f"squadron_preferences: {squadron_preferences}")
-                    logging.info(f"key: {key}")
-                    logging.info(f"Extracted channel_id: {channel_id}")
+                    #logging.info(f"squadron_preferences: {squadron_preferences}")
+                    #logging.info(f"key: {key}")
+                    #logging.info(f"Extracted channel_id: {channel_id}")
 
                     if channel_id:  # Ensure channel_id is not empty
                         try:
@@ -139,9 +142,12 @@ async def snapshot_task():
                             if channel:
                                 for member, points in left_members.items():
                                     safe_member_name = discord.utils.escape_markdown(member)
-                                    await channel.send(
-                                        f"{safe_member_name} left {squadron_name} with {points} points"
+                                    embed = discord.Embed(
+                                        title="Member Left Squadron",
+                                        description=f"**{safe_member_name}** left **{squadron_name}** with **{points}** points.",
+                                        color=discord.Color.red(),
                                     )
+                                    await channel.send(embed=embed)
                             else:
                                 logging.error(f"Channel ID {channel_id} not found")
                         except ValueError:
@@ -220,25 +226,38 @@ async def execute_points_alarm_task(region):
                                     f"Sending points update to channel {channel_id} for squadron {squadron_name}"
                                 )
 
-                                # Prepare the changes text by lines
                                 changes_lines = []
-                                MAX_NAME_LENGTH = 25
+                                MAX_NAME_LENGTH = 15
 
                                 for member, (points_change, current_points) in points_changes.items():
                                     safe_member_name = discord.utils.escape_markdown(member)
 
-                                    # Truncate names cleanly
-                                    safe_member_name = textwrap.shorten(safe_member_name, width=MAX_NAME_LENGTH, placeholder="…")
+                                    # Calculate display width accounting for Unicode character widths
+                                    display_width = sum(2 if unicodedata.east_asian_width(char) in "WF" else 1 for char in safe_member_name)
+
+                                    # Truncate if the display width exceeds MAX_NAME_LENGTH
+                                    truncated_name = ""
+                                    width_count = 0
+                                    for char in safe_member_name:
+                                        char_width = 2 if unicodedata.east_asian_width(char) in "WF" else 1
+                                        if width_count + char_width > MAX_NAME_LENGTH:
+                                            truncated_name += "…"
+                                            break
+                                        truncated_name += char
+                                        width_count += char_width
+
+                                    safe_member_name = truncated_name.ljust(MAX_NAME_LENGTH)
 
                                     arrow = "🔼" if points_change > 0 else "🔽"
-                                    change_color = f"{abs(points_change)} {arrow}"
-                                    changes_lines.append(f"{safe_member_name:<{MAX_NAME_LENGTH}} {change_color:<10} {current_points}")
+                                    change_color = f"{arrow} {abs(points_change):<4}"  # Left-align change column
+                                    current_points_str = f"{current_points:>5}"  # Right-align points column
+
+                                    changes_lines.append(f"{safe_member_name} {change_color} {current_points_str}")
 
                                 # Chunk the lines into sections that fit within the max_field_length limit
                                 max_field_length = 1024
                                 chunks = []
-                                current_chunk = "```\nName                 Change      Now\n"  # Header
-
+                                current_chunk = "```\nName           Change      Now\n"
                                 for line in changes_lines:
                                     if len(current_chunk) + len(line) + 1 > max_field_length:
                                         current_chunk += "```"
@@ -252,10 +271,9 @@ async def execute_points_alarm_task(region):
                                     current_chunk += "```"
                                     chunks.append(current_chunk)
 
-                                chart = "📈" if old_total_points > int(sq_total_points) else "📉"
-                                    
+                                chart = "📈" if old_total_points < int(sq_total_points) else "📉"
                                 embed = discord.Embed(
-                                    title=f"**{squadron_name} {region} Points Update**",
+                                    title=f"**{squadron_name} {opposite_region} Points Update**",
                                     description=f"# **Point Change:** {old_total_points} -> {sq_total_points} {chart}\n\n**Player Changes:**",
                                     color=discord.Color.blue()
                                 )
@@ -309,7 +327,7 @@ def get_shortname_from_long(longname):
     return None
 
 
-@tasks.loop(minutes=10)
+@tasks.loop(minutes=15)
 async def logs_snapshot():
     logging.info("Running auto-logs")
     for guild in bot.guilds:
@@ -414,7 +432,7 @@ async def process_session(bot, session_id, guild_id, squadron_preferences):
     squadrons = replay_data.get("squadrons", [])
     weather = replay_data.get("weather", "Unknown")
     time_of_day = replay_data.get("time_of_day", "Unknown")
-    winner = "MEOW"
+    winner = replay_data.get("winning_team_squadron", "ERROR")
     teams = replay_data.get("teams", [])
 
     embed = discord.Embed(
@@ -447,17 +465,28 @@ async def process_session(bot, session_id, guild_id, squadron_preferences):
         logging.error(f"Failed to send embed for session {session_id}: {e}")
 
 
-
 @logs_snapshot.before_loop
 async def before_logs_snapshot():
     await bot.wait_until_ready()
 
-@bot.tree.command(name='find-comp', description='Find the last known comp for a given team')
+
+@bot.tree.command(name='comp', description='Find the last known comp for a given team')
 @app_commands.describe(username='The username of an enemy player')
 async def find_comp(interaction: discord.Interaction, username: str):
     await interaction.response.defer()  # Defer response to handle potential long-running operations
-    logging.info(f"Running FIND-COMP for username {username}")
 
+    # Get command invocation details
+    user = interaction.user
+    server = interaction.guild  # Can be None in DMs
+    timestamp = DT.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+    
+
+    logging.info(
+        f"[{timestamp}] FIND-COMP used by {user.name} (ID: {user.id}) in server '{server.name}' (ID: {server.id}) for username '{username}'"
+        if server else
+        f"[{timestamp}] FIND-COMP used by {user.name} (ID: {user.id}) in a DM for username '{username}'"
+    )
+    
     try:
         # Fetch games for the given username
         games = await fetch_games_for_user(username)
@@ -489,7 +518,7 @@ async def find_comp(interaction: discord.Interaction, username: str):
         squadrons = replay_data.get("squadrons", [])
         weather = replay_data.get("weather", "Unknown")
         time_of_day = replay_data.get("time_of_day", "Unknown")
-        winner = replay_data.get("winner", "Unknown")
+        winner = replay_data.get("winning_team_squadron", "ERROR")
         teams = replay_data.get("teams", [])
 
         # Create the embed
@@ -562,9 +591,9 @@ async def alarm(interaction: discord.Interaction, type: str, channel_id: str,
 @commands.has_permissions(administrator=True)
 async def grant(interaction: discord.Interaction, target: str,
                 permission_type: str):
-    if permission_type not in ["Session", "Meta"]:
+    if permission_type not in ["Meta"]:
         await interaction.response.send_message(
-            "Invalid permission type. Use 'Session' or 'Meta'.",
+            "Invalid permission type. Use 'Meta'.",
             ephemeral=True)
         return
 
@@ -1133,182 +1162,6 @@ async def clear(interaction: discord.Interaction):
                                                     ephemeral=True)
 
 
-@bot.tree.command(name="session", description="Start a new session")
-@has_roles_or_admin("Session")
-async def session(interaction: discord.Interaction):
-    current_time = DT.datetime.utcnow().time()
-    if current_time >= DT.time(14, 0) and current_time <= DT.time(22, 0):
-        region = "EU"
-    elif current_time >= DT.time(1, 0) and current_time <= DT.time(7, 0):
-        region = "US"
-    else:
-        region = "TEST"
-
-    # Defer the interaction to avoid timing out
-    await interaction.response.defer(ephemeral=True)
-
-    logging.debug(f"Starting session in region: {region}")
-
-    try:
-        await Scoreboard.start_session(interaction, region)
-        await interaction.followup.send("Session started.", ephemeral=True)
-
-    except discord.errors.InteractionResponded:
-        logging.error(
-            "Interaction has already been responded to. Skipping response.")
-
-    except discord.errors.NotFound as e:
-        logging.error(f"Interaction Not Found (404): {e}")
-        await interaction.followup.send(
-            f"Session started, but an error occurred: {e}", ephemeral=True)
-
-    except discord.errors.HTTPException as e:
-        logging.error(f"HTTPException: {e}")
-        await interaction.followup.send(f"HTTP error occurred: {e}",
-                                        ephemeral=True)
-
-    except Exception as e:
-        logging.error(f"Unexpected error: {e}")
-        await interaction.followup.send(f"An unexpected error occurred: {e}",
-                                        ephemeral=True)
-
-
-@bot.tree.command(name="setcomp", description="Set your current team lineup")
-@app_commands.describe(vehicle1="Name of Vehicle 1",
-                       vehicle2="Name of Vehicle 2",
-                       vehicle3="Name of Vehicle 3",
-                       vehicle4="Name of Vehicle 4",
-                       vehicle5="Name of Vehicle 5",
-                       vehicle6="Name of Vehicle 6",
-                       vehicle7="Name of Vehicle 7",
-                       vehicle8="Name of Vehicle 8")
-@has_roles_or_admin("Session")
-async def setComp(interaction: discord.Interaction, vehicle1: str,
-                  vehicle2: str, vehicle3: str, vehicle4: str, vehicle5: str,
-                  vehicle6: str, vehicle7: str, vehicle8: str):
-    await interaction.response.defer(ephemeral=True)
-
-    try:
-        await handle_comp_command(interaction, vehicle1, vehicle2, vehicle3,
-                                  vehicle4, vehicle5, vehicle6, vehicle7,
-                                  vehicle8)
-    except Exception as e:
-        logging.error(f"Error setting team comp: {e}")
-        await interaction.followup.send(f"An error occurred: {e}",
-                                        ephemeral=True)
-
-
-@bot.tree.command(name="win", description="Log a win for a team")
-@app_commands.describe(team_name="The name of the team",
-                       bombers="Number of bombers",
-                       fighters="Number of fighters",
-                       helis="Number of helicopters",
-                       tanks="Number of tanks",
-                       spaa="Number of anti-aircraft",
-                       comment="Additional comments")
-@has_roles_or_admin("Session")
-async def win(interaction: discord.Interaction,
-              team_name: str,
-              bombers: int,
-              fighters: int,
-              helis: int,
-              tanks: int,
-              spaa: int,
-              comment: str = ""):
-    # Defer the interaction
-    await interaction.response.defer(ephemeral=True)
-
-    try:
-        await Scoreboard.log_win(interaction, team_name, bombers, fighters,
-                                 helis, tanks, spaa, comment)
-        await interaction.followup.send("Win logged.", ephemeral=True)
-
-    except Exception as e:
-        logging.error(f"Error logging win: {e}")
-        await interaction.followup.send(f"An error occurred: {e}",
-                                        ephemeral=True)
-
-
-@bot.tree.command(name="loss", description="Log a loss for a team")
-@app_commands.describe(team_name="The name of the team",
-                       bombers="Number of bombers",
-                       fighters="Number of fighters",
-                       helis="Number of helicopters",
-                       tanks="Number of tanks",
-                       spaa="Number of anti-aircraft",
-                       comment="Additional comments")
-@has_roles_or_admin("Session")
-async def loss(interaction: discord.Interaction,
-               team_name: str,
-               bombers: int,
-               fighters: int,
-               helis: int,
-               tanks: int,
-               spaa: int,
-               comment: str = ""):
-    # Defer the interaction
-    await interaction.response.defer(ephemeral=True)
-
-    try:
-        await Scoreboard.log_loss(interaction, team_name, bombers, fighters,
-                                  helis, tanks, spaa, comment)
-        await interaction.followup.send("Loss logged.", ephemeral=True)
-
-    except Exception as e:
-        logging.error(f"Error logging loss: {e}")
-        await interaction.followup.send(f"An error occurred: {e}",
-                                        ephemeral=True)
-
-
-@bot.tree.command(name="end", description="End the current session")
-@has_roles_or_admin("Session")
-async def end(interaction: discord.Interaction):
-    # Defer the interaction to avoid timing out
-    await interaction.response.defer(ephemeral=True)
-
-    try:
-        await Scoreboard.end_session(interaction, bot)
-        await interaction.followup.send("Session ended.", ephemeral=True)
-
-    except Exception as e:
-        logging.error(f"Error ending session: {e}")
-        await interaction.followup.send(f"An error occurred: {e}",
-                                        ephemeral=True)
-
-
-@bot.tree.command(name="edit",
-                  description="Edit the details of the last logged game")
-@app_commands.describe(status="The status of the game (W for win, L for loss)",
-                       team_name="The name of the team",
-                       bombers="Number of bombers",
-                       fighters="Number of helicopters",
-                       helis="Number of helicopters",
-                       tanks="Number of tanks",
-                       spaa="Number of anti-aircraft",
-                       comment="Additional comments")
-@has_roles_or_admin("Session")
-async def edit(interaction: discord.Interaction,
-               status: str,
-               team_name: str,
-               bombers: int,
-               fighters: int,
-               helis: int,
-               tanks: int,
-               spaa: int,
-               comment: str = ""):
-    await interaction.response.defer(ephemeral=True
-                                     )  # Defer the interaction response
-
-    try:
-        await Scoreboard.edit_game(interaction, status, team_name, bombers,
-                                   fighters, helis, tanks, spaa, comment)
-        await interaction.followup.send("Last game edited.", ephemeral=True)
-    except Exception as e:
-        logging.error(f"Error editing game: {e}")
-        await interaction.followup.send(f"An error occurred: {e}",
-                                        ephemeral=True)
-
-
 @bot.tree.command(name="sq-info",
                   description="Fetch information about a squadron")
 @app_commands.describe(
@@ -1637,159 +1490,6 @@ async def trivia(interaction: Interaction, difficulty: str = "medium"):
         "Select the fake vehicles from the dropdown below:", view=view)
 
 
-def categorize_vehicle(vehicle_type):
-    if vehicle_type:
-        vehicle_type_lower = vehicle_type.lower()
-        if 'tank' in vehicle_type_lower:
-            return 'Ground Forces'
-        elif 'spaa' in vehicle_type_lower:
-            return 'Anti-Aircraft'
-        elif 'helicopter' in vehicle_type_lower:
-            return 'Helis'
-        elif 'bomber' in vehicle_type_lower:
-            return 'Bombers'
-        else:
-            return 'Air Forces'
-    return 'Unknown'
-
-
-async def handle_attachment(interaction: discord.Interaction,
-                            attachment: discord.Attachment, enemy_team: str,
-                            message: discord.Message, result_type: str,
-                            comment: str):
-    guild_id = interaction.guild.id
-    user_id = interaction.user.id
-
-    # Load the user's session
-    Scoreboard.load_session(guild_id, user_id)
-    session = Scoreboard.sessions.get((guild_id, user_id))
-
-    if session is None or not session["started"]:
-        await interaction.followup.send(
-            "No active session found. Please start a session first.",
-            ephemeral=True)
-        return
-
-    if attachment.filename.endswith('.txt'):
-        logs_text = await attachment.read()
-        logs_text = logs_text.decode('utf-8')
-
-        # Validate JSON format
-        try:
-            logs = json.loads(logs_text)
-        except json.JSONDecodeError as e:
-            await interaction.followup.send(f"Invalid JSON format: {e}",
-                                            ephemeral=True)
-            return
-
-        # Save logs to a file
-        with open('input.txt', 'w', encoding='utf-8') as f:
-            f.write(logs_text)
-
-        # Redirect stdout to capture the output
-        original_stdout = sys.stdout
-        sys.stdout = StringIO()  # Capture the output in a StringIO object
-
-        try:
-            # Load logs and process them
-            logs = read_logs_from_file('input.txt')
-            logs['damage'].reverse()  # Reverse the order of the logs
-            games, _ = separate_games(logs['damage'])
-
-            if games:
-                parsed_events, clan_members = parse_logs(games[0], enemy_team)
-                categorized_vehicles = {
-                    'Ground Forces': 0,
-                    'Anti-Aircraft': 0,
-                    'Helis': 0,
-                    'Bombers': 0,
-                    'Air Forces': 0,
-                    'Unknown': 0
-                }
-
-                for event in parsed_events:
-                    print(event)
-                print("\nClan Members Vehicles:")
-                for member in clan_members:
-                    vehicle_name = member.split(': ')[1].strip('()')
-                    normalized_vehicle_name = normalize_name(vehicle_name)
-                    autofilled_vehicle_name = autofill_search(
-                        normalized_vehicle_name)
-                    vehicle_type = get_vehicle_type(autofilled_vehicle_name)
-                    category = categorize_vehicle(vehicle_type)
-                    categorized_vehicles[category] += 1
-                    print(
-                        f"{member} - Autofilled: {autofilled_vehicle_name} - Type: {vehicle_type}"
-                    )
-
-                # Prepare counts for each category
-                bombers = categorized_vehicles['Bombers']
-                fighters = categorized_vehicles['Air Forces']
-                helis = categorized_vehicles['Helis']
-                tanks = categorized_vehicles['Ground Forces']
-                spaa = categorized_vehicles['Anti-Aircraft']
-
-                if result_type == 'win':
-                    await Scoreboard.log_win(interaction, enemy_team, bombers,
-                                             fighters, helis, tanks, spaa,
-                                             comment)
-                    await interaction.followup.send("Win logged.",
-                                                    ephemeral=True)
-                elif result_type == 'loss':
-                    await Scoreboard.log_loss(interaction, enemy_team, bombers,
-                                              fighters, helis, tanks, spaa,
-                                              comment)
-                    await interaction.followup.send("Loss logged.",
-                                                    ephemeral=True)
-            else:
-                print("No games found.")
-
-            # Get the captured output
-            captured_output = sys.stdout.getvalue()
-        finally:
-            # Restore the original stdout
-            sys.stdout = original_stdout
-
-        # Send the captured output to the console
-        print(captured_output)
-
-        # Delete the user's message containing the attachment
-        await message.delete()
-    else:
-        await interaction.followup.send("Please upload a valid .txt file.",
-                                        ephemeral=True)
-
-
-@bot.tree.command(name='quick-log',
-                  description='Process game logs with status and enemy team')
-@app_commands.describe(status='Win or Loss (W/L)',
-                       enemy_team='Name of the enemy team',
-                       comment='Additional comments')
-@has_roles_or_admin("Session")
-async def quick_log(interaction: discord.Interaction,
-                    status: str,
-                    enemy_team: str,
-                    comment: str = ""):
-    # Ensure status is either 'W' or 'L'
-    if status not in ['W', 'L']:
-        await interaction.response.send_message(
-            "Invalid status value. Please use 'W' or 'L'.", ephemeral=True)
-        return
-
-    result_type = 'win' if status == 'W' else 'loss'
-    await interaction.response.send_message(
-        "Click this [link](http://localhost:8111/hudmsg?lastEvt=0&lastDmg=0), copy all contents, and paste them back below this message.",
-        ephemeral=True)
-
-    # Check for message attachments
-    def check(msg):
-        return msg.author == interaction.user and len(msg.attachments) > 0
-
-    message = await bot.wait_for('message', check=check)
-    if message.attachments:
-        await handle_attachment(interaction, message.attachments[0],
-                                enemy_team, message, result_type, comment)
-
 
 @bot.tree.command(name='time',
                   description='Get the current UTC and local time')
@@ -1830,7 +1530,6 @@ async def randomizer(interaction: discord.Interaction):
 @app_commands.describe(
     sq_short_hand_name='The short name of the squadron to set',
     sq_long_hand_name='The long name of the squadron to set')
-@has_roles_or_admin("Session")
 async def set_squadron(interaction: discord.Interaction,
                        sq_short_hand_name: str, sq_long_hand_name: str):
     try:
@@ -1898,8 +1597,7 @@ async def set_squadron(interaction: discord.Interaction,
         await interaction.followup.send(embed=embed, ephemeral=True)
 
 
-@bot.tree.command(name='top',
-                  description='Get the top 20 squadrons with detailed stats')
+@bot.tree.command(name='top',description='Get the top 20 squadrons with detailed stats')
 async def top(interaction: discord.Interaction):
     await interaction.response.defer()
 
@@ -1915,7 +1613,7 @@ async def top(interaction: discord.Interaction):
 
     for idx, squadron in enumerate(squadron_data, start=1):
         embed.add_field(
-            name=f"**{idx} - {squadron['Squadron Name']}**",
+            name=f"**{idx} - {squadron['Short Name']}**",
             value=(
                 f"**Squadron Score:** {squadron['Squadron Score']}\n"
                 f"**Air Kills:** {squadron['Air Kills']}\n"
@@ -1929,6 +1627,129 @@ async def top(interaction: discord.Interaction):
 
     embed.set_footer(text="Meow :3")
     await interaction.followup.send(embed=embed, ephemeral=False)
+
+
+async def load_features(guild_id):
+    key = f"{guild_id}-features.json"
+
+    try:
+        data = client.download_as_text(key)
+        return json.loads(data)
+    except (ObjectNotFoundError, FileNotFoundError):
+        # If file doesn't exist, create it with default values
+        features = {"Translate": "False"}
+        client.upload_from_text(key, json.dumps(features))
+        return features
+
+async def save_features(guild_id, features):
+    key = f"{guild_id}-features.json"
+    client.upload_from_text(key, json.dumps(features))
+
+@bot.tree.command(name="toggle", description="Toggle a feature for the server (Currently supports 'Translate')")
+@app_commands.describe(feature="Feature to toggle (only 'Translate' supported)")
+async def toggle(interaction: discord.Interaction, feature: str):
+    await interaction.response.defer()
+
+    if feature.lower() != "translate":
+        await interaction.followup.send("Invalid feature. Only 'Translate' can be toggled.", ephemeral=True)
+        return
+
+    guild_id = interaction.guild.id
+
+    features = await load_features(guild_id)
+
+    # Set Translate explicitly to True or False
+    features["Translate"] = "True" if features["Translate"] == "False" else "False"
+    await save_features(guild_id, features)
+    await interaction.followup.send(f"Translate feature set to {features['Translate']}.", ephemeral=True)
+
+
+translator = Translator()
+
+# Dictionary mapping flag emojis to language codes
+LANGUAGE_MAP = {
+    "🇷🇺": "ru",  # Russian
+    "🇺🇸": "en",  # English (US)
+    #"🇬🇧": "en",  # English (UK)
+    "🇪🇸": "es",  # Spanish
+    "🇫🇷": "fr",  # French
+    "🇩🇪": "de",  # German
+    "🇨🇳": "zh-cn",  # Chinese (Simplified)
+    "🇯🇵": "ja",  # Japanese
+    "🇰🇷": "ko",  # Korean
+    "🇮🇹": "it",  # Italian
+    "🇵🇹": "pt",  # Portuguese
+    "🇵🇱": "pl",  # Polish
+    "🇱🇹": "lt",  # Lithuanian
+    "🇱🇻": "lv",  # Latvian
+    "🇪🇪": "et",  # Estonian
+    "🇺🇦": "uk",  # Ukrainian
+}
+
+def perform_translation(text: str, target_language: str) -> str:
+    """Translates the given text to the target language."""
+    try:
+        translated = translator.translate(text, dest=target_language)
+        return translated.text
+    except Exception as e:
+        print(f"Translation failed: {e}")
+        return "Translation error"
+
+@bot.event
+async def on_reaction_add(reaction, user):
+    if user.bot:
+        return
+
+    message = reaction.message  # The original message being reacted to
+    text = message.content
+    flag = reaction.emoji  # The flag emoji used
+    guild_id = message.guild.id
+
+    # Ignore reactions that are not in LANGUAGE_MAP
+    if flag not in LANGUAGE_MAP:
+        return  
+
+    # Load server features
+    features = await load_features(guild_id)
+    if not features or features.get("Translate") != "True":
+        embed = discord.Embed(
+            title="Translation Disabled",
+            description="Translations are not enabled for this server.\nUse /toggle 'Translate' to enable.",
+            color=discord.Color.red()
+        )
+        error_message = await message.channel.send(embed=embed)
+        await error_message.delete(delay=5)
+        return
+
+    # Get target language from the dictionary
+    target_language = LANGUAGE_MAP[flag]
+
+    # Try to remove the user's reaction message to keep chat clean
+    try:
+        await reaction.message.remove_reaction(flag, user)
+    except discord.Forbidden:
+        pass  # Bot lacks permissions to remove reactions
+
+    # Perform translation
+    translated_text = perform_translation(text, target_language)
+
+    if not translated_text:
+        await message.channel.send(f"Translation failed for: {flag}", delete_after=5)
+        return
+
+    delete_timestamp = int(T.time()) + 38
+
+    # Create embed
+    embed = discord.Embed(
+        title=f"**Translation ({target_language.upper()}):**", 
+        color=discord.Color.purple()
+    )
+    embed.add_field(name=f"{translated_text}", value=f"Deleting <t:{delete_timestamp}:R>", inline=False)
+    embed.set_footer(text=f"Meow • Requested by {user.display_name}")
+
+    # Send embed and delete after 30 seconds
+    sent_message = await message.channel.send(embed=embed)
+    await sent_message.delete(delay=30)
 
 
 
@@ -1951,7 +1772,9 @@ async def help(interaction: discord.Interaction):
         "13. **/viewmeta** - View the metalist.\n"
         "14. **/time** - Get the current UTC time and your local time.\n"
         "15. **/set-squadron {short hand} {long hand}** - Store squadron name for the discord server (used for logging).\n"
-        "16. **/help** - Get a guide on how to use the bot.\n\n"
+        "16. **/help** - Get a guide on how to use the bot.\n"
+        "17. **/enable** - Enable features like Translate.\n"
+        "18. **Translation** - Put a flag reaction under a message to translate to that language (after using /enable).\n\n"
         "*For detailed information on each command, please read the input descriptions of each command, or reach out to not_so_toothless.*"
     )
 
@@ -1962,14 +1785,8 @@ async def help(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed, ephemeral=False)
 
 
-# Error handler for all commands
+
 @clear.error
-@session.error
-@quick_log.error
-@win.error
-@loss.error
-@end.error
-@edit.error
 async def command_error(interaction: discord.Interaction,
                         error: app_commands.AppCommandError):
     if isinstance(error, app_commands.CheckFailure):
