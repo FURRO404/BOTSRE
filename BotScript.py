@@ -6,10 +6,10 @@ import asyncio
 from asyncio import *
 import random
 import datetime as DT
-import time as T
 from datetime import datetime, time, timezone
-import unicodedata
+import time as T
 import re
+import shutil
 
 # Third-Party Library Imports
 import discord
@@ -77,7 +77,7 @@ async def on_ready():
         bot.synced = True
     snapshot_task.start()
     points_alarm_task.start()
-    logs_snapshot.start()
+    logs_snapshot_task.start()
     #region = "US"
     #await execute_points_alarm_task(region)
 
@@ -147,7 +147,7 @@ async def snapshot_task():
                                         description=f"**{safe_member_name}** left **{squadron_name}** with **{points}** points.",
                                         color=discord.Color.red(),
                                     )
-                                    embed.set_footer(text=f"!!!This can be caused by name changes!!! Always verify.")
+                                    #embed.set_footer(text=f"This can be caused by name changes!!! Always verify.")
                                     await channel.send(embed=embed)
                             else:
                                 logging.error(f"Channel ID {channel_id} not found")
@@ -169,13 +169,12 @@ async def points_alarm_task():
     now_utc = datetime.now(timezone.utc).time()
 
     # Define the region based on the current time
-    if now_utc.hour == 22 and now_utc.minute == 10:
+    if now_utc.hour == 22 and now_utc.minute == 15:
         region = "EU"
         await execute_points_alarm_task(region)
-    elif now_utc.hour == 7 and now_utc.minute == 10:
+    elif now_utc.hour == 7 and now_utc.minute == 15:
         region = "US"
         await execute_points_alarm_task(region)
-
 
 async def execute_points_alarm_task(region):
     logging.info("Running points-update alarm")
@@ -228,33 +227,16 @@ async def execute_points_alarm_task(region):
                                 )
 
                                 changes_lines = []
-                                MAX_NAME_LENGTH = 15
+                                MAX_NAME_LENGTH = 20
 
                                 for member, (points_change, current_points) in points_changes.items():
-                                    #safe_member_name = discord.utils.escape_markdown(member)
-                                    safe_member_name = member
-                                    
-                                    # Calculate display width accounting for Unicode character widths
-                                    display_width = sum(2 if unicodedata.east_asian_width(char) in "WF" else 1 for char in safe_member_name)
-
-                                    # Truncate if the display width exceeds MAX_NAME_LENGTH
-                                    truncated_name = ""
-                                    width_count = 0
-                                    for char in safe_member_name:
-                                        char_width = 2 if unicodedata.east_asian_width(char) in "WF" else 1
-                                        if width_count + char_width > MAX_NAME_LENGTH:
-                                            truncated_name += "…"
-                                            break
-                                        truncated_name += char
-                                        width_count += char_width
-
-                                    safe_member_name = truncated_name.ljust(MAX_NAME_LENGTH)
-
                                     arrow = "🌲" if points_change > 0 else "🔻"
-                                    change_color = f"{arrow} {abs(points_change):<8}"  # Left-align change column
-                                    current_points_str = f"{current_points:>4}"  # Right-align points column
 
-                                    changes_lines.append(f"{safe_member_name} {change_color} {current_points_str}")
+                                    # Format with fixed widths
+                                    member_str = f"{member:<20}"[:20]  # Limit name to 20 characters
+                                    change_str = f"{arrow} {abs(points_change):<3}"  # Change column width of 5
+                                    current_points_str = f"{current_points:>8}"  # Right-aligned 8 width
+                                    changes_lines.append(f"{member_str}{change_str}{current_points_str}")
 
                                 # Chunk the lines into sections that fit within the max_field_length limit
                                 max_field_length = 1024
@@ -275,7 +257,7 @@ async def execute_points_alarm_task(region):
 
                                 chart = "📈" if old_total_points < int(sq_total_points) else "📉"
                                 embed = discord.Embed(
-                                    title=f"**{squadron_name} {opposite_region} Points Update**",
+                                    title=f"**{squadron_name} {region} Points Update**",
                                     description=f"# **Point Change:** {old_total_points} -> {sq_total_points} {chart}\n\n**Player Changes:**",
                                     color=discord.Color.blue()
                                 )
@@ -328,90 +310,149 @@ def get_shortname_from_long(longname):
 
     return None
 
+@tasks.loop(minutes=5)
+async def logs_snapshot_task():
+    now_utc = datetime.now(timezone.utc).time()
+    # Run logs_snapshot only while US/EU timeslot are open
+    if (time(13, 55) <= now_utc <= time(22, 10)) or (time(12, 55) <= now_utc <= time(7, 10)):
+        await logs_snapshot()
+    else:
+        await logs_snapshot()
+        logging.info("Logs not ran, not a scheduled time.")
 
-@tasks.loop(minutes=30)
 async def logs_snapshot():
-    logging.info("Running auto-logs")
+    logging.info("Running log-snapshot task")
+
     for guild in bot.guilds:
         guild_id = guild.id
-        key = f"{guild_id}-preferences.json"
         logging.info(f"Processing guild: {guild_id}")
 
-        try:
-            data = client.download_as_text(key)
-            preferences = json.loads(data)
-            logging.info(f"Successfully loaded preferences for guild: {guild_id}")
-        except (ObjectNotFoundError, FileNotFoundError):
-            preferences = {}
-            logging.warning(f"No preferences found for guild: {guild_id}")
+        preferences = load_guild_preferences(guild_id)
+        #squadrons = load_squadrons_data()
+        sessions_data = load_sessions_data()
 
-        try:
-            squadrons_data = client.download_as_text("SQUADRONS.json")
-            squadrons = json.loads(squadrons_data)
-            logging.info("Loaded SQUADRONS.json")
-        except (ObjectNotFoundError, FileNotFoundError) as e:
-            logging.error("SQUADRONS.json not found or could not be loaded")
-            continue
-
-        try:
-            sessions_data = client.download_as_text("SESSIONS.json")
-            logging.info(f"Successfully loaded Session Data")
-            sessions = json.loads(sessions_data)
-        except (ObjectNotFoundError, FileNotFoundError):
-            logging.info("SESSIONS.json not found, creating a new one.")
-            sessions = {}
-
-        # Check if the guild_id exists in sessions.json, if not, create an empty list
-        if str(guild_id) not in sessions:
-            sessions[str(guild_id)] = []
+        if str(guild_id) not in sessions_data:
+            sessions_data[str(guild_id)] = []
             logging.info(f"Added new guild entry for guild: {guild_id} in sessions.json")
 
-        all_found_sessions = []  # Collect all sessions found for this guild
-
-        # Iterate through the preferences to check if logging is set up
-        for squadron_name, squadron_preferences in preferences.items():
-            if "Logs" in squadron_preferences:
-                logging.info(f"Logs are enabled for squadron: {squadron_name} in guild: {guild_id}")
-                shortname = get_shortname_from_long(squadron_name)
-                squadron_info = await fetch_squadron_info(squadron_name, embed_type="logs")
-
-                found_sessions = []
-                if squadron_info:
-                    for field in squadron_info.fields:
-                        usernames = field.value.split("\n")
-                        for username in usernames:
-                            #logging.info(f"Checking games for: {username}")
-                            games = await fetch_games_for_user(username)
-                            for game in games:
-                                session_id = game.get("sessionIdHex")
-                                if session_id and session_id not in sessions[str(guild_id)]:
-                                    found_sessions.append(session_id)
-
-                # Count occurrences of each session_id in found_sessions
-                session_counts = {}
-                for session in found_sessions:
-                    session_counts[session] = session_counts.get(session, 0) + 1
-
-                # Collect sessions that appear more than 3 times
-                valid_sessions = [session for session, count in session_counts.items() if count >= 3]
-                logging.info(f"Valid session IDs (found 3 or more times): {valid_sessions}")
-
-                all_found_sessions.extend(found_sessions)  # Add found sessions to the overall list
-
-                # Process valid sessions sequentially instead of concurrently
-                for session_id in valid_sessions:
-                    await process_session(bot, session_id, guild_id, squadron_preferences)
+        all_found_sessions = await process_guild_squadrons(guild_id, preferences, sessions_data)
+        update_sessions_data(guild_id, all_found_sessions, sessions_data)
 
 
-        # After processing all squadrons, update the sessions.json with the found sessions
-        if all_found_sessions:
-            existing_sessions = sessions.get(str(guild_id), [])
-            updated_sessions = list(set(existing_sessions + all_found_sessions))  # Remove duplicates
-            sessions[str(guild_id)] = updated_sessions
+def load_guild_preferences(guild_id):
+    key = f"{guild_id}-preferences.json"
+    try:
+        data = client.download_as_text(key)
+        logging.info(f"Successfully loaded preferences for guild: {guild_id}")
+        return json.loads(data)
+    except (ObjectNotFoundError, FileNotFoundError):
+        logging.warning(f"No preferences found for guild: {guild_id}")
+        return {}
 
-            # Upload the updated sessions.json file back to storage
-            client.upload_from_text("SESSIONS.json", json.dumps(sessions, indent=4))
-            logging.info(f"Updated SESSIONS.json for guild {guild_id} with new sessions: {all_found_sessions}")
+
+def load_squadrons_data():
+    try:
+        data = client.download_as_text("SQUADRONS.json")
+        logging.info("Loaded SQUADRONS.json")
+        return json.loads(data)
+    except (ObjectNotFoundError, FileNotFoundError):
+        logging.error("SQUADRONS.json not found or could not be loaded")
+        return {}
+
+
+def load_sessions_data():
+    try:
+        data = client.download_as_text("SESSIONS.json")
+        logging.info("Successfully loaded SESSIONS.json")
+        return json.loads(data)
+    except (ObjectNotFoundError, FileNotFoundError):
+        logging.info("SESSIONS.json not found, creating a new one.")
+        return {}
+
+
+async def process_guild_squadrons(guild_id, preferences, sessions):
+    all_found_sessions = []
+    valid_sessions = []
+    # Extract only squadrons that have "Logs" defined
+    squadrons_with_logs = {
+        squadron: prefs["Logs"]
+        for squadron, prefs in preferences.items()
+        if "Logs" in prefs
+    }
+    logging.info(squadrons_with_logs)
+    
+    for squadron_name, log_channel in squadrons_with_logs.items():
+        logging.info(f"Logs are enabled for squadron: {squadron_name} in guild: {guild_id} (Logs Channel: {log_channel})")
+
+        squadron_info = await fetch_squadron_info(squadron_name, embed_type="logs")
+        found_sessions = await extract_sessions_from_squadron(squadron_info, sessions, guild_id)
+
+        valid_sessions = filter_valid_sessions(found_sessions)
+        logging.info(f"Valid session IDs (found 2 or more times): {valid_sessions}")
+
+        try:
+            for session_id in valid_sessions:
+                await process_session(bot, session_id, guild_id, preferences[squadron_name])
+
+            all_found_sessions.extend(found_sessions)
+        except Exception as e:
+            logging.error(f"Error processing sessions for squadron {squadron_name} in guild {guild_id}: {e}", exc_info=True)
+            
+    return all_found_sessions
+
+
+async def extract_sessions_from_squadron(squadron_info, sessions, guild_id):
+    found_sessions = []
+
+    if not squadron_info:
+        return found_sessions
+
+    # Extract usernames
+    usernames = [
+        username
+        for field in squadron_info.fields
+        for username in field.value.split("\n")
+    ]
+
+    # Use asyncio.gather to fetch game data concurrently
+    user_game_tasks = [fetch_games_for_user(username) for username in usernames]
+    user_games_results = await asyncio.gather(*user_game_tasks, return_exceptions=True)
+
+    for games in user_games_results:
+        if isinstance(games, Exception):
+            logging.warning(f"Error fetching games: {games}")
+            continue
+
+        for game in games:
+            session_id = game.get("sessionIdHex")
+            if session_id and session_id not in sessions[str(guild_id)]:
+                found_sessions.append(session_id)
+
+    return found_sessions
+
+
+def filter_valid_sessions(found_sessions):
+    session_counts = {}
+    for session in found_sessions:
+        session_counts[session] = session_counts.get(session, 0) + 1
+        
+    valid_sessions = [session for session, count in session_counts.items() if count >= 2]
+    return valid_sessions
+
+
+def update_sessions_data(guild_id, all_found_sessions, sessions):
+    if all_found_sessions:
+        existing_sessions = sessions.get(str(guild_id), [])
+        updated_sessions = list(set(existing_sessions + all_found_sessions))
+        sessions[str(guild_id)] = updated_sessions
+
+        client.upload_from_text("SESSIONS.json", json.dumps(sessions, indent=4))
+        logging.info(f"Updated SESSIONS.json for guild {guild_id} with new sessions: {all_found_sessions}")
+
+
+@logs_snapshot_task.before_loop
+async def before_logs_snapshot_task():
+    await bot.wait_until_ready()
 
 
 async def process_session(bot, session_id, guild_id, squadron_preferences):
@@ -465,16 +506,20 @@ async def process_session(bot, session_id, guild_id, squadron_preferences):
 
     if guild_squadron is None:
         embed_color = discord.Color.blue()  # No squadron set 🟦
+        color_name = "blue"
     elif winner == guild_squadron:
         embed_color = discord.Color.green()  # Win 🟩
+        color_name = "green"
     elif loser == guild_squadron:
         embed_color = discord.Color.red()  # Loss 🟥
+        color_name = "red"
     else:
         embed_color = discord.Color.purple()  # Not involved, but squadron is set 🟪
+        color_name = "purple"
     
     embed = discord.Embed(
         title=f"**{winner} vs {loser}**",
-        description=f"**👑 - {winner}**\nMap: {mission}\nGame ID: {session_id}",
+        description=f"**👑 • {winner}**\nMap: {mission}\nGame ID: {session_id}",
         color=embed_color,
     )
 
@@ -483,7 +528,7 @@ async def process_session(bot, session_id, guild_id, squadron_preferences):
         players = team.get("players", [])
 
         player_details = "\n".join(
-            f"{escape_markdown(player['nick'])} ({player['vehicle']})"
+            f"{escape_markdown(player['nick'])} • **{player['vehicle']}**"
             for player in players
         )
 
@@ -495,15 +540,18 @@ async def process_session(bot, session_id, guild_id, squadron_preferences):
         channel = bot.get_channel(channel_id)
         if channel:
             await channel.send(embed=embed)
-            logging.info(f"Embed sent for session {session_id} in guild {guild_id} with color {embed_color}")
+            logging.info(f"Embed sent for session {session_id} in guild {guild_id} with color {color_name}")
+
+            replay_file_path = f"replays/0{session_id}"
+            if os.path.exists(replay_file_path):
+                shutil.rmtree(replay_file_path)
+                logging.info(f"Deleted replay folder: {replay_file_path}")
+
         else:
             logging.warning(f"Channel ID {channel_id} not found in guild {guild_id}")
+
     except Exception as e:
         logging.error(f"Failed to send embed for session {session_id}: {e}")
-
-@logs_snapshot.before_loop
-async def before_logs_snapshot():
-    await bot.wait_until_ready()
 
 
 @bot.tree.command(name='comp', description='Find the last known comp for a given team')
@@ -529,7 +577,6 @@ async def find_comp(interaction: discord.Interaction, username: str):
             await interaction.followup.send(f"No games found for user `{username}`.")
             return
 
-        # Process the first game (you can adjust to loop through games if needed)
         game = games[0]
         session_id = game.get('sessionIdHex')
         if not session_id:
@@ -558,14 +605,15 @@ async def find_comp(interaction: discord.Interaction, username: str):
         weather = replay_data.get("weather", "Unknown")
         time_of_day = replay_data.get("time_of_day", "Unknown")
         winner = replay_data.get("winning_team_squadron")
-        logging.info(winner)
+        #logging.info(winner)
         mission = replay_data.get("mission", "In Progress")
         teams = replay_data.get("teams", [])
 
         # Create the embed
         embed = discord.Embed(
             title=f"**{squadrons[0]} vs {squadrons[1]}**",
-            description=f"**👑 - {winner} **\nMap: {mission}\nTimeStamp: {timestamp}",
+            #description=f"**👑 - {winner} **\nMap: {mission}\nTimeStamp: {timestamp}",
+            description=f"**👑 • {winner}**\nMap: {mission}\nTimeStamp: {timestamp}\nGame ID: {session_id}",
             color=discord.Color.purple(),
         )
 
@@ -574,16 +622,21 @@ async def find_comp(interaction: discord.Interaction, username: str):
             players = team.get("players", [])
 
             player_details = "\n".join(
-                f"{escape_markdown(player['nick'])} ({player['vehicle']})"
+                f"{escape_markdown(player['nick'])} • **{player['vehicle']}**"
                 for player in players
             )
 
             embed.add_field(name=f"{squadron_name}", value=player_details or "No players found.", inline=False)
 
-        
         try:
             await interaction.followup.send(embed=embed)
             logging.info(f"Comp sent for session {session_id}")
+
+            replay_file_path = f"replays/0{session_id}"
+            if os.path.exists(replay_file_path):
+                shutil.rmtree(replay_file_path)
+                logging.info(f"Deleted replay folder: {replay_file_path}")
+                
         except Exception as e:
             logging.error(f"Failed to send embed for session {session_id}: {e}")
 
@@ -1531,10 +1584,9 @@ async def trivia(interaction: Interaction, difficulty: str = "medium"):
         "Select the fake vehicles from the dropdown below:", view=view)
 
 
-
-@bot.tree.command(name='time',
+@bot.tree.command(name='time-now',
                   description='Get the current UTC and local time')
-async def time(interaction: discord.Interaction):
+async def time_now(interaction: discord.Interaction):
     utc_time = DT.datetime.utcnow().strftime('%I:%M %p')
     timestamp = int(DT.datetime.utcnow().timestamp())
 
@@ -1711,7 +1763,7 @@ translator = Translator()
 LANGUAGE_MAP = {
     "🇷🇺": "ru",  # Russian
     "🇺🇸": "en",  # English (US)
-    #"🇬🇧": "en",  # English (UK)
+    "🇬🇧": "en",  # English (UK)
     "🇪🇸": "es",  # Spanish
     "🇫🇷": "fr",  # French
     "🇩🇪": "de",  # German
@@ -1758,8 +1810,9 @@ async def on_reaction_add(reaction, user):
             description="Translations are not enabled for this server.\nUse /toggle 'Translate' to enable.",
             color=discord.Color.red()
         )
-        error_message = await message.channel.send(embed=embed)
-        await error_message.delete(delay=5)
+        #error_message = await message.channel.send(embed=embed)
+        #await error_message.delete(delay=5)
+        logging.info("Translation disabled!")
         return
 
     # Get target language from the dictionary

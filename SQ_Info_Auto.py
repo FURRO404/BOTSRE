@@ -15,7 +15,6 @@ def fetch_clan_table_info(sq_name):
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
-
     driver = webdriver.Chrome(service=Service("/nix/store/n4qcnqy0isnvxcpcgv6i2z9ql9wsxksw-chromedriver-114.0.5735.90/bin/chromedriver"), options=chrome_options)
 
     try:
