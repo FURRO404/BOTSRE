@@ -1099,11 +1099,10 @@ async def set_squadron(interaction: discord.Interaction,
 async def top(interaction: discord.Interaction):
     await interaction.response.defer()
 
-    squadron_data = process_all_squadrons()
+    squadron_data = await process_all_squadrons()
 
     if not squadron_data:
-        await interaction.followup.send("No squadron data available.",
-                                        ephemeral=True)
+        await interaction.followup.send("No squadron data available.", ephemeral=True)
         return
 
     embed = discord.Embed(title="**Top 20 Squadrons**",
@@ -1259,7 +1258,7 @@ async def help(interaction: discord.Interaction):
         "1. **/alarm [type] [channel_id] [squadron_name]** - Set an alarm to monitor squadron changes.\n"
         "2. **/comp [username]** - Given a username, will attempt to detail the last found SQB game.\n"
         "3. **/stat [username]** - Get the ThunderSkill stats URL for a user.\n"
-        "4. **/top** - Display the top 20 squadrons and their current stats (takes a moment).\n"
+        "4. **/top** - Display the top 20 squadrons and their current stats.\n"
         "5. **/time-now** - Get the current UTC time and your local time.\n"
         "6. **/set-squadron {short hand} {long hand}** - Store squadron name for the discord server (used for logging).\n"
         "7. **/toggle** - Enable features like Translate (more to come soon).\n"

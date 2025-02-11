@@ -7,8 +7,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
 import re
-import requests
 from bs4 import BeautifulSoup
+import asyncio
+import aiohttp
 
 def fetch_clan_table_info(sq_name):
     chrome_options = Options()
@@ -67,11 +68,11 @@ def fetch_first_page_clan_table():
         first_page_data = []
         for row in rows:
             cells = row.find_elements(By.TAG_NAME, 'td')
-            row_data = [cell.text for cell in cells]  # Capture all cell contents for each row
-            if len(cells) > 1:  # Ensure that the row contains relevant data
+            row_data = [cell.text for cell in cells] 
+            if len(cells) > 1:
                 first_page_data.append(row_data)
 
-        return first_page_data  # Return the full content of the first page as a list of lists
+        return first_page_data  # Return the full content of the first 20 squadrons
 
     except TimeoutException:
         return "Timeout occurred while trying to fetch the first page"
@@ -80,76 +81,96 @@ def fetch_first_page_clan_table():
         driver.quit()
 
 
+BASE_URL = 'https://warthunder.com/en/community/claninfo/'
 
-# Function to fetch and parse the clan info page for a given squadron
-def process_sq(squadron_full_name):
-    baseURL = 'https://warthunder.com/en/community/claninfo/'
-    team_url = f"{baseURL}{squadron_full_name}"
+async def fetch_squadron_page(session, squadron_full_name):
+    """Asynchronously fetch the squadron page."""
+    team_url = f"{BASE_URL}{squadron_full_name}"
+    try:
+        async with session.get(team_url) as response:
+            if response.status == 200:
+                return await response.text()
+            else:
+                print(f"Failed to fetch clan info page for {squadron_full_name}. Status code: {response.status}")
+                return None
+    except Exception as e:
+        print(f"Error fetching squadron {squadron_full_name}: {e}")
+        return None
 
-    response = requests.get(team_url)
 
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.text, 'html.parser')
+async def process_sq(session, squadron_full_name):
+    """Process squadron data asynchronously."""
+    html = await fetch_squadron_page(session, squadron_full_name)
+    if not html:
+        return None  # Skip processing if the page wasn't fetched
 
-        stat_values = []
-        playtime = 'N/A'
-        for item in soup.select('ul.squadrons-stat__item li.squadrons-stat__item-value'):
-            text = item.text.strip()
-            try:
-                stat_values.append(int(text))
-            except ValueError:
-                if "d" in text:
-                    playtime = text
+    soup = BeautifulSoup(html, 'html.parser')
+    stat_values = []
+    playtime = 'N/A'
 
-        if len(stat_values) >= 3:
-            air_kills = stat_values[0]
-            ground_kills = stat_values[1]
-            deaths = stat_values[2]
-            squadron_short_name = soup.find('div', class_='squadrons-info__title').text.strip()
-            match = re.search(r'\[.*?([A-Za-z0-9]+).*?\]', squadron_short_name)
-            squadron_short_name = match.group(1) if match else squadron_short_name  # Reassign to the same variable
-            
-            squadron_score_div = soup.find('div', class_='squadrons-counter__value')
-            squadron_score = int(squadron_score_div.text.strip()) if squadron_score_div else 'N/A'
+    for item in soup.select('ul.squadrons-stat__item li.squadrons-stat__item-value'):
+        text = item.text.strip()
+        try:
+            stat_values.append(int(text))
+        except ValueError:
+            if "d" in text:
+                playtime = text
 
-            kd_ratio = round((air_kills + ground_kills) / deaths, 2) if deaths > 0 else 'N/A'
+    if len(stat_values) >= 3:
+        air_kills = stat_values[0]
+        ground_kills = stat_values[1]
+        deaths = stat_values[2]
+        squadron_short_name = soup.find('div', class_='squadrons-info__title').text.strip()
+        match = re.search(r'\[.*?([A-Za-z0-9]+).*?\]', squadron_short_name)
+        squadron_short_name = match.group(1) if match else squadron_short_name
 
-            return {
-                'Short Name': squadron_short_name,
-                'Squadron Name': squadron_full_name,
-                'Squadron Score': squadron_score,
-                'Air Kills': air_kills,
-                'Ground Kills': ground_kills,
-                'Deaths': deaths,
-                'KD Ratio': kd_ratio,
-                'Playtime': playtime
-            }
-        else:
-            print(f"Not enough valid stats found for {squadron_full_name}.")
+        squadron_score_div = soup.find('div', class_='squadrons-counter__value')
+        squadron_score = int(squadron_score_div.text.strip()) if squadron_score_div else 'N/A'
+
+        kd_ratio = round((air_kills + ground_kills) / deaths, 2) if deaths > 0 else 'N/A'
+
+        return {
+            'Short Name': squadron_short_name,
+            'Squadron Name': squadron_full_name,
+            'Squadron Score': squadron_score,
+            'Air Kills': air_kills,
+            'Ground Kills': ground_kills,
+            'Deaths': deaths,
+            'KD Ratio': kd_ratio,
+            'Playtime': playtime
+        }
     else:
-        print(f"Failed to fetch clan info page for {squadron_full_name}. Status code: {response.status_code}")
+        print(f"Not enough valid stats found for {squadron_full_name}.")
 
     return None
 
-# Main function to process all 20 squadrons
-def process_all_squadrons():
-    # Fetch the first page of the leaderboard
-    leaderboard_data = fetch_first_page_clan_table()
 
-    all_squadron_stats = []
+async def process_all_squadrons():
+    """Process all squadrons concurrently to speed up execution."""
+    leaderboard_data = fetch_first_page_clan_table()  # Assuming this function is synchronous
 
-    if leaderboard_data and len(leaderboard_data) > 0:
-        # Extract and process each squadron's stats
+    if not leaderboard_data or len(leaderboard_data) == 0:
+        print("No data found on the first page of the leaderboard.")
+        return None
+
+    async with aiohttp.ClientSession() as session:
+        tasks = []
         for team in leaderboard_data:
             if isinstance(team, list):
                 squadron_full_name = ' '.join(team[1].split()[1:])  # Extract the full name (everything after the short name)
-                squadron_stats = process_sq(squadron_full_name)
-                if squadron_stats:
-                    all_squadron_stats.append(squadron_stats)
-    else:
-        print("No data found on the first page of the leaderboard.")
+                tasks.append(process_sq(session, squadron_full_name))
 
-    return all_squadron_stats if all_squadron_stats else None
+        all_squadron_stats = await asyncio.gather(*tasks)
+
+    # Filter out None values
+    return [squadron for squadron in all_squadron_stats if squadron]
+
+
+async def test():
+    squadron_data = await process_all_squadrons()
+    print(squadron_data)
+
+#asyncio.run(test())
 
 
 
