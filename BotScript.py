@@ -20,7 +20,6 @@ from replit.object_storage import Client
 from replit.object_storage.errors import ObjectNotFoundError
 from googletrans import Translator
 
-
 # Local Module Imports
 import Alarms
 from SQ_Info import fetch_squadron_info
@@ -33,7 +32,6 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("hpack").setLevel(logging.WARNING)
 
 client = Client(bucket_id="replit-objstore-b5261a8a-c768-4543-975e-dfce1cd7077d")
-
 TOKEN = os.environ.get('DISCORD_KEY')
 
 intents = discord.Intents.default()
@@ -41,14 +39,12 @@ intents.message_content = True
 intents.reactions = True
 intents.members = True
 intents.messages = True
-intents.dm_messages = True
 
 
 class MyBot(commands.Bot):
     def __init__(self):
         super().__init__(command_prefix='~', intents=intents)
         self.synced = False
-        self.conversations = {}  
 
     async def setup_hook(self):
         await self.tree.sync()
@@ -58,9 +54,9 @@ bot = MyBot()
 
 @bot.event
 async def on_ready():
-    print(f'We have logged in as {bot.user} in the following guilds:')
+    logging.info(f'We have logged in as {bot.user} in the following guilds:')
     for guild in bot.guilds:
-        print(f' - {guild.name} (id: {guild.id})')
+        logging.info(f' - {guild.name} (id: {guild.id})')
     await bot.change_presence(activity=discord.Activity(
         type=discord.ActivityType.playing, name="War Thunder"))
     if not bot.synced:
@@ -69,13 +65,14 @@ async def on_ready():
     snapshot_task.start()
     points_alarm_task.start()
     logs_snapshot_task.start()
+    
     #region = "US"
     #await execute_points_alarm_task(region)
 
 
 @bot.event
 async def on_guild_join(guild):
-    print(f'Joined new guild: {guild.name} (id: {guild.id})')
+    logging.info(f'Joined new guild: {guild.name} (id: {guild.id})')
     await bot.tree.sync()
     guild_id = guild.id
     key = "guilds.json"
@@ -1189,7 +1186,7 @@ def perform_translation(text: str, target_language: str) -> str:
         translated = translator.translate(text, dest=target_language)
         return translated.text
     except Exception as e:
-        print(f"Translation failed: {e}")
+        logging.info(f"Translation failed: {e}")
         return "Translation error"
 
 
