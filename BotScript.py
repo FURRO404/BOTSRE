@@ -548,14 +548,8 @@ async def find_comp(interaction: discord.Interaction, username: str):
 
     # Get command invocation details
     user = interaction.user
-    server = interaction.guild  # Can be None in DMs
+    server = interaction.guild
     timestamp = DT.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')    
-
-    logging.info(
-        f"[{timestamp}] FIND-COMP used by {user.name} (ID: {user.id}) in server '{server.name}' (ID: {server.id}) for username '{username}'"
-        if server else
-        f"[{timestamp}] FIND-COMP used by {user.name} (ID: {user.id}) in a DM for username '{username}'"
-    )
     
     try:
         # Fetch games for the given username
@@ -618,6 +612,7 @@ async def find_comp(interaction: discord.Interaction, username: str):
         try:
             await interaction.followup.send(embed=embed)
             logging.info(f"Comp sent for session {session_id}")
+            logging.info(f"[{timestamp}] FIND-COMP used by {user.name} (ID: {user.id}) in server '{server.name}' (ID: {server.id}) for username '{username}'")
 
             replay_file_path = f"replays/0{session_id}"
             if os.path.exists(replay_file_path):
