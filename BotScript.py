@@ -18,27 +18,21 @@ from discord.utils import escape_markdown
 from discord import app_commands, ui, Interaction, SelectOption
 from replit.object_storage import Client
 from replit.object_storage.errors import ObjectNotFoundError
-import requests
 from googletrans import Translator
 
 
 # Local Module Imports
-from Meta_Add import add_to_metas
-from Meta_Remove import remove_from_metas, find_vehicles_in_meta
-from permissions import grant_permission, revoke_permission, has_permission
 import Alarms
-from Games import guessing_game, choose_random_vehicle, normalize_name, randomizer_game
 from SQ_Info import fetch_squadron_info
 from AutoLog import fetch_games_for_user
 from SQ_Info_Auto import process_all_squadrons
-from Searcher import normalize_name, get_vehicle_type, get_vehicle_country
 from Parse_Replay import save_replay_data
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("hpack").setLevel(logging.WARNING)
-client = Client(
-    bucket_id="replit-objstore-b5261a8a-c768-4543-975e-dfce1cd7077d")
+
+client = Client(bucket_id="replit-objstore-b5261a8a-c768-4543-975e-dfce1cd7077d")
 
 TOKEN = os.environ.get('DISCORD_KEY')
 
@@ -51,17 +45,14 @@ intents.dm_messages = True
 
 
 class MyBot(commands.Bot):
-
     def __init__(self):
         super().__init__(command_prefix='~', intents=intents)
         self.synced = False
-        self.conversations = {}  # Dictionary to track active conversations
+        self.conversations = {}  
 
     async def setup_hook(self):
         await self.tree.sync()
         self.synced = True
-
-
 bot = MyBot()
 
 
@@ -131,11 +122,7 @@ async def snapshot_task():
                 if left_members:
                     channel_id = squadron_preferences.get("Leave", "").strip("<#>")
 
-                    #logging.info(f"squadron_preferences: {squadron_preferences}")
-                    #logging.info(f"key: {key}")
-                    #logging.info(f"Extracted channel_id: {channel_id}")
-
-                    if channel_id:  # Ensure channel_id is not empty
+                    if channel_id:
                         try:
                             channel_id = int(channel_id)
                             channel = bot.get_channel(channel_id)
@@ -175,6 +162,7 @@ async def points_alarm_task():
     elif now_utc.hour == 7 and now_utc.minute == 15:
         region = "US"
         await execute_points_alarm_task(region)
+
 
 async def execute_points_alarm_task(region):
     logging.info("Running points-update alarm")
@@ -241,7 +229,7 @@ async def execute_points_alarm_task(region):
                                 # Chunk the lines into sections that fit within the max_field_length limit
                                 max_field_length = 1024
                                 chunks = []
-                                current_chunk = "```\nName             Change        Now\n"
+                                current_chunk = "```\nName                Change   Now\n"
                                 for line in changes_lines:
                                     if len(current_chunk) + len(line) + 1 > max_field_length:
                                         current_chunk += "```"
@@ -310,6 +298,7 @@ def get_shortname_from_long(longname):
 
     return None
 
+
 @tasks.loop(minutes=5)
 async def logs_snapshot_task():
     now_utc = datetime.now(timezone.utc).time()
@@ -317,8 +306,9 @@ async def logs_snapshot_task():
     if (time(13, 55) <= now_utc <= time(22, 10)) or (time(12, 55) <= now_utc <= time(7, 10)):
         await logs_snapshot()
     else:
-        await logs_snapshot()
+        #await logs_snapshot()
         logging.info("Logs not ran, not a scheduled time.")
+
 
 async def logs_snapshot():
     logging.info("Running log-snapshot task")
@@ -645,9 +635,7 @@ async def find_comp(interaction: discord.Interaction, username: str):
         await interaction.followup.send("An error occurred while processing the command. Please try again.")
 
 
-
-@bot.tree.command(name="alarm",
-                  description="Set an alarm to monitor squadron changes")
+@bot.tree.command(name="alarm", description="Set an alarm to monitor squadron changes")
 @app_commands.describe(
     type="The type of alarm (e.g., Leave, Points, Logs)",
     channel_id="The ID of the channel to send alarm messages to",
@@ -678,586 +666,7 @@ async def alarm(interaction: discord.Interaction, type: str, channel_id: str,
         ephemeral=True)
 
 
-@bot.tree.command(name="grant", description="Grant a user or role permission")
-@app_commands.describe(
-    target="The user or role to grant permission to",
-    permission_type="The type of permission (Session or Meta)")
-@commands.has_permissions(administrator=True)
-async def grant(interaction: discord.Interaction, target: str,
-                permission_type: str):
-    if permission_type not in ["Meta"]:
-        await interaction.response.send_message(
-            "Invalid permission type. Use 'Meta'.",
-            ephemeral=True)
-        return
-
-    is_role = False
-    target_id = None
-    target_obj = None
-
-    if target.startswith("<@&"):  # Check if target is a role
-        is_role = True
-        try:
-            target_id = int(target[3:-1])
-        except ValueError:
-            await interaction.response.send_message("Invalid role ID format.",
-                                                    ephemeral=True)
-            return
-        target_obj = interaction.guild.get_role(target_id)
-    elif target.startswith("<@"):  # Check if target is a user
-        try:
-            target_id = int(target[2:-1])
-        except ValueError:
-            await interaction.response.send_message("Invalid user ID format.",
-                                                    ephemeral=True)
-            return
-        target_obj = interaction.guild.get_member(target_id)
-
-    if not target_obj:
-        await interaction.response.send_message("Invalid user or role.",
-                                                ephemeral=True)
-        return
-
-    grant_permission(target_id, permission_type, interaction.guild.id, is_role)
-    await interaction.response.send_message(
-        f"Granted {permission_type} permission to {target}.", ephemeral=True)
-
-
-@bot.tree.command(name="revoke",
-                  description="Revoke a user or role's permission")
-@app_commands.describe(
-    target="The user or role to revoke permission from",
-    permission_type="The type of permission (Session or Meta)")
-@commands.has_permissions(administrator=True)
-async def revoke(interaction: discord.Interaction, target: str,
-                 permission_type: str):
-    if permission_type not in ["Session", "Meta"]:
-        await interaction.response.send_message(
-            "Invalid permission type. Use 'Session' or 'Meta'.",
-            ephemeral=True)
-        return
-
-    is_role = False
-    target_id = None
-    target_obj = None
-
-    if target.startswith("<@&"):  # Check if target is a role
-        is_role = True
-        try:
-            target_id = int(target[3:-1])
-        except ValueError:
-            await interaction.response.send_message("Invalid role ID format.",
-                                                    ephemeral=True)
-            return
-        target_obj = interaction.guild.get_role(target_id)
-    elif target.startswith("<@"):  # Check if target is a user
-        try:
-            target_id = int(target[2:-1])
-        except ValueError:
-            await interaction.response.send_message("Invalid user ID format.",
-                                                    ephemeral=True)
-            return
-        target_obj = interaction.guild.get_member(target_id)
-
-    if not target_obj:
-        await interaction.response.send_message("Invalid user or role.",
-                                                ephemeral=True)
-        return
-
-    revoke_permission(target_id, permission_type, interaction.guild.id,
-                      is_role)
-    await interaction.response.send_message(
-        f"Revoked {permission_type} permission from {target}.", ephemeral=True)
-
-
-def has_roles_or_admin(permission_type):
-    async def predicate(interaction: discord.Interaction):
-        if interaction.user.id == bot.owner_id:
-            return True
-        if interaction.user.guild_permissions.administrator:
-            return True
-        if has_permission(interaction.user.id, interaction.user.roles,
-                          permission_type, interaction.guild.id):
-            return True
-        return False
-
-    return app_commands.check(predicate)
-
-
-GROUND_DATA_FILE = 'DATA/Ground.txt'
-AIR_DATA_FILE = 'DATA/Air.txt'
-
-# Hardcoded BR options including more values
-BR_OPTIONS = [
-    "4.3", "4.7", "5.0", "5.3", "5.7", "6.0", "6.3", "6.7", "7.0", "7.3",
-    "7.7", "8.0", "8.3", "8.7", "9.0", "9.3", "9.7", "10.0", "10.3", "10.7",
-    "11.0", "11.3", "11.7", "12.0", "12.3", "12.7", "13.0", "13.3", "13.7", "14.0"
-]
-
-
-def get_country_flag(country):
-    flags = {
-        "USSR": "🇷🇺",
-        "Germany": "🇩🇪",
-        "USA": "🇺🇸",
-        "Great Britain": "🇬🇧",
-        "Japan": "🇯🇵",
-        "Italy": "🇮🇹",
-        "France": "🇫🇷",
-        "China": "🇨🇳",
-        "Sweden": "🇸🇪",
-        "Israel": "🇮🇱"
-    }
-    return flags.get(country, "")
-
-
-def view_metalist(br: str, server_id: int) -> discord.Embed:
-    key = f"{server_id}_METAS.txt"
-
-    try:
-        data = client.download_as_text(key)
-    except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 404:
-            return discord.Embed(title="Meta List",
-                                 description="Meta is empty.",
-                                 color=discord.Color.red())
-        else:
-            logging.error(
-                f"Error loading meta data for server {server_id}: {e}")
-            return discord.Embed(
-                title="Meta List",
-                description=
-                "An error occurred while trying to view the Meta list.",
-                color=discord.Color.red())
-    except Exception as e:
-        logging.error(f"Error loading meta data for server {server_id}: {e}")
-        return discord.Embed(
-            title="Meta List",
-            description="There is no Meta list for this server.",
-            color=discord.Color.red())
-
-    metas = json.loads(data)
-
-    if not metas:
-        return discord.Embed(
-            title="Meta List",
-            description=f"No vehicles found at BR {br} in Meta.",
-            color=discord.Color.red())
-
-    if br not in metas:
-        return discord.Embed(
-            title="Meta List",
-            description=f"No vehicles found at BR {br} in Meta.",
-            color=discord.Color.red())
-
-    categorized_vehicles = {
-        'Ground Forces': [],
-        'Anti-Aircraft': [],
-        'Air Forces': [],
-        'Helis': []
-    }
-
-    for vehicle in metas[br]:
-        vehicle_type = get_vehicle_type(vehicle)
-        if vehicle_type:
-            country = get_vehicle_country(vehicle)
-            flag = get_country_flag(country)
-            vehicle_display = f"• {vehicle} ({flag})"
-
-            if 'Light tank' in vehicle_type or 'Medium tank' in vehicle_type or 'Heavy tank' in vehicle_type or 'Tank destroyer' in vehicle_type:
-                categorized_vehicles['Ground Forces'].append(vehicle_display)
-            elif 'SPAA' in vehicle_type:
-                categorized_vehicles['Anti-Aircraft'].append(vehicle_display)
-            elif 'helicopter' in vehicle_type.lower():
-                categorized_vehicles['Helis'].append(vehicle_display)
-            else:
-                categorized_vehicles['Air Forces'].append(vehicle_display)
-
-    embed = discord.Embed(title=f"Meta List for BR {br}",
-                          color=discord.Color.blue())
-    for category, vehicles in categorized_vehicles.items():
-        if vehicles:
-            embed.add_field(name=category,
-                            value="\n".join(vehicles),
-                            inline=False)
-    embed.set_footer(text="Meow :3")
-    return embed
-
-
-class InitialView(discord.ui.View):
-
-    def __init__(self, interaction):
-        super().__init__()
-        self.interaction = interaction
-        self.add_item(InitialDropdown(interaction))
-
-
-class InitialDropdown(discord.ui.Select):
-
-    def __init__(self, interaction):
-        options = [
-            discord.SelectOption(label="Add"),
-            discord.SelectOption(label="Remove"),
-            discord.SelectOption(label="View")
-        ]
-        super().__init__(placeholder="Choose an action...", options=options)
-        self.interaction = interaction
-
-    async def callback(self, interaction: discord.Interaction):
-        if self.values[0] in ["Add", "Remove"]:
-            if not has_permission(
-                    interaction.user.id, interaction.user.roles, "Meta",
-                    interaction.guild.id
-            ) and not interaction.user.guild_permissions.administrator:
-                await interaction.response.send_message(
-                    "You do not have permission to perform this action.",
-                    ephemeral=True)
-                return
-
-        if self.values[0] == "Add":
-            await interaction.response.send_modal(AddModal(interaction))
-        elif self.values[0] == "Remove":
-            await interaction.response.send_modal(RemoveModal(interaction))
-        elif self.values[0] == "View":
-            await interaction.response.send_message(
-                "Select BRs to view:", view=BRSelectView(interaction))
-        else:
-            await interaction.response.send_message("Invalid action selected.",
-                                                    ephemeral=True)
-
-
-class AddModal(discord.ui.Modal, title="Add Item"):
-
-    def __init__(self, interaction):
-        super().__init__()
-        self.interaction = interaction
-        self.add_item(discord.ui.TextInput(label="Enter item to search for"))
-
-    async def on_submit(self, interaction: discord.Interaction):
-        search_term = self.children[0].value.lower(
-        )  # Convert search term to lowercase
-
-        # Read and search both files
-        matches = set()
-        for file_path in [GROUND_DATA_FILE, AIR_DATA_FILE]:
-            with open(file_path, 'r') as f:
-                lines = f.readlines()
-                matches.update(
-                    normalize_name(line.strip()) for line in lines
-                    if search_term in line.lower()
-                )  # Convert each line to lowercase for comparison
-
-        matches = list(matches)  # Convert back to list to allow indexing
-
-        if not matches:
-            await interaction.response.send_message(
-                f"No matches found for '{search_term}'.", ephemeral=True)
-        elif len(matches) == 1:
-            view = BRSelectionView(matches[0])
-            await interaction.response.send_message(
-                f"Select BRs for '{matches[0]}':", view=view)
-        else:
-            view = MatchSelectionView(matches)
-            await interaction.response.send_message(
-                "Multiple matches found, please select one:", view=view)
-
-
-class MatchSelectionView(discord.ui.View):
-
-    def __init__(self, matches):
-        super().__init__()
-        self.matches = matches
-        self.add_match_dropdowns()
-
-    def add_match_dropdowns(self):
-        options_chunks = [
-            self.matches[i:i + 25] for i in range(0, len(self.matches), 25)
-        ]
-        for options_chunk in options_chunks:
-            self.add_item(MatchSelectionDropdown(options_chunk))
-
-
-class MatchSelectionDropdown(discord.ui.Select):
-
-    def __init__(self, matches):
-        options = [discord.SelectOption(label=match) for match in matches]
-        super().__init__(placeholder="Select a match...", options=options)
-
-    async def callback(self, interaction: discord.Interaction):
-        selected_match = self.values[0]
-        view = BRSelectionView(selected_match)
-        await interaction.response.send_message(
-            f"Select BRs for '{selected_match}':", view=view)
-
-
-class BRSelectionView(discord.ui.View):
-
-    def __init__(self, selected_match):
-        super().__init__()
-        self.selected_match = selected_match
-        self.add_br_dropdowns()
-
-    def add_br_dropdowns(self):
-        options_chunks = [
-            BR_OPTIONS[i:i + 25] for i in range(0, len(BR_OPTIONS), 25)
-        ]
-        for options_chunk in options_chunks:
-            self.add_item(
-                BRSelectionDropdown(self.selected_match, options_chunk))
-
-
-class BRSelectionDropdown(discord.ui.Select):
-
-    def __init__(self, selected_match, options):
-        options = [discord.SelectOption(label=br) for br in options]
-        super().__init__(
-            placeholder="Select BRs...",
-            options=options,
-            min_values=1,
-            max_values=len(options)  # Allow multiple selections
-        )
-        self.selected_match = selected_match
-
-    async def callback(self, interaction: discord.Interaction):
-        selected_brs = self.values
-
-        await interaction.response.defer(
-        )  # Defer the response to avoid timeouts
-
-        response_messages = []
-
-        for br in selected_brs:
-            response = add_to_metas(self.selected_match, br,
-                                    interaction.guild.id)
-            response_messages.append(response)
-
-        # Create an embed for the response
-        embed = discord.Embed(
-            title=f"Add to Meta",
-            description=f"Results for adding '{self.selected_match}'",
-            color=discord.Color.green())
-        for message in response_messages:
-            embed.add_field(name="Result", value=message, inline=False)
-
-        await interaction.followup.send(embed=embed)
-
-
-class RemoveModal(discord.ui.Modal, title="Remove Item"):
-
-    def __init__(self, interaction):
-        super().__init__()
-        self.interaction = interaction
-        self.add_item(discord.ui.TextInput(label="Enter item to search for"))
-
-    async def on_submit(self, interaction: discord.Interaction):
-        search_term = self.children[0].value.lower(
-        )  # Convert search term to lowercase
-        server_id = interaction.guild.id
-
-        # Find vehicles in the meta data
-        matches = find_vehicles_in_meta(search_term, server_id)
-
-        if not matches:
-            await interaction.response.send_message(
-                f"No matches found for '{search_term}' in meta data.",
-                ephemeral=True)
-        else:
-            view = RemoveMatchSelectionView(matches, search_term)
-            await interaction.response.send_message(
-                f"Select the vehicle to remove:", view=view)
-
-
-class RemoveMatchSelectionView(discord.ui.View):
-
-    def __init__(self, matches, search_term):
-        super().__init__()
-        self.matches = matches
-        self.search_term = search_term
-        self.add_match_dropdowns()
-
-    def add_match_dropdowns(self):
-        options_chunks = [
-            list(self.matches.keys())[i:i + 25]
-            for i in range(0, len(self.matches), 25)
-        ]
-        for options_chunk in options_chunks:
-            self.add_item(
-                RemoveMatchSelectionDropdown(self.search_term, self.matches,
-                                             options_chunk))
-
-
-class RemoveMatchSelectionDropdown(discord.ui.Select):
-
-    def __init__(self, search_term, matches, options):
-        options = [discord.SelectOption(label=vehicle) for vehicle in options]
-        super().__init__(placeholder="Select a vehicle...", options=options)
-        self.search_term = search_term
-        self.matches = matches
-
-    async def callback(self, interaction: discord.Interaction):
-        selected_vehicle = self.values[0]
-        view = RemoveBRSelectionView(self.matches[selected_vehicle],
-                                     selected_vehicle)
-        await interaction.response.send_message(
-            f"Select BRs to remove '{selected_vehicle}' from:", view=view)
-
-
-class RemoveBRSelectionView(discord.ui.View):
-
-    def __init__(self, brs, selected_vehicle):
-        super().__init__()
-        self.selected_vehicle = selected_vehicle
-        self.brs = brs
-        self.add_br_dropdowns()
-
-    def add_br_dropdowns(self):
-        options_chunks = [
-            self.brs[i:i + 25] for i in range(0, len(self.brs), 25)
-        ]
-        for options_chunk in options_chunks:
-            self.add_item(
-                RemoveBRSelectionDropdown(self.selected_vehicle,
-                                          options_chunk))
-
-
-class RemoveBRSelectionDropdown(discord.ui.Select):
-
-    def __init__(self, selected_vehicle, options):
-        options = [discord.SelectOption(label=br) for br in options]
-        super().__init__(
-            placeholder="Select BRs...",
-            options=options,
-            min_values=1,
-            max_values=len(options)  # Allow multiple selections
-        )
-        self.selected_vehicle = selected_vehicle
-
-    async def callback(self, interaction: discord.Interaction):
-        selected_brs = self.values
-        # Log the details
-        logging.debug(
-            f"Item: {self.selected_vehicle} removed from BRs: {selected_brs}")
-
-        response_messages = []
-
-        # Remove the vehicle from each selected BR using meta_remove
-        for br in selected_brs:
-            response = remove_from_metas(self.selected_vehicle, br,
-                                         interaction.guild.id)
-            logging.info(response)
-            response_messages.append(response)
-
-        # Create an embed for the response
-        embed = discord.Embed(
-            title=f"Remove from Meta",
-            description=f"Results for removing '{self.selected_vehicle}'",
-            color=discord.Color.red())
-        for message in response_messages:
-            embed.add_field(name="Result", value=message, inline=False)
-
-        await interaction.response.send_message(embed=embed)
-
-
-class BRSelectView(discord.ui.View):
-
-    def __init__(self, interaction):
-        super().__init__()
-        self.interaction = interaction
-        self.add_br_dropdowns()
-
-    def add_br_dropdowns(self):
-        key = f"{self.interaction.guild.id}_METAS.txt"
-
-        try:
-            data = client.download_as_text(key)
-            metas = json.loads(data)
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 404:
-                metas = {}
-            else:
-                logging.error(
-                    f"Error loading meta data for server {self.interaction.guild.id}: {e}"
-                )
-                metas = {}
-        except Exception as e:
-            logging.error(
-                f"Error loading meta data for server {self.interaction.guild.id}: {e}"
-            )
-            metas = {}
-
-        # Sort BR options numerically
-        br_options = sorted(metas.keys(), key=lambda x: float(x))
-        options_chunks = [
-            br_options[i:i + 25] for i in range(0, len(br_options), 25)
-        ]
-        for options_chunk in options_chunks:
-            self.add_item(BRSelectDropdown(options_chunk))
-
-
-class BRSelectDropdown(discord.ui.Select):
-
-    def __init__(self, options):
-        options = [discord.SelectOption(label=br) for br in options]
-        super().__init__(
-            placeholder="Select BRs to view...",
-            options=options,
-            min_values=1,
-            max_values=len(options)  # Allow multiple selections
-        )
-
-    async def callback(self, interaction: discord.Interaction):
-        selected_brs = self.values
-
-        await interaction.response.defer(
-        )  # Defer the response to avoid timeouts
-
-        embeds = [
-            view_metalist(br, interaction.guild.id) for br in selected_brs
-        ]
-
-        for embed in embeds:
-            await interaction.followup.send(embed=embed)
-
-
-@bot.tree.command(name="console", description="Choose an action.")
-async def console(interaction: discord.Interaction):
-    view = InitialView(interaction)
-    await interaction.response.send_message("Choose an action:", view=view)
-
-
-@bot.tree.command(name="viewmeta", description="View the meta list.")
-@app_commands.describe()
-async def viewmeta(interaction: discord.Interaction):
-    # This will mimic the "View" action from the console dropdown.
-    view = BRSelectView(interaction)
-    await interaction.response.send_message("Select BRs to view:", view=view)
-
-
-@bot.tree.command(name="clear", description="Clear the entire Meta list")
-@commands.is_owner()
-async def clear(interaction: discord.Interaction):
-    if not await bot.is_owner(interaction.user):
-        await interaction.response.send_message(
-            "You do not have permission to use this command.", ephemeral=True)
-        return
-    try:
-        key = f"{interaction.guild.id}_METAS.txt"
-        client.upload_from_text(key, json.dumps(
-            {}))  # Clear the file by uploading an empty JSON object
-        embed = discord.Embed(title="Meta List Cleared",
-                              description="The Meta list has been cleared.",
-                              color=discord.Color.yellow())
-        embed.set_footer(text="Meow :3")
-        await interaction.response.send_message(embed=embed)
-    except Exception as e:
-        logging.error(f"Error clearing Meta list: {e}")
-        if not interaction.response.is_done():
-            await interaction.response.send_message(f"An error occurred: {e}",
-                                                    ephemeral=True)
-
-
-@bot.tree.command(name="sq-info",
-                  description="Fetch information about a squadron")
+@bot.tree.command(name="sq-info", description="Fetch information about a squadron")
 @app_commands.describe(
     squadron="The full name of the squadron to fetch information about",
     type=
@@ -1322,8 +731,7 @@ async def stat(interaction: discord.Interaction, username: str):
     await interaction.response.send_message(url, ephemeral=False)
 
 
-active_guessing_games = {
-}  # Dictionary to keep track of active guessing games by channel ID
+active_guessing_games = {}  # Dictionary to keep track of active guessing games by channel ID
 
 
 def update_leaderboard(guild_id, user_id, points):
@@ -1352,7 +760,7 @@ def update_leaderboard(guild_id, user_id, points):
     client.upload_from_text(filename, json.dumps(leaderboard))
 
 
-@bot.tree.command(name='guessing-game', description='Start a guessing game')
+#@bot.tree.command(name='guessing-game', description='Start a guessing game')
 async def guessing_game_command(interaction: discord.Interaction):
     logging.debug("Executing /guessing-game command")
 
@@ -1411,7 +819,7 @@ async def guessing_game_command(interaction: discord.Interaction):
     del active_guessing_games[interaction.channel_id]
 
 
-@bot.tree.command(name='leaderboard', description='Show the leaderboard')
+#@bot.tree.command(name='leaderboard', description='Show the leaderboard')
 async def leaderboard_command(interaction: discord.Interaction):
     logging.debug("Executing /leaderboard command")
 
@@ -1552,10 +960,8 @@ class TriviaView(ui.View):
         self.fake_vehicles = fake_vehicles
 
 
-@bot.tree.command(name="trivia",
-                  description="Play a War Thunder vehicle trivia game")
-@app_commands.describe(
-    difficulty="Choose the difficulty level: easy, medium, or hard")
+#@bot.tree.command(name="trivia", description="Play a War Thunder vehicle trivia game")
+#@app_commands.describe(difficulty="Choose the difficulty level: easy, medium, or hard")
 async def trivia(interaction: Interaction, difficulty: str = "medium"):
     user_id = interaction.user.id
     difficulty = difficulty.lower()  # Normalize difficulty to lowercase
@@ -1600,8 +1006,7 @@ async def time_now(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed, ephemeral=False)
 
 
-@bot.tree.command(name="randomizer",
-                  description="Choose a random vehicle and its BR.")
+#@bot.tree.command(name="randomizer", description="Choose a random vehicle and its BR.")
 async def randomizer(interaction: discord.Interaction):
     # Run the randomizer_game function to get the vehicle details
     result = randomizer_game()
@@ -1738,6 +1143,7 @@ async def save_features(guild_id, features):
     key = f"{guild_id}-features.json"
     client.upload_from_text(key, json.dumps(features))
 
+    
 @bot.tree.command(name="toggle", description="Toggle a feature for the server (Currently supports 'Translate')")
 @app_commands.describe(feature="Feature to toggle (only 'Translate' supported)")
 async def toggle(interaction: discord.Interaction, feature: str):
@@ -1756,8 +1162,6 @@ async def toggle(interaction: discord.Interaction, feature: str):
     await save_features(guild_id, features)
     await interaction.followup.send(f"Translate feature set to {features['Translate']}.", ephemeral=True)
 
-
-translator = Translator()
 
 # Dictionary mapping flag emojis to language codes
 LANGUAGE_MAP = {
@@ -1779,14 +1183,16 @@ LANGUAGE_MAP = {
     "🇺🇦": "uk",  # Ukrainian
 }
 
+
+translator = Translator()
 def perform_translation(text: str, target_language: str) -> str:
-    """Translates the given text to the target language."""
     try:
         translated = translator.translate(text, dest=target_language)
         return translated.text
     except Exception as e:
         print(f"Translation failed: {e}")
         return "Translation error"
+
 
 @bot.event
 async def on_reaction_add(reaction, user):
@@ -1846,29 +1252,20 @@ async def on_reaction_add(reaction, user):
     await sent_message.delete(delay=30)
 
 
-
 @bot.tree.command(name="help", description="Get a guide on how to use the bot")
 async def help(interaction: discord.Interaction):
     guide_text = (
         "**Commands Overview**\n"
-        "1. **/grant [target] [permission_type]** - Grant a user or role permission.\n"
-        "2. **/revoke [target] [permission_type]** - Revoke a user or role permission.\n"
-        "3. **/clear** - Clear the entire Meta list (Owner only).\n"
-        "4. **/session** - Start a new session.\n"
-        "5. **/randomizer** - returns a random vehicle at its BR.\n"
-        "6. **/alarm [type] [channel_id] [squadron_name]** - Set an alarm to monitor squadron changes.\n"
-        "7. **/stat [username]** - Get the ThunderSkill stats URL for a user.\n"
-        "8. **/guessing-game** - Start a guessing game.\n"
-        "9. **/trivia [difficulty]** - Play a War Thunder vehicle trivia game. A higher difficulty means more points.\n"
-        "10. **/leaderboard** - Show the leaderboard.\n"
-        "11. **/top** - Display the top 20 squadrons currently and their stats.\n"
-        "12. **/console** - Manage the metalist.\n"
-        "13. **/viewmeta** - View the metalist.\n"
-        "14. **/time** - Get the current UTC time and your local time.\n"
-        "15. **/set-squadron {short hand} {long hand}** - Store squadron name for the discord server (used for logging).\n"
-        "16. **/help** - Get a guide on how to use the bot.\n"
-        "17. **/enable** - Enable features like Translate.\n"
-        "18. **Translation** - Put a flag reaction under a message to translate to that language (after using /enable).\n\n"
+        "1. **/alarm [type] [channel_id] [squadron_name]** - Set an alarm to monitor squadron changes.\n"
+        "2. **/comp [username]** - Given a username, will attempt to detail the last found SQB game.\n"
+        "3. **/stat [username]** - Get the ThunderSkill stats URL for a user.\n"
+        "4. **/top** - Display the top 20 squadrons and their current stats (takes a moment).\n"
+        "5. **/time-now** - Get the current UTC time and your local time.\n"
+        "6. **/set-squadron {short hand} {long hand}** - Store squadron name for the discord server (used for logging).\n"
+        "7. **/toggle** - Enable features like Translate (more to come soon).\n"
+        "8. **/sq-info [squadron] [type]** - View the details of the specified squadron, if a squadron is set (command 6), it will default to that squadron.\n"
+        "9. **/help** - Get a guide on how to use the bot.\n"
+        "10. **Translation** - Put a flag reaction under a message to translate to that language (after using /enable).\n\n"
         "*For detailed information on each command, please read the input descriptions of each command, or reach out to not_so_toothless.*"
     )
 
@@ -1877,18 +1274,6 @@ async def help(interaction: discord.Interaction):
                           color=discord.Color.blue())
     embed.set_footer(text="Meow :3")
     await interaction.response.send_message(embed=embed, ephemeral=False)
-
-
-
-@clear.error
-async def command_error(interaction: discord.Interaction,
-                        error: app_commands.AppCommandError):
-    if isinstance(error, app_commands.CheckFailure):
-        await interaction.response.send_message(
-            "You do not have permission to use this command.", ephemeral=True)
-    else:
-        await interaction.response.send_message(f"An error occurred: {error}",
-                                                ephemeral=True)
 
 
 bot.run(TOKEN)
