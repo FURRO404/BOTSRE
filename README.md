@@ -1,6 +1,6 @@
 # Discord Bot for War Thunder
 
-This is a Discord bot designed for War Thunder, providing various features such as squadron management, game logging, and vehicle meta-management.
+This is a Discord bot designed for War Thunder, providing various features such as squadron management, game logging, and stat tracking.
 
 ## Usage
 
@@ -12,18 +12,15 @@ This is a Discord bot designed for War Thunder, providing various features such 
 
 You can start the bot by running `BotScript.py` once you put your discord bot token into your env, this bot is currently meant to be ran inside Replit.
 
-### Features
-Meta Management
-Allows users to add, remove, and view vehicles in the Meta list based on their Battle Ratings (BR).
-
+### Main Features
 Alarms
-Monitor squadron changes and notify when members leave with points, and point changes
+Monitor squadron changes and notify when members leave with points, point changes, and automatic logs.
 
-Game Logging
-Log game outcomes (wins, losses) along with details like the enemy team name, vehicle counts, and comments.
+Comp
+Given an enemy username, return the composition of their team's vehicles from the last known game.
 
-Interactive Commands
-Use Discord's UI components like modals and dropdowns to interact with the bot.
+Translation
+Useful for international squadrons, be sure to toggle the feature!
 
-### License
-This project is licensed under the MIT License. See the LICENSE file for details.
+General Squadron Information
+SQ-Info and Stat should be useful for that
