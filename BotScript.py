@@ -226,7 +226,7 @@ async def execute_points_alarm_task(region):
                                 # Chunk the lines into sections that fit within the max_field_length limit
                                 max_field_length = 1024
                                 chunks = []
-                                current_chunk = "```\nName                Change   Now\n"
+                                current_chunk = "```\nName                Change     Now\n"
                                 for line in changes_lines:
                                     if len(current_chunk) + len(line) + 1 > max_field_length:
                                         current_chunk += "```"
@@ -296,7 +296,7 @@ def get_shortname_from_long(longname):
     return None
 
 
-@tasks.loop(minutes=5)
+@tasks.loop(minutes=3)
 async def logs_snapshot_task():
     now_utc = datetime.now(timezone.utc).time()
     # Run logs_snapshot only while US/EU timeslot are open
@@ -312,17 +312,16 @@ async def logs_snapshot():
 
     for guild in bot.guilds:
         guild_id = guild.id
-        logging.info(f"Processing guild: {guild_id}")
+        guild_name = guild.name
 
         preferences = load_guild_preferences(guild_id)
-        #squadrons = load_squadrons_data()
         sessions_data = load_sessions_data()
 
         if str(guild_id) not in sessions_data:
             sessions_data[str(guild_id)] = []
             logging.info(f"Added new guild entry for guild: {guild_id} in sessions.json")
 
-        all_found_sessions = await process_guild_squadrons(guild_id, preferences, sessions_data)
+        all_found_sessions = await process_guild_squadrons(guild_id, preferences, sessions_data, guild_name)
         update_sessions_data(guild_id, all_found_sessions, sessions_data)
 
 
@@ -357,7 +356,7 @@ def load_sessions_data():
         return {}
 
 
-async def process_guild_squadrons(guild_id, preferences, sessions):
+async def process_guild_squadrons(guild_id, preferences, sessions, guild_name):
     all_found_sessions = []
     valid_sessions = []
     # Extract only squadrons that have "Logs" defined
@@ -369,13 +368,13 @@ async def process_guild_squadrons(guild_id, preferences, sessions):
     logging.info(squadrons_with_logs)
     
     for squadron_name, log_channel in squadrons_with_logs.items():
-        logging.info(f"Logs are enabled for squadron: {squadron_name} in guild: {guild_id} (Logs Channel: {log_channel})")
+        logging.info(f"Logs are enabled for squadron: {squadron_name} in {guild_name}: {guild_id} (Logs Channel: {log_channel})")
 
         squadron_info = await fetch_squadron_info(squadron_name, embed_type="logs")
         found_sessions = await extract_sessions_from_squadron(squadron_info, sessions, guild_id)
 
         valid_sessions = filter_valid_sessions(found_sessions)
-        logging.info(f"Valid session IDs (found 2 or more times): {valid_sessions}")
+        logging.info(f"Valid session IDs (found 1 or more times): {valid_sessions}")
 
         try:
             for session_id in valid_sessions:
@@ -423,7 +422,7 @@ def filter_valid_sessions(found_sessions):
     for session in found_sessions:
         session_counts[session] = session_counts.get(session, 0) + 1
         
-    valid_sessions = [session for session, count in session_counts.items() if count >= 2]
+    valid_sessions = [session for session, count in session_counts.items() if count >= 1]
     return valid_sessions
 
 
@@ -541,6 +540,44 @@ async def process_session(bot, session_id, guild_id, squadron_preferences):
         logging.error(f"Failed to send embed for session {session_id}: {e}")
 
 
+async def update_billing(server_id, server_name, user_name, user_id, cmd_timestamp):
+    try:
+        raw_data = client.download_as_text("BILLING.json")
+        data = json.loads(raw_data) if raw_data else {}
+        logging.info("Successfully loaded BILLING.json")
+    except (ObjectNotFoundError, FileNotFoundError, json.JSONDecodeError) as e:
+        logging.warning(f"BILLING.json not found or invalid, creating a new one. Error: {e}")
+        data = {}
+        
+    server_id = str(server_id)  # Ensure server_id is a string
+    if server_id not in data:
+        logging.info(f"Server ID {server_id} not found, creating new entry.")
+        data[server_id] = {
+            "server_name": server_name,
+            "use_total": 0, 
+            "uses": []
+        }
+    else:
+        logging.info(f"Server ID {server_id} found, appending new entry.")
+
+    # Increment use_total count
+    data[server_id]["use_total"] += 1  
+
+    # Append the new use entry
+    new_entry = {
+        "timestamp": cmd_timestamp,
+        "user_name": user_name,
+        "user_id": user_id
+    }
+    data[server_id]["uses"].append(new_entry)
+
+    #logging.info(f"Final data structure before saving: {json.dumps(data, indent=4)}")
+
+    # Save the updated data
+    client.upload_from_text("BILLING.json", json.dumps(data, indent=4))
+    logging.info(f"Logged billing entry for {server_name} ({server_id}) - User: {user_name} ({user_id}) at {cmd_timestamp}")
+
+
 @bot.tree.command(name='comp', description='Find the last known comp for a given team')
 @app_commands.describe(username='The username of an enemy player')
 async def find_comp(interaction: discord.Interaction, username: str):
@@ -548,9 +585,15 @@ async def find_comp(interaction: discord.Interaction, username: str):
 
     # Get command invocation details
     user = interaction.user
-    server = interaction.guild
-    timestamp = DT.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')    
+    user_name = user.name
+    user_id = user.id
     
+    server = interaction.guild
+    server_name = server.name
+    server_id = server.id
+    
+    cmd_timestamp = DT.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+    logging.info(f"[{cmd_timestamp}] FIND-COMP used by {user_name} (ID: {user_id}) in server '{server_name}' (ID: {server_id}) for username '{username}'")
     try:
         # Fetch games for the given username
         games = await fetch_games_for_user(username)
@@ -594,7 +637,7 @@ async def find_comp(interaction: discord.Interaction, username: str):
         embed = discord.Embed(
             title=f"**{squadrons[0]} vs {squadrons[1]}**",
             #description=f"**👑 - {winner} **\nMap: {mission}\nTimeStamp: {timestamp}",
-            description=f"**👑 • {winner}**\nMap: {mission}\nTimeStamp: {timestamp}\nGame ID: {session_id}",
+            description=f"**👑 • {winner}**\nMap: {mission}\nTimeStamp: {timestamp}",
             color=discord.Color.purple(),
         )
 
@@ -608,12 +651,16 @@ async def find_comp(interaction: discord.Interaction, username: str):
             )
 
             embed.add_field(name=f"{squadron_name}", value=player_details or "No players found.", inline=False)
-
+            embed.set_footer(text="This was not billed.")
+            
         try:
             await interaction.followup.send(embed=embed)
-            logging.info(f"Comp sent for session {session_id}")
-            logging.info(f"[{timestamp}] FIND-COMP used by {user.name} (ID: {user.id}) in server '{server.name}' (ID: {server.id}) for username '{username}'")
+            try:
+                await update_billing(server_id, server_name, user_name, user_id, cmd_timestamp)
 
+            except Exception as e:
+                logging.error(f"Failed to bill {server_name} ({server_id}) for session {session_id}: {e}")
+            
             replay_file_path = f"replays/0{session_id}"
             if os.path.exists(replay_file_path):
                 shutil.rmtree(replay_file_path)
