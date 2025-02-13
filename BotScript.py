@@ -24,7 +24,7 @@ from googletrans import Translator
 import Alarms
 from SQ_Info import fetch_squadron_info
 from AutoLog import fetch_games_for_user
-from SQ_Info_Auto import process_all_squadrons
+from Leaderboard_Parser import get_top_20, search_for_clan
 from Parse_Replay import save_replay_data
 
 logging.basicConfig(level=logging.INFO)
@@ -32,7 +32,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("hpack").setLevel(logging.WARNING)
 
 client = Client(bucket_id="replit-objstore-b5261a8a-c768-4543-975e-dfce1cd7077d")
-TOKEN = os.environ.get('DISCORD_KEY')
+TOKEN = os.environ.get('TEST_DISCORD_KEY')
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -152,10 +152,10 @@ async def points_alarm_task():
     now_utc = datetime.now(timezone.utc).time()
 
     # Define the region based on the current time
-    if now_utc.hour == 22 and now_utc.minute == 20:
+    if now_utc.hour == 22 and now_utc.minute == 15:
         region = "EU"
         await execute_points_alarm_task(region)
-    elif now_utc.hour == 7 and now_utc.minute == 20:
+    elif now_utc.hour == 7 and now_utc.minute == 15:
         region = "US"
         await execute_points_alarm_task(region)
 
@@ -317,7 +317,7 @@ async def logs_snapshot_task():
     if US_START <= now_utc <= US_END or EU_START <= now_utc <= EU_END:
         await logs_snapshot()
     else:
-        await logs_snapshot()
+        #await logs_snapshot()
         logging.info("Logs not ran, not a scheduled time.")
 
 
@@ -342,6 +342,7 @@ async def logs_snapshot():
             sessions_data[str(guild_id)] = []
 
         all_found_sessions = await process_guild_squadrons(guild_id, preferences, sessions_data, guild_name)
+        all_found_sessions = list(set(all_found_sessions)) #remove duplicates
         update_sessions_data(guild_id, all_found_sessions, sessions_data)
 
 
@@ -1100,13 +1101,9 @@ async def randomizer(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 
-@bot.tree.command(name='set-squadron',
-                  description='Set the squadron information for this server')
-@app_commands.describe(
-    sq_short_hand_name='The short name of the squadron to set',
-    sq_long_hand_name='The long name of the squadron to set')
-async def set_squadron(interaction: discord.Interaction,
-                       sq_short_hand_name: str, sq_long_hand_name: str):
+@bot.tree.command(name='set-squadron', description='Set the squadron tag for this server')
+@app_commands.describe(abbreviated_name='The short name of the squadron to set')
+async def set_squadron(interaction: discord.Interaction, abbreviated_name: str):
     try:
         # Defer the response to prevent timeouts
         await interaction.response.defer()
@@ -1126,7 +1123,7 @@ async def set_squadron(interaction: discord.Interaction,
         # Ensure the server doesn't already have a different squadron set
         guild_id = str(interaction.guild_id)
         if guild_id in squadrons and squadrons[guild_id][
-                'SQ_ShortHand_Name'] != re.sub(r'\W+', '', sq_short_hand_name):
+                'SQ_ShortHand_Name'] != re.sub(r'\W+', '', abbreviated_name):
             embed = discord.Embed(
                 title="Error",
                 description=
@@ -1137,8 +1134,9 @@ async def set_squadron(interaction: discord.Interaction,
             return
 
         # Sanitize and store the short-hand and long-hand names
-        sq_short_hand_name = re.sub(r'\W+', '', sq_short_hand_name)
-        sq_long_hand_name = re.sub(r'\W+', ' ', sq_long_hand_name)
+        sq_short_hand_name = re.sub(r'\W+', '', abbreviated_name)
+        clan_data = await search_for_clan(sq_short_hand_name.lower())
+        sq_long_hand_name = clan_data.get("long_name")
 
         # Update squadron data for the current Discord server
         squadrons[guild_id] = {
@@ -1172,31 +1170,43 @@ async def set_squadron(interaction: discord.Interaction,
         await interaction.followup.send(embed=embed, ephemeral=True)
 
 
-#@bot.tree.command(name='top',description='Get the top 20 squadrons with detailed stats')
+@bot.tree.command(name='top', description='Get the top 20 squadrons with detailed stats')
 async def top(interaction: discord.Interaction):
     await interaction.response.defer()
 
-    squadron_data = await process_all_squadrons()
-
+    squadron_data = await get_top_20()
     if not squadron_data:
-        await interaction.followup.send("No squadron data available.", ephemeral=True)
+        await interaction.followup.send("Failed to retrieve squadron data.", ephemeral=True)
         return
 
     embed = discord.Embed(title="**Top 20 Squadrons**", color=discord.Color.purple())
 
     for idx, squadron in enumerate(squadron_data, start=1):
+        ground_kills = squadron.get("g_kills", 0)
+        air_kills = squadron.get("a_kills", 0)
+        total_kills = ground_kills + air_kills
+        deaths = squadron.get("deaths", 1)  # Avoid division by zero
+        kd_ratio = round(total_kills / deaths, 2) if deaths else "N/A"
+
+        playtime_minutes = squadron.get("playtime", 0)
+        days = playtime_minutes // 1440
+        hours = (playtime_minutes % 1440) // 60
+        minutes = playtime_minutes % 60
+        formatted_playtime = f"{days}d {hours}h {minutes}m"
+
         embed.add_field(
-            name=f"**{idx} - {squadron['Short Name']}**",
+            name=f"**{idx} - {squadron['long_name']}**",
             value=(
-                f"**Squadron Score:** {squadron['Squadron Score']}\n"
-                f"**Air Kills:** {squadron['Air Kills']}\n"
-                f"**Ground Kills:** {squadron['Ground Kills']}\n"
-                f"**Deaths:** {squadron['Deaths']}\n"
-                f"**K/D:** {squadron['KD Ratio']}\n"
-                f"**Playtime:** {squadron['Playtime']}\n"
-                "\u200b"  # Adds a small amount of space between each squadron
+                f"**Squadron Score:** {squadron.get('clanrating', 'N/A')}\n"
+                f"**Air Kills:** {air_kills}\n"
+                f"**Ground Kills:** {ground_kills}\n"
+                f"**Deaths:** {deaths}\n"
+                f"**K/D:** {kd_ratio}\n"
+                f"**Playtime:** {formatted_playtime}\n"
+                "\u200b"  # Adds spacing
             ),
-            inline=True)
+            inline=True  # Each squadron appears on a new line
+        )
 
     embed.set_footer(text="Meow :3")
     await interaction.followup.send(embed=embed, ephemeral=False)
@@ -1336,7 +1346,7 @@ async def help(interaction: discord.Interaction):
         "3. **/stat [username]** - Get the ThunderSkill stats URL for a user.\n"
         "4. **/top** - Display the top 20 squadrons and their current stats.\n"
         "5. **/time-now** - Get the current UTC time and your local time.\n"
-        "6. **/set-squadron {short hand} {long hand}** - Store squadron name for the discord server (used for logging).\n"
+        "6. **/set-squadron {short name}** - Store squadron name for the discord server (used for logging).\n"
         "7. **/toggle** - Enable features like Translate (more to come soon).\n"
         "8. **/sq-info [squadron] [type]** - View the details of the specified squadron, if a squadron is set (command 6), it will default to that squadron.\n"
         "9. **/help** - Get a guide on how to use the bot.\n"
