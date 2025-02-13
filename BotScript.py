@@ -160,12 +160,7 @@ async def points_alarm_task():
         await execute_points_alarm_task(region)
 
 
-async def execute_points_alarm_task(region):
-    replay_file_path = "replays/"
-    if os.path.exists(replay_file_path):
-        shutil.rmtree(replay_file_path)
-        logging.info(f"Deleted replay folder.")
-        
+async def execute_points_alarm_task(region):        
     logging.info("Running points-update alarm")
     for guild in bot.guilds:
         guild_id = guild.id
@@ -313,11 +308,16 @@ def load_active_guilds(guild_id):
 @tasks.loop(minutes=5)
 async def logs_snapshot_task():
     now_utc = datetime.now(timezone.utc).time()
-    # Run logs_snapshot only while US/EU timeslot are open
-    if (time(13, 55) <= now_utc <= time(22, 10)) or (time(12, 55) <= now_utc <= time(7, 10)):
+    
+    US_START = (time(00, 55))
+    US_END = (time(7, 10))
+    EU_START = (time(13, 55))
+    EU_END = (time(22, 10))
+    
+    if US_START <= now_utc <= US_END or EU_START <= now_utc <= EU_END:
         await logs_snapshot()
     else:
-        #await logs_snapshot()
+        await logs_snapshot()
         logging.info("Logs not ran, not a scheduled time.")
 
 
@@ -391,14 +391,16 @@ async def process_guild_squadrons(guild_id, preferences, sessions, guild_name):
         logging.info(f"Logs are enabled for squadron: {squadron_name} in {guild_name}: {guild_id} (Logs Channel: {log_channel})")
 
         squadron_info = await fetch_squadron_info(squadron_name, embed_type="logs")
-        found_sessions = await extract_sessions_from_squadron(squadron_info, sessions, guild_id)
-
+        found_sessions, maps = await extract_sessions_from_squadron(squadron_info, sessions, guild_id)
+        map_dict = {m["session_id"]: m["missionName"] for m in maps} #convert to a dict
         valid_sessions = filter_valid_sessions(found_sessions)
+        
         logging.info(f"Valid session IDs (found 1 or more times): {valid_sessions}")
 
         try:
             for session_id in valid_sessions:
-                await process_session(bot, session_id, guild_id, preferences[squadron_name])
+                map_name = map_dict.get(session_id, "Unknown")
+                await process_session(bot, session_id, guild_id, preferences[squadron_name], map_name)
 
             all_found_sessions.extend(found_sessions)
         except Exception as e:
@@ -409,7 +411,7 @@ async def process_guild_squadrons(guild_id, preferences, sessions, guild_name):
 
 async def extract_sessions_from_squadron(squadron_info, sessions, guild_id):
     found_sessions = []
-
+    maps = []
     if not squadron_info:
         return found_sessions
 
@@ -428,13 +430,16 @@ async def extract_sessions_from_squadron(squadron_info, sessions, guild_id):
         if isinstance(games, Exception):
             logging.warning(f"Error fetching games: {games}")
             continue
-
+        
         for game in games:
             session_id = game.get("sessionIdHex")
+            missionName = game.get("missionName", "Error")
+
             if session_id and session_id not in sessions[str(guild_id)]:
                 found_sessions.append(session_id)
+                maps.append({"session_id": session_id, "missionName": missionName})
 
-    return found_sessions
+    return found_sessions, maps
 
 
 def filter_valid_sessions(found_sessions):
@@ -461,7 +466,7 @@ async def before_logs_snapshot_task():
     await bot.wait_until_ready()
 
 
-async def process_session(bot, session_id, guild_id, squadron_preferences):
+async def process_session(bot, session_id, guild_id, squadron_preferences, map_name):
     """Processes a single session, saves replay data, and sends embeds to the specified Discord channel."""
     max_retries = 3
     retry_delay = 5
@@ -497,9 +502,11 @@ async def process_session(bot, session_id, guild_id, squadron_preferences):
 
     squadrons = replay_data.get("squadrons", [])
     weather = replay_data.get("weather", "Unknown")
-    mission = replay_data.get("mission", "In Progress")
+    mission = map_name
     time_of_day = replay_data.get("time_of_day", "Unknown")
     teams = replay_data.get("teams", [])
+    decimal_session_id = int(session_id, 16)
+    replay_url = f"https://warthunder.com/en/tournament/replay/{decimal_session_id}"
 
     try:
         squadrons_json = client.download_as_text("SQUADRONS.json")
@@ -533,7 +540,7 @@ async def process_session(bot, session_id, guild_id, squadron_preferences):
     
     embed = discord.Embed(
         title=f"**{winner} vs {loser}**",
-        description=f"**👑 • {winner}**\nMap: {mission}",
+        description=f"**👑 • {winner}**\n{mission}\n[Replay Link]({replay_url})",
         color=embed_color,
     )
 
@@ -559,7 +566,7 @@ async def process_session(bot, session_id, guild_id, squadron_preferences):
             replay_file_path = f"replays/0{session_id}"
             if os.path.exists(replay_file_path):
                 shutil.rmtree(replay_file_path)
-                logging.info(f"Deleted replay folder: {replay_file_path}")
+                #logging.info(f"Deleted replay folder: {replay_file_path}")
 
         else:
             logging.warning(f"Channel ID {channel_id} not found in guild {guild_id}")
@@ -631,6 +638,7 @@ async def find_comp(interaction: discord.Interaction, username: str):
 
         game = games[0]
         session_id = game.get('sessionIdHex')
+        mission = game.get("missionName", "Error")
         if not session_id:
             await interaction.followup.send(f"Could not retrieve session ID for user `{username}`.")
             return
@@ -658,15 +666,17 @@ async def find_comp(interaction: discord.Interaction, username: str):
         time_of_day = replay_data.get("time_of_day", "Unknown")
         winner = replay_data.get("winning_team_squadron")
         #logging.info(winner)
-        mission = replay_data.get("mission", "In Progress")
         teams = replay_data.get("teams", [])
 
+        decimal_session_id = int(session_id, 16)
+        replay_url = f"https://warthunder.com/en/tournament/replay/{decimal_session_id}"
+        
         # Create the embed
         embed = discord.Embed(
             title=f"**{squadrons[0]} vs {squadrons[1]}**",
             #description=f"**👑 - {winner} **\nMap: {mission}\nTimeStamp: {timestamp}",
-            description=f"**👑 • {winner}**\nMap: {mission}\nTimeStamp: {timestamp}",
-            color=discord.Color.purple(),
+            description=f"**👑 • {winner}**\n{mission}\nTime: {timestamp}\n[Replay Link]({replay_url})",
+            color=discord.Color.gold(),
         )
 
         for team in teams:
