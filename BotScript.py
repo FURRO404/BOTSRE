@@ -40,7 +40,6 @@ intents.reactions = True
 intents.members = True
 intents.messages = True
 
-
 class MyBot(commands.Bot):
     def __init__(self):
         super().__init__(command_prefix='~', intents=intents)
@@ -153,15 +152,20 @@ async def points_alarm_task():
     now_utc = datetime.now(timezone.utc).time()
 
     # Define the region based on the current time
-    if now_utc.hour == 22 and now_utc.minute == 15:
+    if now_utc.hour == 22 and now_utc.minute == 20:
         region = "EU"
         await execute_points_alarm_task(region)
-    elif now_utc.hour == 7 and now_utc.minute == 15:
+    elif now_utc.hour == 7 and now_utc.minute == 20:
         region = "US"
         await execute_points_alarm_task(region)
 
 
 async def execute_points_alarm_task(region):
+    replay_file_path = "replays/"
+    if os.path.exists(replay_file_path):
+        shutil.rmtree(replay_file_path)
+        logging.info(f"Deleted replay folder.")
+        
     logging.info("Running points-update alarm")
     for guild in bot.guilds:
         guild_id = guild.id
@@ -221,7 +225,7 @@ async def execute_points_alarm_task(region):
                                     member_str = f"{member:<20}"[:20]  # Limit name to 20 characters
                                     change_str = f"{arrow} {abs(points_change):<3}"  # Change column width of 5
                                     current_points_str = f"{current_points:>8}"  # Right-aligned 8 width
-                                    changes_lines.append(f"{member_str}{change_str}{current_points_str}")
+                                    changes_lines.append(f"{member_str}{change_str}  {current_points_str}")
 
                                 # Chunk the lines into sections that fit within the max_field_length limit
                                 max_field_length = 1024
@@ -296,7 +300,17 @@ def get_shortname_from_long(longname):
     return None
 
 
-@tasks.loop(minutes=3)
+def load_active_guilds(guild_id):
+    guild_id = str(guild_id)
+    try:
+        with open("ACTIVE_GUILDS.json", "r", encoding="utf-8") as file:
+            data = json.load(file)
+        return guild_id in data.get("activated", [])
+    except (FileNotFoundError, json.JSONDecodeError):
+        return False
+
+
+@tasks.loop(minutes=5)
 async def logs_snapshot_task():
     now_utc = datetime.now(timezone.utc).time()
     # Run logs_snapshot only while US/EU timeslot are open
@@ -314,12 +328,18 @@ async def logs_snapshot():
         guild_id = guild.id
         guild_name = guild.name
 
+        activated = load_active_guilds(guild_id)
+        if not activated:
+            logging.info(f"{guild_name} ({guild_id}) is NOT activated, skipping this guild.")
+            #continue
+
+        logging.info(f"{guild_name} ({guild_id}) is activated")
+
         preferences = load_guild_preferences(guild_id)
         sessions_data = load_sessions_data()
 
         if str(guild_id) not in sessions_data:
             sessions_data[str(guild_id)] = []
-            logging.info(f"Added new guild entry for guild: {guild_id} in sessions.json")
 
         all_found_sessions = await process_guild_squadrons(guild_id, preferences, sessions_data, guild_name)
         update_sessions_data(guild_id, all_found_sessions, sessions_data)
@@ -443,11 +463,19 @@ async def before_logs_snapshot_task():
 
 async def process_session(bot, session_id, guild_id, squadron_preferences):
     """Processes a single session, saves replay data, and sends embeds to the specified Discord channel."""
-    try:
-        await save_replay_data(session_id)
-    except Exception as e:
-        logging.error(f"Failed to save replay data for session {session_id}: {e}")
-        return  # Skip this session but continue with others
+    max_retries = 3
+    retry_delay = 5
+
+    for attempt in range(max_retries):
+        try:
+            await save_replay_data(session_id)
+            break  # Exit loop if successful
+        except Exception as e:
+            logging.error(f"Failed to save replay data for session {session_id} (Attempt {attempt + 1}/{max_retries}): {e}")
+            if attempt < max_retries - 1:
+                await asyncio.sleep(retry_delay)
+            else:
+                logging.error(f"Max retries reached for session {session_id}. Skipping.")
 
     replay_file_path = f"replays/0{session_id}/replay_data.json"
     try:
@@ -505,7 +533,7 @@ async def process_session(bot, session_id, guild_id, squadron_preferences):
     
     embed = discord.Embed(
         title=f"**{winner} vs {loser}**",
-        description=f"**👑 • {winner}**\nMap: {mission}\nGame ID: {session_id}",
+        description=f"**👑 • {winner}**\nMap: {mission}",
         color=embed_color,
     )
 
@@ -651,7 +679,7 @@ async def find_comp(interaction: discord.Interaction, username: str):
             )
 
             embed.add_field(name=f"{squadron_name}", value=player_details or "No players found.", inline=False)
-            embed.set_footer(text="This was not billed.")
+            #embed.set_footer(text="This was not billed.")
             
         try:
             await interaction.followup.send(embed=embed)
@@ -1134,7 +1162,7 @@ async def set_squadron(interaction: discord.Interaction,
         await interaction.followup.send(embed=embed, ephemeral=True)
 
 
-@bot.tree.command(name='top',description='Get the top 20 squadrons with detailed stats')
+#@bot.tree.command(name='top',description='Get the top 20 squadrons with detailed stats')
 async def top(interaction: discord.Interaction):
     await interaction.response.defer()
 
@@ -1144,8 +1172,7 @@ async def top(interaction: discord.Interaction):
         await interaction.followup.send("No squadron data available.", ephemeral=True)
         return
 
-    embed = discord.Embed(title="**Top 20 Squadrons**",
-                          color=discord.Color.purple())
+    embed = discord.Embed(title="**Top 20 Squadrons**", color=discord.Color.purple())
 
     for idx, squadron in enumerate(squadron_data, start=1):
         embed.add_field(
