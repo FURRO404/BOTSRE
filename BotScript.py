@@ -32,7 +32,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("hpack").setLevel(logging.WARNING)
 
 client = Client(bucket_id="replit-objstore-b5261a8a-c768-4543-975e-dfce1cd7077d")
-TOKEN = os.environ.get('TEST_DISCORD_KEY')
+TOKEN = os.environ.get('DISCORD_KEY')
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -160,7 +160,12 @@ async def points_alarm_task():
         await execute_points_alarm_task(region)
 
 
-async def execute_points_alarm_task(region):        
+async def execute_points_alarm_task(region):
+    replay_file_path = f"replays/"
+    if os.path.exists(replay_file_path):
+        shutil.rmtree(replay_file_path)
+        logging.info(f"Deleted replay folder: {replay_file_path}")
+        
     logging.info("Running points-update alarm")
     for guild in bot.guilds:
         guild_id = guild.id
@@ -305,7 +310,7 @@ def load_active_guilds(guild_id):
         return False
 
 
-@tasks.loop(minutes=5)
+@tasks.loop(minutes=10)
 async def logs_snapshot_task():
     now_utc = datetime.now(timezone.utc).time()
     
@@ -338,8 +343,10 @@ async def logs_snapshot():
         preferences = load_guild_preferences(guild_id)
         sessions_data = load_sessions_data()
 
-        if str(guild_id) not in sessions_data:
-            sessions_data[str(guild_id)] = []
+        key = str(guild_id)
+        if key not in sessions_data:
+            logging.info("Key not found!")
+            sessions_data[key] = []
 
         all_found_sessions = await process_guild_squadrons(guild_id, preferences, sessions_data, guild_name)
         all_found_sessions = list(set(all_found_sessions)) #remove duplicates
@@ -392,7 +399,7 @@ async def process_guild_squadrons(guild_id, preferences, sessions, guild_name):
         logging.info(f"Logs are enabled for squadron: {squadron_name} in {guild_name}: {guild_id} (Logs Channel: {log_channel})")
 
         squadron_info = await fetch_squadron_info(squadron_name, embed_type="logs")
-        found_sessions, maps = await extract_sessions_from_squadron(squadron_info, sessions, guild_id)
+        found_sessions, maps, time_stamps = await extract_sessions_from_squadron(squadron_info, sessions, guild_id)
         map_dict = {m["session_id"]: m["missionName"] for m in maps} #convert to a dict
         valid_sessions = filter_valid_sessions(found_sessions)
         
@@ -401,7 +408,7 @@ async def process_guild_squadrons(guild_id, preferences, sessions, guild_name):
         try:
             for session_id in valid_sessions:
                 map_name = map_dict.get(session_id, "Unknown")
-                await process_session(bot, session_id, guild_id, preferences[squadron_name], map_name)
+                await process_session(bot, session_id, guild_id, preferences[squadron_name], map_name, guild_name)
 
             all_found_sessions.extend(found_sessions)
         except Exception as e:
@@ -413,6 +420,7 @@ async def process_guild_squadrons(guild_id, preferences, sessions, guild_name):
 async def extract_sessions_from_squadron(squadron_info, sessions, guild_id):
     found_sessions = []
     maps = []
+    time_stamps = []
     if not squadron_info:
         return found_sessions
 
@@ -435,12 +443,15 @@ async def extract_sessions_from_squadron(squadron_info, sessions, guild_id):
         for game in games:
             session_id = game.get("sessionIdHex")
             missionName = game.get("missionName", "Error")
+            timestamp = game.get("startTime", "Error")
 
-            if session_id and session_id not in sessions[str(guild_id)]:
-                found_sessions.append(session_id)
-                maps.append({"session_id": session_id, "missionName": missionName})
+            if guild_id:
+                if session_id not in sessions[str(guild_id)]:
+                    found_sessions.append(session_id)
+                    maps.append({"session_id": session_id, "missionName": missionName})
+            time_stamps.append(timestamp)
 
-    return found_sessions, maps
+    return found_sessions, maps, time_stamps
 
 
 def filter_valid_sessions(found_sessions):
@@ -467,14 +478,19 @@ async def before_logs_snapshot_task():
     await bot.wait_until_ready()
 
 
-async def process_session(bot, session_id, guild_id, squadron_preferences, map_name):
+async def process_session(bot, session_id, guild_id, squadron_preferences, map_name, guild_name):
     """Processes a single session, saves replay data, and sends embeds to the specified Discord channel."""
     max_retries = 3
     retry_delay = 5
-
+    replay_file_path = f"replays/0{session_id}/replay_data.json"
+    
     for attempt in range(max_retries):
         try:
-            await save_replay_data(session_id)
+            if not os.path.exists(replay_file_path):
+                # Load the replay data only if the file doesn't exist
+                await save_replay_data(session_id)
+            else:
+                logging.info("Replay existed, recycling...")
             break  # Exit loop if successful
         except Exception as e:
             logging.error(f"Failed to save replay data for session {session_id} (Attempt {attempt + 1}/{max_retries}): {e}")
@@ -483,7 +499,6 @@ async def process_session(bot, session_id, guild_id, squadron_preferences, map_n
             else:
                 logging.error(f"Max retries reached for session {session_id}. Skipping.")
 
-    replay_file_path = f"replays/0{session_id}/replay_data.json"
     try:
         with open(replay_file_path, "r") as replay_file:
             replay_data = json.load(replay_file)
@@ -519,12 +534,7 @@ async def process_session(bot, session_id, guild_id, squadron_preferences, map_n
     # Get the expected squadron shortname for this guild
     guild_data = squadrons_data.get(str(guild_id), {})
     guild_squadron = guild_data.get("SQ_ShortHand_Name", None) #EXLY
-
-    # Determine the losing squadron
-    if len(squadrons) >= 2:
-        loser = squadrons[0] if squadrons[1] == winner else squadrons[1]
-    else:
-        loser = None  # Fallback in case of unexpected data
+    loser = squadrons[0] if squadrons[1] == winner else squadrons[1]
 
     if guild_squadron is None:
         embed_color = discord.Color.blue()  # No squadron set 🟦
@@ -562,12 +572,14 @@ async def process_session(bot, session_id, guild_id, squadron_preferences, map_n
         channel = bot.get_channel(channel_id)
         if channel:
             await channel.send(embed=embed)
-            logging.info(f"Embed sent for session {session_id} in guild {guild_id} with color {color_name}")
+            logging.info(f"Embed sent for session {session_id} in guild {guild_name}")
 
             replay_file_path = f"replays/0{session_id}"
             if os.path.exists(replay_file_path):
-                shutil.rmtree(replay_file_path)
-                #logging.info(f"Deleted replay folder: {replay_file_path}")
+                for file_name in os.listdir(replay_file_path):
+                    file_path = os.path.join(replay_file_path, file_name)
+                    if os.path.isfile(file_path) and file_name.endswith(".wrpl"):
+                        os.remove(file_path)
 
         else:
             logging.warning(f"Channel ID {channel_id} not found in guild {guild_id}")
@@ -648,11 +660,13 @@ async def find_comp(interaction: discord.Interaction, username: str):
         if timestamp != "ERR":
             timestamp = f"<t:{timestamp}:R>"
         
-        # Save replay data for the session
-        await save_replay_data(session_id)
-
-        # Load the replay data saved for the session
         replay_file_path = f"replays/0{session_id}/replay_data.json"
+
+        if not os.path.exists(replay_file_path):
+            # Load the replay data only if the file doesn't exist
+            await save_replay_data(session_id)
+            logging.info("Replay didnt exist, downloading now...")
+            
         try:
             with open(replay_file_path, "r") as replay_file:
                 replay_data = json.load(replay_file)
@@ -694,16 +708,18 @@ async def find_comp(interaction: discord.Interaction, username: str):
             
         try:
             await interaction.followup.send(embed=embed)
-            try:
-                await update_billing(server_id, server_name, user_name, user_id, cmd_timestamp)
-
-            except Exception as e:
-                logging.error(f"Failed to bill {server_name} ({server_id}) for session {session_id}: {e}")
-            
             replay_file_path = f"replays/0{session_id}"
             if os.path.exists(replay_file_path):
-                shutil.rmtree(replay_file_path)
-                logging.info(f"Deleted replay folder: {replay_file_path}")
+                for file_name in os.listdir(replay_file_path):
+                    file_path = os.path.join(replay_file_path, file_name)
+                    if os.path.isfile(file_path) and file_name.endswith(".wrpl"):
+                        os.remove(file_path)
+                        
+            try:
+                await update_billing(server_id, server_name, user_name, user_id, cmd_timestamp)
+            
+            except Exception as e:
+                logging.error(f"Failed to bill {server_name} ({server_id}) for session {session_id}: {e}")
                 
         except Exception as e:
             logging.error(f"Failed to send embed for session {session_id}: {e}")
@@ -1195,7 +1211,7 @@ async def top(interaction: discord.Interaction):
         formatted_playtime = f"{days}d {hours}h {minutes}m"
 
         embed.add_field(
-            name=f"**{idx} - {squadron['long_name']}**",
+            name=f"**{idx} - {squadron['tag']}**",
             value=(
                 f"**Squadron Score:** {squadron.get('clanrating', 'N/A')}\n"
                 f"**Air Kills:** {air_kills}\n"
@@ -1337,6 +1353,61 @@ async def on_reaction_add(reaction, user):
     await sent_message.delete(delay=30)
 
 
+async def return_latest_battle(sq_long_name):
+    sessions, guild_id = {}, ""
+    squadron_info = await fetch_squadron_info(sq_long_name, embed_type="logs")
+    found_sessions, maps, time_stamps = await extract_sessions_from_squadron(squadron_info, sessions, guild_id)
+
+    if not time_stamps:
+        return "No recorded battles found."
+
+    latest_timestamp = max(time_stamps)
+    return f"<t:{latest_timestamp}:R>"
+        
+
+@bot.tree.command(name="track", description="Track a certain squadron to see when they last played SQB")
+@app_commands.describe(squadron_short_name="Short name of the squadron to track, or do top20 (will take a minute)")
+async def track_squadron(interaction: discord.Interaction, squadron_short_name: str):
+    await interaction.response.defer()
+    logging.info("Running /track")
+    if squadron_short_name == "top20":
+        squadron_data = await get_top_20()
+        if not squadron_data:
+            await interaction.followup.send("Failed to retrieve squadron data... Is captcha up?", ephemeral=True)
+            return
+
+        embed = discord.Embed(title="**Top 20 Last Played**", color=discord.Color.blue())
+
+        for idx, squadron in enumerate(squadron_data, start=1):
+            latest_stamp = await return_latest_battle(squadron['long_name'])
+
+            embed.add_field(
+                name=f"**{idx} - {squadron['tag']}**",
+                value=f"**Last Played:** {latest_stamp}\u200b",
+                inline=False
+            )
+
+        embed.set_footer(text="Meow :3")
+        await interaction.followup.send(embed=embed, ephemeral=False)
+
+    else:
+        clan_data = await search_for_clan(squadron_short_name.lower())
+        if not clan_data:
+            await interaction.followup.send("Squadron not found.", ephemeral=True)
+            return
+
+        clan_name_long = clan_data.get("long_name")
+        clan_tag = clan_data.get("tag")
+        latest_stamp = await return_latest_battle(clan_name_long)
+
+        embed = discord.Embed(
+            title=f"**{clan_tag} Played {latest_stamp}**",
+            color=discord.Color.green()
+        )
+        embed.set_footer(text="Meow :3")
+        await interaction.followup.send(embed=embed, ephemeral=False)
+        
+
 @bot.tree.command(name="help", description="Get a guide on how to use the bot")
 async def help(interaction: discord.Interaction):
     guide_text = (
@@ -1346,11 +1417,12 @@ async def help(interaction: discord.Interaction):
         "3. **/stat [username]** - Get the ThunderSkill stats URL for a user.\n"
         "4. **/top** - Display the top 20 squadrons and their current stats.\n"
         "5. **/time-now** - Get the current UTC time and your local time.\n"
-        "6. **/set-squadron {short name}** - Store squadron name for the discord server (used for logging).\n"
+        "6. **/set-squadron [short name]** - Store squadron name for the discord server (used for logging).\n"
         "7. **/toggle** - Enable features like Translate (more to come soon).\n"
         "8. **/sq-info [squadron] [type]** - View the details of the specified squadron, if a squadron is set (command 6), it will default to that squadron.\n"
-        "9. **/help** - Get a guide on how to use the bot.\n"
-        "10. **Translation** - Put a flag reaction under a message to translate to that language (after using /enable).\n\n"
+        "9. **/track [squadron]** - View the last time a squadron played.\n"
+        "10. **/help** - Get a guide on how to use the bot.\n"
+        "11. **Translation** - Put a flag reaction under a message to translate to that language (after using /enable).\n\n"
         "*For detailed information on each command, please read the input descriptions of each command, or reach out to not_so_toothless.*"
     )
 

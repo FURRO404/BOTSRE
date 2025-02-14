@@ -30,6 +30,7 @@ def parse_clan_data(data):
             "position": entry.get("pos"),
             "long_name": entry.get("name"),
             "short_name": entry.get("tagl"),
+            "tag": entry.get("lastPaidTag")[1:-1] if entry.get("lastPaidTag") else None,
             "members": entry.get("members_cnt"),
             "wins": entry.get("astat", {}).get("wins_hist"),
             "battles": entry.get("astat", {}).get("battles_hist"),
@@ -59,6 +60,7 @@ async def search_for_clan(short_name):
 
         for clan in clan_data:
             if clan["short_name"] == short_name:
+                #print(clan)
                 return clan
         page += 1
     return None
