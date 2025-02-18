@@ -65,7 +65,7 @@ async def on_ready():
     points_alarm_task.start()
     logs_snapshot_task.start()
     
-    #region = "US"
+    #region = "EU"
     #await execute_points_alarm_task(region)
 
 
@@ -87,7 +87,7 @@ async def on_guild_join(guild):
         client.upload_from_text(key, json.dumps(guilds))
 
 
-@tasks.loop(minutes=10)
+@tasks.loop(minutes=5)
 async def snapshot_task():
     logging.info("Running member-leave alarm")
     for guild in bot.guilds:
@@ -110,9 +110,6 @@ async def snapshot_task():
 
                 # Skip this iteration if there are no left members
                 if left_members == "EMPTY":
-                    logging.info(
-                        f"No new members were found for {squadron_name}, skipping"
-                    )
                     continue
 
                 if left_members:
@@ -130,7 +127,7 @@ async def snapshot_task():
                                         description=f"**{safe_member_name}** left **{squadron_name}** with **{points}** points.",
                                         color=discord.Color.red(),
                                     )
-                                    #embed.set_footer(text=f"This can be caused by name changes!!! Always verify.")
+                                    embed.set_footer(text=f"This can be caused by name changes!!! Always verify.")
                                     await channel.send(embed=embed)
                             else:
                                 logging.error(f"Channel ID {channel_id} not found")
@@ -152,10 +149,10 @@ async def points_alarm_task():
     now_utc = datetime.now(timezone.utc).time()
 
     # Define the region based on the current time
-    if now_utc.hour == 22 and now_utc.minute == 15:
+    if now_utc.hour == 22 and now_utc.minute == 30:
         region = "EU"
         await execute_points_alarm_task(region)
-    elif now_utc.hour == 7 and now_utc.minute == 15:
+    elif now_utc.hour == 7 and now_utc.minute == 30:
         region = "US"
         await execute_points_alarm_task(region)
 
@@ -200,9 +197,6 @@ async def execute_points_alarm_task(region):
                 new_snapshot = await Alarms.take_snapshot(squadron_name)
 
                 if old_snapshot:
-                    logging.info(
-                        f"Loaded old snapshot for {squadron_name}, region {region}"
-                    )
                     points_changes, old_total_points = Alarms.compare_points(old_snapshot, new_snapshot)
 
                     if points_changes:
@@ -230,7 +224,7 @@ async def execute_points_alarm_task(region):
                                 # Chunk the lines into sections that fit within the max_field_length limit
                                 max_field_length = 1024
                                 chunks = []
-                                current_chunk = "```\nName                Change     Now\n"
+                                current_chunk = "```\nName                 Change      Now\n"
                                 for line in changes_lines:
                                     if len(current_chunk) + len(line) + 1 > max_field_length:
                                         current_chunk += "```"
@@ -257,8 +251,13 @@ async def execute_points_alarm_task(region):
                                 embed.set_footer(text="Meow :3")
 
                                 # Send the embed
-                                await channel.send(embed=embed)
-                                logging.info(f"Points update sent successfully for {squadron_name} in {guild_id}")
+                                try:
+                                    await channel.send(embed=embed)
+                                    logging.info(f"Points update sent successfully for {squadron_name} in {guild_id}")
+                                    
+                                except Exception as e:
+                                    logging.error(f"Error sending points update to {guild_id}: {e}")
+                                    continue
 
                             else:
                                 logging.error(
@@ -310,14 +309,14 @@ def load_active_guilds(guild_id):
         return False
 
 
-@tasks.loop(minutes=10)
+@tasks.loop(minutes=7)
 async def logs_snapshot_task():
     now_utc = datetime.now(timezone.utc).time()
     
     US_START = (time(00, 55))
-    US_END = (time(7, 10))
+    US_END = (time(7, 20))
     EU_START = (time(13, 55))
-    EU_END = (time(22, 10))
+    EU_END = (time(22, 20))
     
     if US_START <= now_utc <= US_END or EU_START <= now_utc <= EU_END:
         await logs_snapshot()
@@ -393,7 +392,7 @@ async def process_guild_squadrons(guild_id, preferences, sessions, guild_name):
         for squadron, prefs in preferences.items()
         if "Logs" in prefs
     }
-    logging.info(squadrons_with_logs)
+    #logging.info(squadrons_with_logs)
     
     for squadron_name, log_channel in squadrons_with_logs.items():
         logging.info(f"Logs are enabled for squadron: {squadron_name} in {guild_name}: {guild_id} (Logs Channel: {log_channel})")
@@ -402,17 +401,20 @@ async def process_guild_squadrons(guild_id, preferences, sessions, guild_name):
         found_sessions, maps, time_stamps = await extract_sessions_from_squadron(squadron_info, sessions, guild_id)
         map_dict = {m["session_id"]: m["missionName"] for m in maps} #convert to a dict
         valid_sessions = filter_valid_sessions(found_sessions)
-        
+
         logging.info(f"Valid session IDs (found 1 or more times): {valid_sessions}")
 
-        try:
-            for session_id in valid_sessions:
-                map_name = map_dict.get(session_id, "Unknown")
-                await process_session(bot, session_id, guild_id, preferences[squadron_name], map_name, guild_name)
+        if len(valid_sessions) > 10:
+            logging.info("Skipping session processing as there are more than 10 valid sessions.")
+        else:
+            try:
+                for session_id in valid_sessions:
+                    map_name = map_dict.get(session_id, "Unknown")
+                    await process_session(bot, session_id, guild_id, preferences[squadron_name], map_name, guild_name)
+            except Exception as e:
+                logging.error(f"Error processing sessions: {e}")
 
-            all_found_sessions.extend(found_sessions)
-        except Exception as e:
-            logging.error(f"Error processing sessions for squadron {squadron_name} in guild {guild_id}: {e}", exc_info=True)
+        all_found_sessions.extend(found_sessions)
             
     return all_found_sessions
 
@@ -459,7 +461,7 @@ def filter_valid_sessions(found_sessions):
     for session in found_sessions:
         session_counts[session] = session_counts.get(session, 0) + 1
         
-    valid_sessions = [session for session, count in session_counts.items() if count >= 1]
+    valid_sessions = [session for session, count in session_counts.items() if count >= 3]
     return valid_sessions
 
 
@@ -572,7 +574,7 @@ async def process_session(bot, session_id, guild_id, squadron_preferences, map_n
         channel = bot.get_channel(channel_id)
         if channel:
             await channel.send(embed=embed)
-            logging.info(f"Embed sent for session {session_id} in guild {guild_name}")
+            logging.info(f"Embed sent for session {session_id} in {guild_name} ({guild_id})")
 
             replay_file_path = f"replays/0{session_id}"
             if os.path.exists(replay_file_path):
@@ -582,10 +584,10 @@ async def process_session(bot, session_id, guild_id, squadron_preferences, map_n
                         os.remove(file_path)
 
         else:
-            logging.warning(f"Channel ID {channel_id} not found in guild {guild_id}")
+            logging.warning(f"Channel ID {channel_id} not found in {guild_name} ({guild_id})")
 
     except Exception as e:
-        logging.error(f"Failed to send embed for session {session_id}: {e}")
+        logging.error(f"Failed to send embed for session {session_id} in {guild_name} ({guild_id}): {e}")
 
 
 async def update_billing(server_id, server_name, user_name, user_id, cmd_timestamp):
@@ -641,7 +643,7 @@ async def find_comp(interaction: discord.Interaction, username: str):
     server_id = server.id
     
     cmd_timestamp = DT.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
-    logging.info(f"[{cmd_timestamp}] FIND-COMP used by {user_name} (ID: {user_id}) in server '{server_name}' (ID: {server_id}) for username '{username}'")
+    logging.info(f"FIND-COMP used by {user_name} (ID: {user_id}) in server '{server_name}' (ID: {server_id}) for username '{username}'")
     try:
         # Fetch games for the given username
         games = await fetch_games_for_user(username)
@@ -739,13 +741,13 @@ async def alarm(interaction: discord.Interaction, type: str, channel_id: str,
                 squadron_name: str):
     guild_id = interaction.guild.id
     key = f"{guild_id}-preferences.json"
-
+    type = type.title()
     try:
         data = client.download_as_text(key)
         preferences = json.loads(data)
     except ObjectNotFoundError:
         preferences = {}
-    except FileNotFoundError:
+    except :
         preferences = {}
 
     if squadron_name not in preferences:
@@ -762,60 +764,45 @@ async def alarm(interaction: discord.Interaction, type: str, channel_id: str,
 
 @bot.tree.command(name="sq-info", description="Fetch information about a squadron")
 @app_commands.describe(
-    squadron="The full name of the squadron to fetch information about",
+    squadron="The short name of the squadron to fetch information about",
     type=
     "The type of information to display: members, points, or leave empty for full info"
 )
-async def sq_info(interaction: discord.Interaction,
-                  squadron: str = None,
-                  type: str = None):
+async def sq_info(interaction: discord.Interaction, squadron: str = None, type: str = None):
     await interaction.response.defer(ephemeral=False)
 
-    try:
-        # File to check for existing squadron data
-        filename = "SQUADRONS.json"
+    filename = "SQUADRONS.json"
+    squadrons_json = client.download_as_text(filename)
+    squadrons = json.loads(squadrons_json)
+    guild_id = str(interaction.guild_id)
 
-        # Download existing squadron data
-        try:
-            squadrons_json = client.download_as_text(filename)
-            squadrons = json.loads(squadrons_json)
-        except:
-            squadrons = {}
-
-        guild_id = str(interaction.guild_id)
-
-        # Check if a squadron is set for the server
-        if not squadron and guild_id in squadrons:
-            squadron = squadrons[guild_id]["SQ_LongHandName"]
-        elif not squadron:
+    if not squadron:
+        if guild_id in squadrons:
+            squadron_name = squadrons[guild_id]["SQ_LongHandName"]
+        else:
             embed = discord.Embed(
                 title="Error",
-                description=
-                "No squadron specified and no squadron is set for this server.",
-                color=discord.Color.red())
+                description="No squadron specified and no squadron is set for this server.",
+                color=discord.Color.red()
+            )
             embed.set_footer(text="Meow :3")
             await interaction.followup.send(embed=embed, ephemeral=True)
             return
+    else:
+        clan_data = await search_for_clan(squadron.lower())
+        if not clan_data:
+            await interaction.followup.send("Squadron not found.", ephemeral=True)
+            return
+            
+        squadron_name = clan_data.get("long_name")
+    embed = await fetch_squadron_info(squadron_name, type)
 
-        # Fetch squadron information using the resolved squadron name
-        embed = await fetch_squadron_info(squadron, type)
-        if embed:
-            embed.set_footer(text="Meow :3")
-            await interaction.followup.send(embed=embed)
-        else:
-            await interaction.followup.send("Failed to fetch squadron info.",
-                                            ephemeral=True)
-
-    except Exception as e:
-        logging.error(f"Error fetching squadron info: {e}")
-        embed = discord.Embed(
-            title="Error",
-            description=
-            f"An error occurred while fetching the squadron info: {e}",
-            color=discord.Color.red())
+    if embed:
         embed.set_footer(text="Meow :3")
-        await interaction.followup.send(embed=embed, ephemeral=True)
-
+        await interaction.followup.send(embed=embed)
+    else:
+        await interaction.followup.send("Failed to fetch squadron info.", ephemeral=True)
+        
 
 @bot.tree.command(name='stat',
                   description='Get the ThunderSkill stats URL for a user')
@@ -1300,16 +1287,15 @@ async def on_reaction_add(reaction, user):
     if user.bot:
         return
 
-    message = reaction.message  # The original message being reacted to
+    message = reaction.message  
     text = message.content
-    flag = reaction.emoji  # The flag emoji used
+    flag = reaction.emoji
     guild_id = message.guild.id
 
-    # Ignore reactions that are not in LANGUAGE_MAP
+    
     if flag not in LANGUAGE_MAP:
         return  
 
-    # Load server features
     features = await load_features(guild_id)
     if not features or features.get("Translate") != "True":
         embed = discord.Embed(
@@ -1322,35 +1308,21 @@ async def on_reaction_add(reaction, user):
         logging.info("Translation disabled!")
         return
 
-    # Get target language from the dictionary
     target_language = LANGUAGE_MAP[flag]
 
-    # Try to remove the user's reaction message to keep chat clean
     try:
         await reaction.message.remove_reaction(flag, user)
     except discord.Forbidden:
         pass  # Bot lacks permissions to remove reactions
 
-    # Perform translation
     translated_text = perform_translation(text, target_language)
 
     if not translated_text:
         await message.channel.send(f"Translation failed for: {flag}", delete_after=5)
         return
 
-    delete_timestamp = int(T.time()) + 38
-
-    # Create embed
-    embed = discord.Embed(
-        title=f"**Translation ({target_language.upper()}):**", 
-        color=discord.Color.purple()
-    )
-    embed.add_field(name=f"{translated_text}", value=f"Deleting <t:{delete_timestamp}:R>", inline=False)
-    embed.set_footer(text=f"Meow • Requested by {user.display_name}")
-
-    # Send embed and delete after 30 seconds
-    sent_message = await message.channel.send(embed=embed)
-    await sent_message.delete(delay=30)
+    sent_message = await message.channel.send(f"**{message.author.display_name} - ({target_language.upper()}):** {translated_text}")
+    await sent_message.delete(delay=60)
 
 
 async def return_latest_battle(sq_long_name):
@@ -1363,10 +1335,9 @@ async def return_latest_battle(sq_long_name):
 
     latest_timestamp = max(time_stamps)
     return f"<t:{latest_timestamp}:R>"
-        
 
 @bot.tree.command(name="track", description="Track a certain squadron to see when they last played SQB")
-@app_commands.describe(squadron_short_name="Short name of the squadron to track, or do top20 (will take a minute)")
+@app_commands.describe(squadron_short_name="Short name of the squadron to track")
 async def track_squadron(interaction: discord.Interaction, squadron_short_name: str):
     await interaction.response.defer()
     logging.info("Running /track")
@@ -1382,8 +1353,8 @@ async def track_squadron(interaction: discord.Interaction, squadron_short_name: 
             latest_stamp = await return_latest_battle(squadron['long_name'])
 
             embed.add_field(
-                name=f"**{idx} - {squadron['tag']}**",
-                value=f"**Last Played:** {latest_stamp}\u200b",
+                name=f"**{idx} - {squadron['tag']} • {latest_stamp}**",
+                value="\n",
                 inline=False
             )
 
@@ -1398,12 +1369,31 @@ async def track_squadron(interaction: discord.Interaction, squadron_short_name: 
 
         clan_name_long = clan_data.get("long_name")
         clan_tag = clan_data.get("tag")
+        points = int(clan_data.get("clanrating"))
+        ground_kills = int(clan_data.get("g_kills"))
+        air_kills = int(clan_data.get("a_kills"))
+        deaths = int(clan_data.get("deaths"))
+        battles = int(clan_data.get("battles"))
+        wins = int(clan_data.get("wins"))
+        members = clan_data.get("members")
         latest_stamp = await return_latest_battle(clan_name_long)
+
+        total_kills = ground_kills + air_kills
+        kd_ratio = total_kills / deaths if deaths > 0 else total_kills
+
+        win_rate = (wins / battles) * 100 if battles > 0 else 0
+        win_rate_percentage = f"{win_rate:.2f}%"
 
         embed = discord.Embed(
             title=f"**{clan_tag} Played {latest_stamp}**",
             color=discord.Color.green()
         )
+        
+        embed.add_field(name="Points", value=points, inline=True)
+        embed.add_field(name="Wins", value=wins, inline=True)
+        embed.add_field(name="Win Rate", value=win_rate_percentage, inline=True)
+        embed.add_field(name="Members", value=members, inline=True)
+        embed.add_field(name="KD Ratio", value=f"{kd_ratio:.2f}", inline=True)
         embed.set_footer(text="Meow :3")
         await interaction.followup.send(embed=embed, ephemeral=False)
         
