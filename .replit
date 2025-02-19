@@ -18,3 +18,8 @@ ignorePorts = true
 
 [objectStorage]
 defaultBucketID = "replit-objstore-b5261a8a-c768-4543-975e-dfce1cd7077d"
+
+[env]
+REPLIT_DISABLE_PACKAGE_LAYER = "1"
+REPLIT_KEEP_PACKAGE_DEV_DEPENDENCIES = "1"
+

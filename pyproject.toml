@@ -1,17 +1,3 @@
-[tool.poetry]
-name = "python-template"
-version = "0.1.0"
-description = ""
-authors = ["Your Name <you@example.com>"]
-
-[tool.poetry.dependencies]
-python = ">=3.10.0,<3.12"
-discord-py = "^2.4.0"
-requests = "^2.32.3"
-replit = "^4.0.0"
-replit-object-storage = "^1.0.0"
-beautifulsoup4 = "^4.12.3"
-
 [tool.pyright]
 # https://github.com/microsoft/pyright/blob/main/docs/configuration.md
 useLibraryCodeForTypes = true
