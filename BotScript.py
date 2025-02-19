@@ -7,7 +7,6 @@ from asyncio import *
 import random
 import datetime as DT
 from datetime import datetime, time, timezone
-import time as T
 import re
 import shutil
 
@@ -101,20 +100,15 @@ async def snapshot_task():
             preferences = {}
 
         for squadron_name, squadron_preferences in preferences.items():
+            channel_id = squadron_preferences.get("Leave", "").strip("<#>")
+            
             old_snapshot = Alarms.load_snapshot(guild_id, squadron_name)
             new_snapshot = await Alarms.take_snapshot(squadron_name)
 
             if old_snapshot:
-                left_members = Alarms.compare_snapshots(
-                    old_snapshot, new_snapshot)
-
-                # Skip this iteration if there are no left members
-                if left_members == "EMPTY":
-                    continue
+                left_members, name_changes = Alarms.compare_snapshots(old_snapshot, new_snapshot)
 
                 if left_members:
-                    channel_id = squadron_preferences.get("Leave", "").strip("<#>")
-
                     if channel_id:
                         try:
                             channel_id = int(channel_id)
@@ -122,12 +116,16 @@ async def snapshot_task():
                             if channel:
                                 for member, points in left_members.items():
                                     safe_member_name = discord.utils.escape_markdown(member)
+                                    if points > 0:
+                                        description=f"**{safe_member_name}** left **{squadron_name}** with **{points}** points."
+                                    else:
+                                        description=f"**{safe_member_name}** left **{squadron_name}**."
                                     embed = discord.Embed(
                                         title="Member Left Squadron",
-                                        description=f"**{safe_member_name}** left **{squadron_name}** with **{points}** points.",
+                                        description=description,
                                         color=discord.Color.red(),
                                     )
-                                    embed.set_footer(text=f"This can be caused by name changes!!! Always verify.")
+                                    embed.set_footer(text="This can be caused by name changes!!! Always verify.")
                                     await channel.send(embed=embed)
                             else:
                                 logging.error(f"Channel ID {channel_id} not found")
@@ -136,6 +134,30 @@ async def snapshot_task():
                     else:
                         logging.error(f"'Leave' channel ID is missing or empty for squadron {squadron_name}.")
 
+
+                if name_changes:
+                    if channel_id:
+                        try:
+                            channel_id = int(channel_id)
+                            channel = bot.get_channel(channel_id)
+                            if channel:
+                                for old_name, (new_name, points) in name_changes.items():
+                                    old_name = discord.utils.escape_markdown(old_name)
+                                    new_name = discord.utils.escape_markdown(new_name)
+                                    embed = discord.Embed(
+                                        title="Member Left Squadron",
+                                        description=f"**{old_name}** changed their name to {new_name} in **{squadron_name}**.",
+                                        color=discord.Color.dark_blue(),
+                                    )
+                                    embed.set_footer(text="Experimental... Might be wrong!")
+                                    await channel.send(embed=embed)
+                            else:
+                                logging.error(f"Channel ID {channel_id} not found")
+                        except ValueError:
+                            logging.error(f"Invalid channel ID format: {channel_id} for squadron {squadron_name}")
+                    else:
+                        logging.error(f"'Leave' channel ID is missing or empty for squadron {squadron_name}.")
+                        
             Alarms.save_snapshot(new_snapshot, guild_id, squadron_name)
 
 
@@ -147,8 +169,7 @@ async def before_snapshot_task():
 @tasks.loop(minutes=1)
 async def points_alarm_task():
     now_utc = datetime.now(timezone.utc).time()
-
-    # Define the region based on the current time
+    
     if now_utc.hour == 22 and now_utc.minute == 30:
         region = "EU"
         await execute_points_alarm_task(region)
@@ -292,7 +313,7 @@ def get_shortname_from_long(longname):
     squadrons = json.loads(squadrons_str)
 
     # Iterate through the dictionary to find the matching long name
-    for server_id, squadron_info in squadrons.items():
+    for _, squadron_info in squadrons.items():
         if squadron_info["SQ_LongHandName"] == longname:
             return squadron_info["SQ_ShortHand_Name"]
 
@@ -348,7 +369,7 @@ async def logs_snapshot():
             sessions_data[key] = []
 
         all_found_sessions = await process_guild_squadrons(guild_id, preferences, sessions_data, guild_name)
-        all_found_sessions = list(set(all_found_sessions)) #remove duplicates
+        all_found_sessions = list(set(all_found_sessions))
         update_sessions_data(guild_id, all_found_sessions, sessions_data)
 
 
@@ -386,20 +407,19 @@ def load_sessions_data():
 async def process_guild_squadrons(guild_id, preferences, sessions, guild_name):
     all_found_sessions = []
     valid_sessions = []
-    # Extract only squadrons that have "Logs" defined
+
     squadrons_with_logs = {
         squadron: prefs["Logs"]
         for squadron, prefs in preferences.items()
         if "Logs" in prefs
     }
-    #logging.info(squadrons_with_logs)
     
     for squadron_name, log_channel in squadrons_with_logs.items():
         logging.info(f"Logs are enabled for squadron: {squadron_name} in {guild_name}: {guild_id} (Logs Channel: {log_channel})")
 
         squadron_info = await fetch_squadron_info(squadron_name, embed_type="logs")
         found_sessions, maps, time_stamps = await extract_sessions_from_squadron(squadron_info, sessions, guild_id)
-        map_dict = {m["session_id"]: m["missionName"] for m in maps} #convert to a dict
+        map_dict = {m["session_id"]: m["missionName"] for m in maps}
         valid_sessions = filter_valid_sessions(found_sessions)
 
         logging.info(f"Valid session IDs (found 1 or more times): {valid_sessions}")
@@ -418,6 +438,10 @@ async def process_guild_squadrons(guild_id, preferences, sessions, guild_name):
             
     return all_found_sessions
 
+async def fetch_games_for_user_with_delay(username):
+    # Wait 0.5 seconds before processing each request
+    await asyncio.sleep(2)
+    return await fetch_games_for_user(username)
 
 async def extract_sessions_from_squadron(squadron_info, sessions, guild_id):
     found_sessions = []
@@ -426,18 +450,22 @@ async def extract_sessions_from_squadron(squadron_info, sessions, guild_id):
     if not squadron_info:
         return found_sessions
 
-    # Extract usernames
     usernames = [
         username
         for field in squadron_info.fields
         for username in field.value.split("\n")
     ]
+    random.shuffle(usernames)    # Lower the risk that we miss a player on the next scan
+    usernames = usernames[::2]    # Use every other username
 
-    # Use asyncio.gather to fetch game data concurrently
-    user_game_tasks = [fetch_games_for_user(username) for username in usernames]
-    user_games_results = await asyncio.gather(*user_game_tasks, return_exceptions=True)
+    results = []
+    for username in usernames:
+        logging.info(f"Retrieving games for {username}")
+        #await asyncio.sleep(0.25)  
+        games = await fetch_games_for_user(username)
+        results.append(games)
 
-    for games in user_games_results:
+    for games in results:
         if isinstance(games, Exception):
             logging.warning(f"Error fetching games: {games}")
             continue
@@ -447,10 +475,10 @@ async def extract_sessions_from_squadron(squadron_info, sessions, guild_id):
             missionName = game.get("missionName", "Error")
             timestamp = game.get("startTime", "Error")
 
-            if guild_id:
-                if session_id not in sessions[str(guild_id)]:
-                    found_sessions.append(session_id)
-                    maps.append({"session_id": session_id, "missionName": missionName})
+            if guild_id and session_id not in sessions.get(str(guild_id), set()):
+                found_sessions.append(session_id)
+                maps.append({"session_id": session_id, "missionName": missionName})
+
             time_stamps.append(timestamp)
 
     return found_sessions, maps, time_stamps
@@ -519,9 +547,9 @@ async def process_session(bot, session_id, guild_id, squadron_preferences, map_n
         #return
 
     squadrons = replay_data.get("squadrons", [])
-    weather = replay_data.get("weather", "Unknown")
+    #weather = replay_data.get("weather", "Unknown")
     mission = map_name
-    time_of_day = replay_data.get("time_of_day", "Unknown")
+    #time_of_day = replay_data.get("time_of_day", "Unknown")
     teams = replay_data.get("teams", [])
     decimal_session_id = int(session_id, 16)
     replay_url = f"https://warthunder.com/en/tournament/replay/{decimal_session_id}"
@@ -540,16 +568,12 @@ async def process_session(bot, session_id, guild_id, squadron_preferences, map_n
 
     if guild_squadron is None:
         embed_color = discord.Color.blue()  # No squadron set 🟦
-        color_name = "blue"
     elif winner == guild_squadron:
         embed_color = discord.Color.green()  # Win 🟩
-        color_name = "green"
     elif loser == guild_squadron:
         embed_color = discord.Color.red()  # Loss 🟥
-        color_name = "red"
     else:
         embed_color = discord.Color.purple()  # Not involved, but squadron is set 🟪
-        color_name = "purple"
     
     embed = discord.Embed(
         title=f"**{winner} vs {loser}**",
@@ -637,13 +661,14 @@ async def find_comp(interaction: discord.Interaction, username: str):
     user = interaction.user
     user_name = user.name
     user_id = user.id
-    
+
     server = interaction.guild
     server_name = server.name
     server_id = server.id
-    
+
     cmd_timestamp = DT.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
     logging.info(f"FIND-COMP used by {user_name} (ID: {user_id}) in server '{server_name}' (ID: {server_id}) for username '{username}'")
+
     try:
         # Fetch games for the given username
         games = await fetch_games_for_user(username)
@@ -651,80 +676,85 @@ async def find_comp(interaction: discord.Interaction, username: str):
             await interaction.followup.send(f"No games found for user `{username}`.")
             return
 
-        game = games[0]
-        session_id = game.get('sessionIdHex')
-        mission = game.get("missionName", "Error")
-        if not session_id:
-            await interaction.followup.send(f"Could not retrieve session ID for user `{username}`.")
-            return
-
-        timestamp = game.get("startTime", "ERR")
-        if timestamp != "ERR":
-            timestamp = f"<t:{timestamp}:R>"
-        
-        replay_file_path = f"replays/0{session_id}/replay_data.json"
-
-        if not os.path.exists(replay_file_path):
-            # Load the replay data only if the file doesn't exist
-            await save_replay_data(session_id)
-            logging.info("Replay didnt exist, downloading now...")
-            
-        try:
-            with open(replay_file_path, "r") as replay_file:
-                replay_data = json.load(replay_file)
-        except FileNotFoundError:
-            logging.error(f"Replay file not found for session ID {session_id}")
-            await interaction.followup.send(f"Replay data not found for session `{session_id}`.")
-            return
-        
-        # Extract relevant data from the replay JSON
-        squadrons = replay_data.get("squadrons", [])
-        weather = replay_data.get("weather", "Unknown")
-        time_of_day = replay_data.get("time_of_day", "Unknown")
-        winner = replay_data.get("winning_team_squadron")
-        #logging.info(winner)
-        teams = replay_data.get("teams", [])
-
-        decimal_session_id = int(session_id, 16)
-        replay_url = f"https://warthunder.com/en/tournament/replay/{decimal_session_id}"
-        
-        # Create the embed
-        embed = discord.Embed(
-            title=f"**{squadrons[0]} vs {squadrons[1]}**",
-            #description=f"**👑 - {winner} **\nMap: {mission}\nTimeStamp: {timestamp}",
-            description=f"**👑 • {winner}**\n{mission}\nTime: {timestamp}\n[Replay Link]({replay_url})",
-            color=discord.Color.gold(),
-        )
-
-        for team in teams:
-            squadron_name = team.get("squadron", "Unknown")
-            players = team.get("players", [])
-
-            player_details = "\n".join(
-                f"{escape_markdown(player['nick'])} • **{player['vehicle']}**"
-                for player in players
-            )
-
-            embed.add_field(name=f"{squadron_name}", value=player_details or "No players found.", inline=False)
-            #embed.set_footer(text="This was not billed.")
-            
-        try:
-            await interaction.followup.send(embed=embed)
-            replay_file_path = f"replays/0{session_id}"
-            if os.path.exists(replay_file_path):
-                for file_name in os.listdir(replay_file_path):
-                    file_path = os.path.join(replay_file_path, file_name)
-                    if os.path.isfile(file_path) and file_name.endswith(".wrpl"):
-                        os.remove(file_path)
-                        
+        # Try processing up to 3 games deep
+        for game in games[:3]:
             try:
-                await update_billing(server_id, server_name, user_name, user_id, cmd_timestamp)
-            
+                session_id = game.get('sessionIdHex')
+                mission = game.get("missionName", "Error")
+                timestamp = game.get("startTime", "Error")
+
+                if timestamp != "Error":
+                    timestamp = f"<t:{timestamp}:R>"
+
+                replay_file_path = f"replays/0{session_id}/replay_data.json"
+
+                if not os.path.exists(replay_file_path):
+                    await save_replay_data(session_id)
+                    logging.info("Replay didn't exist, downloading now...")
+
+                try:
+                    with open(replay_file_path, "r") as replay_file:
+                        replay_data = json.load(replay_file)
+                except FileNotFoundError:
+                    logging.error(f"Replay file not found for session ID {session_id}")
+                    continue  # Try the next game
+
+                # Extract relevant data from the replay JSON
+                squadrons = replay_data.get("squadrons", [])
+                #weather = replay_data.get("weather", "Unknown")
+                #time_of_day = replay_data.get("time_of_day", "Unknown")
+                winner = replay_data.get("winning_team_squadron")
+                teams = replay_data.get("teams", [])
+
+                decimal_session_id = int(session_id, 16)
+                replay_url = f"https://warthunder.com/en/tournament/replay/{decimal_session_id}"
+
+                # Create the embed
+                embed = discord.Embed(
+                    title=f"**{squadrons[0]} vs {squadrons[1]}**",
+                    description=f"**👑 • {winner}**\n{mission}\nTime: {timestamp}\n[Replay Link]({replay_url})",
+                    color=discord.Color.gold(),
+                )
+
+                for team in teams:
+                    squadron_name = team.get("squadron", "Unknown")
+                    players = team.get("players", [])
+
+                    player_details = "\n".join(
+                        f"{escape_markdown(player['nick'])} • **{player['vehicle']}**"
+                        for player in players
+                    )
+
+                    embed.add_field(name=f"{squadron_name}", value=player_details or "No players found.", inline=False)
+
+                try:
+                    await interaction.followup.send(embed=embed)
+
+                    # Clean up replay files
+                    replay_file_path = f"replays/0{session_id}"
+                    if os.path.exists(replay_file_path):
+                        for file_name in os.listdir(replay_file_path):
+                            file_path = os.path.join(replay_file_path, file_name)
+                            if os.path.isfile(file_path) and file_name.endswith(".wrpl"):
+                                os.remove(file_path)
+
+                    try:
+                        await update_billing(server_id, server_name, user_name, user_id, cmd_timestamp)
+                    except Exception as e:
+                        logging.error(f"Failed to bill {server_name} ({server_id}) for session {session_id}: {e}")
+
+                    return  # Exit after a successful match
+
+                except Exception as e:
+                    logging.error(f"Failed to send embed for session {session_id}: {e}")
+                    continue  # Try the next game
+
             except Exception as e:
-                logging.error(f"Failed to bill {server_name} ({server_id}) for session {session_id}: {e}")
-                
-        except Exception as e:
-            logging.error(f"Failed to send embed for session {session_id}: {e}")
+                logging.error(f"An error occurred while processing session ID {session_id}: {e}")
+                continue  # Try the next game
+
+        # If none of the three games worked, send an error message
+        await interaction.followup.send("No valid game data could be retrieved. Please try again later.")
 
     except Exception as e:
         logging.error(f"An error occurred in the find-comp command: {e}")
@@ -747,7 +777,7 @@ async def alarm(interaction: discord.Interaction, type: str, channel_id: str,
         preferences = json.loads(data)
     except ObjectNotFoundError:
         preferences = {}
-    except :
+    except E:
         preferences = {}
 
     if squadron_name not in preferences:
@@ -1421,6 +1451,5 @@ async def help(interaction: discord.Interaction):
                           color=discord.Color.blue())
     embed.set_footer(text="Meow :3")
     await interaction.response.send_message(embed=embed, ephemeral=False)
-
 
 bot.run(TOKEN)
