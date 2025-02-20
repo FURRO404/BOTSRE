@@ -1,30 +1,30 @@
 # Standard Library Imports
-import os
+import asyncio
+import datetime as DT
 import json
 import logging
-import asyncio
-from asyncio import *
+import os
 import random
-import datetime as DT
-from datetime import datetime, time, timezone
 import re
 import shutil
+from asyncio import *
+from datetime import datetime, time, timezone
 
 # Third-Party Library Imports
 import discord
+from discord import Interaction, SelectOption, app_commands, ui
 from discord.ext import commands, tasks
 from discord.utils import escape_markdown
-from discord import app_commands, ui, Interaction, SelectOption
+from googletrans import Translator
 from replit.object_storage import Client
 from replit.object_storage.errors import ObjectNotFoundError
-from googletrans import Translator
 
 # Local Module Imports
 import Alarms
-from SQ_Info import fetch_squadron_info
 from AutoLog import fetch_games_for_user
 from Leaderboard_Parser import get_top_20, search_for_clan
 from Parse_Replay import save_replay_data
+from SQ_Info import fetch_squadron_info
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -91,6 +91,7 @@ async def snapshot_task():
     logging.info("Running member-leave alarm")
     for guild in bot.guilds:
         guild_id = guild.id
+        guild_name = guild.name
         key = f"{guild_id}-preferences.json"
 
         try:
@@ -130,9 +131,9 @@ async def snapshot_task():
                             else:
                                 logging.error(f"Channel ID {channel_id} not found")
                         except ValueError:
-                            logging.error(f"Invalid channel ID format: {channel_id} for squadron {squadron_name}")
+                            logging.error(f"(LEAVE) Invalid channel ID format: {channel_id} for squadron {squadron_name} in {guild_name} ({guild_id})")
                     else:
-                        logging.error(f"'Leave' channel ID is missing or empty for squadron {squadron_name}.")
+                        logging.error(f"'Leave' channel ID is missing or empty for squadron {squadron_name} in {guild_name} ({guild_id}).")
 
 
                 if name_changes:
@@ -154,9 +155,9 @@ async def snapshot_task():
                             else:
                                 logging.error(f"Channel ID {channel_id} not found")
                         except ValueError:
-                            logging.error(f"Invalid channel ID format: {channel_id} for squadron {squadron_name}")
+                            logging.error(f"(NAME) Invalid channel ID format: {channel_id} for squadron {squadron_name} in {guild_name} ({guild_id})")
                     else:
-                        logging.error(f"'Leave' channel ID is missing or empty for squadron {squadron_name}.")
+                        logging.error(f"'Leave' channel ID is missing or empty for squadron {squadron_name} in {guild_name} ({guild_id}).")
                         
             Alarms.save_snapshot(new_snapshot, guild_id, squadron_name)
 
@@ -187,6 +188,7 @@ async def execute_points_alarm_task(region):
     logging.info("Running points-update alarm")
     for guild in bot.guilds:
         guild_id = guild.id
+        guild_name = guild.id
         key = f"{guild_id}-preferences.json"
 
         logging.info(f"Processing guild: {guild_id} for region: {region}")
@@ -231,7 +233,6 @@ async def execute_points_alarm_task(region):
                                 )
 
                                 changes_lines = []
-                                MAX_NAME_LENGTH = 20
 
                                 for member, (points_change, current_points) in points_changes.items():
                                     arrow = "🌲" if points_change > 0 else "🔻"
@@ -286,7 +287,7 @@ async def execute_points_alarm_task(region):
                                 )
                         else:
                             logging.error(
-                                f"Invalid channel ID format: {channel_id} for squadron {squadron_name}"
+                                f"(POINTS) Invalid channel ID format: {channel_id} for squadron {squadron_name} in {guild_name} ({guild_id})"
                             )
                     else:
                         logging.info(
@@ -295,9 +296,7 @@ async def execute_points_alarm_task(region):
 
                 # Save the new snapshot with the region specified
                 Alarms.save_snapshot(new_snapshot, guild_id, squadron_name,region)
-                logging.info(
-                    f"New snapshot saved for {squadron_name} in region {region}"
-                )
+                logging.info(f"New snapshot saved for {squadron_name} in region {region}")
 
 
 @points_alarm_task.before_loop
@@ -334,10 +333,10 @@ def load_guild_preferences(guild_id):
     key = f"{guild_id}-preferences.json"
     try:
         data = client.download_as_text(key)
-        #logging.info(f"Successfully loaded preferences for guild: {guild_id}")
+        logging.info(f"Successfully loaded preferences for guild: {guild_id}")
         return json.loads(data)
     except (ObjectNotFoundError, FileNotFoundError):
-        logging.warning(f"No preferences found for guild: {guild_id}")
+        #logging.warning(f"No preferences found for guild: {guild_id}")
         return {}
 
 
@@ -378,6 +377,14 @@ async def global_replay_snapshot_task():
     scanned_sessions = set(sessions_data.get("global", []))
     logging.debug(f"Scanned sessions: {scanned_sessions}")
 
+    sessionsss = []
+    for game in games:
+        session_id = game.get("sessionIdHex")
+        sessionsss.append(session_id)
+
+    if len(sessionsss) != len(set(sessionsss)):
+        logging.warning("Games had duplicate sessions!")
+    
     for game in games:
         session_id = game.get("sessionIdHex")
         mission_name = game.get("missionName")
@@ -397,6 +404,7 @@ async def global_replay_snapshot_task():
         try:
             await save_replay_data(session_id)
             logging.info(f"Replay data saved for session {session_id}")
+
         except Exception as e:
             logging.error(f"Failed to save replay data for session {session_id}: {e}")
             continue
@@ -442,7 +450,7 @@ async def global_replay_snapshot_task():
                 for squadron, prefs in preferences.items()
                 if "Logs" in prefs
             }
-            logging.info(f"Logs setup for {guild.name} ({guild.id})")
+            logging.info(f"Logs setup for {guild.name} ({guild.id}): {squadrons_with_logs}")
 
             processed = False
             for squadron_name, squadron_prefs in squadrons_with_logs.items():
@@ -458,10 +466,25 @@ async def global_replay_snapshot_task():
                         logging.info(f"Already processed session {session_id} for guild {guild.name} ({guild.id}), skipping duplicate.")
 
         scanned_sessions.add(session_id)
-
+    
     sessions_data["global"] = list(scanned_sessions)
     client.upload_from_text("SESSIONS.json", json.dumps(sessions_data, indent=4))
     logging.info("Global sessions data updated.")
+
+    for session_id in scanned_sessions:
+        # Construct the folder path for each session.
+        folder_path = f"replays/0{session_id}"
+
+        # Check if the folder exists.
+        if os.path.exists(folder_path) and os.path.isdir(folder_path):
+            # Iterate over all items in the folder.
+            for file_name in os.listdir(folder_path):
+                file_path = os.path.join(folder_path, file_name)
+                # Remove the file if it's a .wrpl file.
+                if os.path.isfile(file_path) and file_name.endswith(".wrpl"):
+                    os.remove(file_path)
+                    print(f"Removed file: {file_path}")
+
 
 @logs_snapshot_task.before_loop
 async def before_logs_snapshot_task():
@@ -541,6 +564,7 @@ async def process_session(bot, session_id, guild_id, squadron_preferences, map_n
         )
         embed.add_field(name=squadron_name, value=player_details or "No players found.", inline=False)
 
+    
     # Retrieve the logs channel from squadron preferences.
     channel_id_str = squadron_preferences.get("Logs", "")
     try:
@@ -557,14 +581,9 @@ async def process_session(bot, session_id, guild_id, squadron_preferences, map_n
             await channel.send(embed=embed)
             logging.info(f"Embed sent for session {session_id} in {guild_name} ({guild_id})")
 
-            replay_folder_path = f"replays/0{session_id}"
-            if os.path.exists(replay_folder_path):
-                for file_name in os.listdir(replay_folder_path):
-                    file_path = os.path.join(replay_folder_path, file_name)
-                    if os.path.isfile(file_path) and file_name.endswith(".wrpl"):
-                        os.remove(file_path)
         else:
             logging.warning(f"Channel ID {channel_id} not found in {guild_name} ({guild_id})")
+
     except Exception as e:
         logging.error(f"Failed to send embed for session {session_id} in {guild_name} ({guild_id}): {e}")
 
@@ -633,8 +652,9 @@ async def find_comp(interaction: discord.Interaction, username: str):
 
         # Try processing up to 3 games deep
         for game in games[:3]:
+            session_id = None
             try:
-                session_id = game.get('sessionIdHex')
+                session_id = game.get('sessionIdHex', "Error")
                 mission = game.get("missionName", "Error")
                 timestamp = game.get("startTime", "Error")
 
@@ -753,7 +773,7 @@ async def alarm(interaction: discord.Interaction, type: str, channel_id: str,
     type=
     "The type of information to display: members, points, or leave empty for full info"
 )
-async def sq_info(interaction: discord.Interaction, squadron: str = None, type: str = None):
+async def sq_info(interaction: discord.Interaction, squadron: str = "", type: str = ""):
     await interaction.response.defer(ephemeral=False)
 
     filename = "SQUADRONS.json"
@@ -1103,7 +1123,7 @@ async def set_squadron(interaction: discord.Interaction, abbreviated_name: str):
         try:
             squadrons_json = client.download_as_text(filename)
             squadrons = json.loads(squadrons_json)
-        except:
+        except Exception:
             logging.warning("SQUADRONS.json not found. Creating a new one."
                             )  # Nigh Impossible
             squadrons = {}
@@ -1320,67 +1340,48 @@ async def return_latest_battle(sq_long_name):
 
     latest_timestamp = max(time_stamps)
     return f"<t:{latest_timestamp}:R>"
+    
 
 @bot.tree.command(name="track", description="Track a certain squadron to see when they last played SQB")
 @app_commands.describe(squadron_short_name="Short name of the squadron to track")
 async def track_squadron(interaction: discord.Interaction, squadron_short_name: str):
     await interaction.response.defer()
     logging.info("Running /track")
-    if squadron_short_name == "top20":
-        squadron_data = await get_top_20()
-        if not squadron_data:
-            await interaction.followup.send("Failed to retrieve squadron data... Is captcha up?", ephemeral=True)
-            return
 
-        embed = discord.Embed(title="**Top 20 Last Played**", color=discord.Color.blue())
+    clan_data = await search_for_clan(squadron_short_name.lower())
+    if not clan_data:
+        await interaction.followup.send("Squadron not found.", ephemeral=True)
+        return
 
-        for idx, squadron in enumerate(squadron_data, start=1):
-            latest_stamp = await return_latest_battle(squadron['long_name'])
+    #clan_name_long = clan_data.get("long_name")
+    clan_tag = clan_data.get("tag")
+    points = int(clan_data.get("clanrating"))
+    ground_kills = int(clan_data.get("g_kills"))
+    air_kills = int(clan_data.get("a_kills"))
+    deaths = int(clan_data.get("deaths"))
+    battles = int(clan_data.get("battles"))
+    wins = int(clan_data.get("wins"))
+    members = clan_data.get("members")
+    #latest_stamp = await return_latest_battle(clan_name_long)
 
-            embed.add_field(
-                name=f"**{idx} - {squadron['tag']} • {latest_stamp}**",
-                value="\n",
-                inline=False
-            )
+    total_kills = ground_kills + air_kills
+    kd_ratio = total_kills / deaths if deaths > 0 else total_kills
 
-        embed.set_footer(text="Meow :3")
-        await interaction.followup.send(embed=embed, ephemeral=False)
+    win_rate = (wins / battles) * 100 if battles > 0 else 0
+    win_rate_percentage = f"{win_rate:.2f}%"
 
-    else:
-        clan_data = await search_for_clan(squadron_short_name.lower())
-        if not clan_data:
-            await interaction.followup.send("Squadron not found.", ephemeral=True)
-            return
-
-        clan_name_long = clan_data.get("long_name")
-        clan_tag = clan_data.get("tag")
-        points = int(clan_data.get("clanrating"))
-        ground_kills = int(clan_data.get("g_kills"))
-        air_kills = int(clan_data.get("a_kills"))
-        deaths = int(clan_data.get("deaths"))
-        battles = int(clan_data.get("battles"))
-        wins = int(clan_data.get("wins"))
-        members = clan_data.get("members")
-        latest_stamp = await return_latest_battle(clan_name_long)
-
-        total_kills = ground_kills + air_kills
-        kd_ratio = total_kills / deaths if deaths > 0 else total_kills
-
-        win_rate = (wins / battles) * 100 if battles > 0 else 0
-        win_rate_percentage = f"{win_rate:.2f}%"
-
-        embed = discord.Embed(
-            title=f"**{clan_tag} Played {latest_stamp}**",
-            color=discord.Color.green()
-        )
-        
-        embed.add_field(name="Points", value=points, inline=True)
-        embed.add_field(name="Wins", value=wins, inline=True)
-        embed.add_field(name="Win Rate", value=win_rate_percentage, inline=True)
-        embed.add_field(name="Members", value=members, inline=True)
-        embed.add_field(name="KD Ratio", value=f"{kd_ratio:.2f}", inline=True)
-        embed.set_footer(text="Meow :3")
-        await interaction.followup.send(embed=embed, ephemeral=False)
+    embed = discord.Embed(
+        title=f"**{clan_tag}**",
+        color=discord.Color.green()
+    )
+    
+    embed.add_field(name="Points", value=points, inline=True)
+    embed.add_field(name="Wins", value=wins, inline=True)
+    embed.add_field(name="Win Rate", value=win_rate_percentage, inline=True)
+    embed.add_field(name="Members", value=members, inline=True)
+    embed.add_field(name="KD Ratio", value=f"{kd_ratio:.2f}", inline=True)
+    embed.set_footer(text="Meow :3")
+    await interaction.followup.send(embed=embed, ephemeral=False)
         
 
 @bot.tree.command(name="help", description="Get a guide on how to use the bot")
