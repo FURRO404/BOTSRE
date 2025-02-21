@@ -39,6 +39,7 @@ intents.reactions = True
 intents.members = True
 intents.messages = True
 
+
 class MyBot(commands.Bot):
     def __init__(self):
         super().__init__(command_prefix='~', intents=intents)
@@ -60,11 +61,14 @@ async def on_ready():
     if not bot.synced:
         await bot.tree.sync()
         bot.synced = True
+
+    await cleanup_replays()
+    
     snapshot_task.start()
     points_alarm_task.start()
-    logs_snapshot_task.start()
+    auto_logging_task.start()
     
-    #region = "EU"
+    #region = "NA"
     #await execute_points_alarm_task(region)
 
 
@@ -133,7 +137,7 @@ async def snapshot_task():
                         except ValueError:
                             logging.error(f"(LEAVE) Invalid channel ID format: {channel_id} for squadron {squadron_name} in {guild_name} ({guild_id})")
                     else:
-                        logging.error(f"'Leave' channel ID is missing or empty for squadron {squadron_name} in {guild_name} ({guild_id}).")
+                        logging.warning(f"'Leave' not setup for squadron {squadron_name} in {guild_name} ({guild_id}).")
 
 
                 if name_changes:
@@ -157,7 +161,7 @@ async def snapshot_task():
                         except ValueError:
                             logging.error(f"(NAME) Invalid channel ID format: {channel_id} for squadron {squadron_name} in {guild_name} ({guild_id})")
                     else:
-                        logging.error(f"'Leave' channel ID is missing or empty for squadron {squadron_name} in {guild_name} ({guild_id}).")
+                        logging.warning(f"'Leave' not setup for squadron {squadron_name} in {guild_name} ({guild_id}).")
                         
             Alarms.save_snapshot(new_snapshot, guild_id, squadron_name)
 
@@ -180,11 +184,7 @@ async def points_alarm_task():
 
 
 async def execute_points_alarm_task(region):
-    replay_file_path = f"replays/"
-    if os.path.exists(replay_file_path):
-        shutil.rmtree(replay_file_path)
-        logging.info(f"Deleted replay folder: {replay_file_path}")
-        
+    await cleanup_replays()
     logging.info("Running points-update alarm")
     for guild in bot.guilds:
         guild_id = guild.id
@@ -200,7 +200,6 @@ async def execute_points_alarm_task(region):
                 f"Successfully loaded preferences for guild: {guild_id}")
         except (ObjectNotFoundError, FileNotFoundError):
             preferences = {}
-            logging.warning(f"No preferences found for guild: {guild_id}")
 
         for squadron_name, squadron_preferences in preferences.items():
             logging.info(
@@ -291,7 +290,7 @@ async def execute_points_alarm_task(region):
                             )
                     else:
                         logging.info(
-                            f"No channel set for 'Points' type Alarms for squadron {squadron_name}"
+                            f"No new points for {squadron_name}"
                         )
 
                 # Save the new snapshot with the region specified
@@ -333,7 +332,7 @@ def load_guild_preferences(guild_id):
     key = f"{guild_id}-preferences.json"
     try:
         data = client.download_as_text(key)
-        logging.info(f"Successfully loaded preferences for guild: {guild_id}")
+        #logging.info(f"Successfully loaded preferences for guild: {guild_id}")
         return json.loads(data)
     except (ObjectNotFoundError, FileNotFoundError):
         #logging.warning(f"No preferences found for guild: {guild_id}")
@@ -349,145 +348,151 @@ def load_sessions_data():
         logging.info("SESSIONS.json not found, creating a new one.")
         return {}
 
-@tasks.loop(minutes=2)
-async def logs_snapshot_task():
-    now_utc = datetime.now(timezone.utc).time()
+async def cleanup_replays():
+    replay_file_path = "replays/"
+    if os.path.exists(replay_file_path):
+        shutil.rmtree(replay_file_path)
+        logging.info("Deleted replay folder")
 
-    US_START = (time(00, 55))
-    US_END = (time(7, 20))
-    EU_START = (time(13, 55))
-    EU_END = (time(22, 20))
 
-    if US_START <= now_utc <= US_END or EU_START <= now_utc <= EU_END:
-        await global_replay_snapshot_task()
-    else:
-        #await logs_snapshot()
-        logging.info("Logs not ran, not a scheduled time.")
+@tasks.loop(seconds=60)
+async def auto_logging_task():
+    try:
+        now_utc = datetime.now(timezone.utc).time()
 
-async def global_replay_snapshot_task():
-    logging.info("Running global replay snapshot task")
+        US_START = time(0, 55)
+        US_END = time(7, 20)
+        EU_START = time(13, 55)
+        EU_END = time(22, 20)
 
-    # Fetch the last 10 games globally.
-    games = await fetch_games_for_user("")
-    if not games:
-        logging.error("No games returned from fetch_games_for_user('')")
-        return
-
-    sessions_data = load_sessions_data()
-    scanned_sessions = set(sessions_data.get("global", []))
-    logging.debug(f"Scanned sessions: {scanned_sessions}")
-
-    sessionsss = []
-    for game in games:
-        session_id = game.get("sessionIdHex")
-        sessionsss.append(session_id)
-
-    if len(sessionsss) != len(set(sessionsss)):
-        logging.warning("Games had duplicate sessions!")
-    
-    for game in games:
-        session_id = game.get("sessionIdHex")
-        mission_name = game.get("missionName")
-
-        if not session_id:
-            logging.error("No sessionIdHex returned!!")
-            continue
-
-        if session_id in scanned_sessions:
-            logging.info(f"Session {session_id} already scanned, skipping.")
-            continue
+        if US_START <= now_utc <= US_END or EU_START <= now_utc <= EU_END:
+            await auto_logging()
         else:
-            logging.info(f"Session {session_id} not scanned, downloading.")
+            logging.info("Logs not ran, not a scheduled time.")
+    except Exception as e:
+        logging.error(f"Unhandled exception in auto_logging: {e}")
 
-        replay_file_path = f"replays/0{session_id}/replay_data.json"
 
-        try:
-            await save_replay_data(session_id)
-            logging.info(f"Replay data saved for session {session_id}")
-
-        except Exception as e:
-            logging.error(f"Failed to save replay data for session {session_id}: {e}")
-            continue
-
-        try:
-            with open(replay_file_path, "r") as replay_file:
-                replay_data = json.load(replay_file)
-            logging.debug(f"Replay data for session {session_id}: {replay_data}")
-        except Exception as e:
-            logging.error(f"Error reading replay data for session {session_id}: {e}")
-            continue
-
-        # Get the list of squadrons from the replay.
-        replay_squadrons = replay_data.get("squadrons", [])
-        logging.debug(f"Replay squadrons for session {session_id}: {replay_squadrons}")
-        if not replay_squadrons:
-            logging.warning(f"No squadrons found in replay data for session {session_id}")
-            continue
-
-        # Build a list of long clan names (lowercased) from replay squadrons.
-        long_clans = []
-        for squadron_short in replay_squadrons:
-            clan_data = await search_for_clan(squadron_short.lower())
-            if not clan_data:
-                logging.warning(f"Squadron '{squadron_short}' not found. Skipping this squadron.")
-                continue
-
-            clan_long_name = clan_data.get("long_name", squadron_short)
-            long_clans.append(clan_long_name.lower())
-        #logging.info(f"Long clan names for session {session_id}: {long_clans}")
+async def auto_logging():
+    try:
+        logging.info("Running autologs")
+        games = await fetch_games_for_user("")
+        if not games:
+            logging.error("No games returned from fetch_games_for_user('')")
+            return
         
-        # For each guild, check if they have logging preferences for a matching squadron.
-        for guild in bot.guilds:
-            preferences = load_guild_preferences(guild.id)
-            #logging.info(f"Preferences for guild {guild.name} ({guild.id}): {preferences}")
-            if not preferences:
-                #logging.info(f"No preferences found for {guild.name} ({guild.id})")
+        squadrons_json = client.download_as_text("SQUADRONS.json")
+        squadrons_data = json.loads(squadrons_json)
+        sessions_data = load_sessions_data()
+        scanned_sessions = set(sessions_data.get("global", []))
+        
+        for game in games:
+            session_id = game.get("sessionIdHex")
+            mission_name = game.get("missionName")
+    
+            if session_id in scanned_sessions:
+                logging.info(f"Session {session_id} already scanned, skipping.")
+                continue
+            else:
+                logging.info(f"Session {session_id} not scanned, downloading.")
+    
+            replay_file_path = f"replays/0{session_id}/replay_data.json"
+    
+            try:
+                await save_replay_data(session_id)
+                logging.info(f"Replay data saved for session {session_id}")
+    
+            except Exception as e:
+                logging.error(f"Failed to save replay data for session {session_id}: {e}")
+                continue
+    
+            try:
+                with open(replay_file_path, "r") as replay_file:
+                    replay_data = json.load(replay_file)
+            except Exception as e:
+                logging.error(f"Error reading replay data for session {session_id}: {e}")
+                continue
+            
+            replay_squadrons = replay_data.get("squadrons", [])
+            logging.info(f"Replay squadrons for session {session_id}: {replay_squadrons}")
+            if not replay_squadrons:
+                logging.warning(f"No squadrons found in replay data for session {session_id}, skipping this session.")
                 continue
 
-            # Extract only the squadrons with a Logs channel configured.
-            squadrons_with_logs = {
-                squadron: prefs
-                for squadron, prefs in preferences.items()
-                if "Logs" in prefs
-            }
-            logging.info(f"Logs setup for {guild.name} ({guild.id}): {squadrons_with_logs}")
+            long_clans = []
+            for squadron_short in replay_squadrons:
+                # Attempt Method 1: Look for a match in the JSON data.
+                long_sq_name = None
+                for squadron in squadrons_data.values():
+                    if squadron["SQ_ShortHand_Name"] == squadron_short:
+                        logging.info("Method 1 worked.")
+                        long_sq_name = squadron["SQ_LongHandName"]
+                        break  # Stop searching once a match is found.
 
-            processed = False
-            for squadron_name, squadron_prefs in squadrons_with_logs.items():
-                if squadron_name.lower() in long_clans:
-                    if not processed:
-                        logging.info(f"Processing session {session_id} for guild {guild.name} ({guild.id}) with teams {long_clans}")
-                        try:
-                            await process_session(bot, session_id, guild.id, squadron_prefs, mission_name, guild.name)
-                        except Exception as e:
-                            logging.error(f"Error processing session {session_id} for guild {guild.name} ({guild.id}): {e}")
-                        processed = True
+                if long_sq_name:
+                    long_clans.append(long_sq_name.lower())
+                    
+                else:
+                    clan_data = await search_for_clan(squadron_short.lower())
+                    if clan_data:
+                        clan_long_name = clan_data.get("long_name", squadron_short)
+                        long_clans.append(clan_long_name.lower())
                     else:
-                        logging.info(f"Already processed session {session_id} for guild {guild.name} ({guild.id}), skipping duplicate.")
+                        logging.error(f"Squadron '{squadron_short}' not found for session {session_id}.")
+                        continue
 
-        scanned_sessions.add(session_id)
+            for guild in bot.guilds:
+                preferences = load_guild_preferences(guild.id)
+                
+                if not preferences:
+                    continue
+
+                squadrons_with_logs = {
+                    squadron_name: squadron_prefs["Logs"]
+                    for squadron_name, squadron_prefs in preferences.items()
+                    if "Logs" in squadron_prefs
+                }
+                
+                #logging.info(f"Logs setup for {guild.name} ({guild.id}): {squadrons_with_logs}")
+                
+                processed = False
+                for squadron_name, squadron_prefs in squadrons_with_logs.items():
+                    if squadron_name.lower() in long_clans:
+                        if not processed:
+                            logging.info(f"Processing session {session_id} for guild {guild.name} ({guild.id}) with teams {replay_squadrons}")
+                            try:
+                                await process_session(bot, session_id, guild.id, squadron_prefs, mission_name, guild.name)
+                            except Exception as e:
+                                logging.error(f"Error processing session {session_id} for guild {guild.name} ({guild.id}): {e}")
+                            processed = True
+                        else:
+                            logging.info(f"Already processed session {session_id} for guild {guild.name} ({guild.id}), skipping duplicate.")
+                        
+            scanned_sessions.add(session_id)
+        
+        sessions_data["global"] = list(scanned_sessions)
+        client.upload_from_text("SESSIONS.json", json.dumps(sessions_data, indent=4))
+        logging.info("Global sessions data updated.")
     
-    sessions_data["global"] = list(scanned_sessions)
-    client.upload_from_text("SESSIONS.json", json.dumps(sessions_data, indent=4))
-    logging.info("Global sessions data updated.")
+        for session_id in scanned_sessions:
+            # Construct the folder path for each session.
+            folder_path = f"replays/0{session_id}"
+    
+            # Check if the folder exists.
+            if os.path.exists(folder_path) and os.path.isdir(folder_path):
+                # Iterate over all items in the folder.
+                for file_name in os.listdir(folder_path):
+                    file_path = os.path.join(folder_path, file_name)
+                    # Remove the file if it's a .wrpl file.
+                    if os.path.isfile(file_path) and file_name.endswith(".wrpl"):
+                        os.remove(file_path)
+    
+    except Exception as e:
+        logging.error(f"Error occured in logs: {e}")
+        
 
-    for session_id in scanned_sessions:
-        # Construct the folder path for each session.
-        folder_path = f"replays/0{session_id}"
-
-        # Check if the folder exists.
-        if os.path.exists(folder_path) and os.path.isdir(folder_path):
-            # Iterate over all items in the folder.
-            for file_name in os.listdir(folder_path):
-                file_path = os.path.join(folder_path, file_name)
-                # Remove the file if it's a .wrpl file.
-                if os.path.isfile(file_path) and file_name.endswith(".wrpl"):
-                    os.remove(file_path)
-                    print(f"Removed file: {file_path}")
-
-
-@logs_snapshot_task.before_loop
-async def before_logs_snapshot_task():
+@auto_logging_task.before_loop
+async def before_auto_logging_task():
     await bot.wait_until_ready()
 
 
@@ -564,9 +569,8 @@ async def process_session(bot, session_id, guild_id, squadron_preferences, map_n
         )
         embed.add_field(name=squadron_name, value=player_details or "No players found.", inline=False)
 
-    
-    # Retrieve the logs channel from squadron preferences.
-    channel_id_str = squadron_preferences.get("Logs", "")
+
+    channel_id_str = squadron_preferences
     try:
         # Remove Discord formatting and convert to integer.
         channel_id = int(channel_id_str.strip("<#>"))
@@ -715,10 +719,10 @@ async def find_comp(interaction: discord.Interaction, username: str):
 
                     try:
                         await update_billing(server_id, server_name, user_name, user_id, cmd_timestamp)
+                        return  # Exit after a successful match
+                        
                     except Exception as e:
                         logging.error(f"Failed to bill {server_name} ({server_id}) for session {session_id}: {e}")
-
-                    return  # Exit after a successful match
 
                 except Exception as e:
                     logging.error(f"Failed to send embed for session {session_id}: {e}")

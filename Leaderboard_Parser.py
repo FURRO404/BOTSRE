@@ -3,7 +3,7 @@ import aiohttp
 import json
 
 async def fetch_clan_leaderboard(page=1):
-    url = f"https://warthunder.com/en/community/getclansleaderboard/dif/_hist/page/{page}/sort/dr_era5"
+    url = f"https://warthunder.com/en/community/getclansleaderboard/dif/_hist/page/{page}/sort/tagl"
 
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
@@ -51,21 +51,21 @@ async def get_top_20():
         return clan_data
 
 async def search_for_clan(short_name):
-    """Search for a squadron by short_name, page by page."""
+    """Search for a squadron by short_name, page by page, up to a maximum of 50 pages."""
+    max_pages = 75
     page = 1
-    while True:
+    while page <= max_pages:
         clan_data = await fetch_clan_leaderboard(page)
         if not clan_data:
             break
-
         for clan in clan_data:
-            if clan["short_name"] == short_name:
-                #print(clan)
+            if clan["short_name"] == short_name.lower():
+                print(clan)
                 return clan
         page += 1
     return None
 
 
-#short_name_to_search = "tehb"  
-#asyncio.run(search_for_clan(short_name_to_search))
+test = search_for_clan("avr")
+#asyncio.run(test)
 #asyncio.run(get_top_20())
