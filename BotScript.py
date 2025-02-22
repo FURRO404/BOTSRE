@@ -404,6 +404,7 @@ async def auto_logging():
     
             except Exception as e:
                 logging.error(f"Failed to save replay data for session {session_id}: {e}")
+                scanned_sessions.add(session_id)
                 continue
     
             try:
@@ -442,6 +443,11 @@ async def auto_logging():
                         continue
 
             for guild in bot.guilds:
+                activated = load_active_guilds(guild.id)
+                if not activated:
+                    logging.info(f"Guild {guild.name} ({guild.id}) is not activated for auto-logs, skipping")
+                    #continue
+                
                 preferences = load_guild_preferences(guild.id)
                 
                 if not preferences:
@@ -640,10 +646,23 @@ async def find_comp(interaction: discord.Interaction, username: str):
     user_name = user.name
     user_id = user.id
 
-    server = interaction.guild
-    server_name = server.name
-    server_id = server.id
+    guild = interaction.guild
+    server_name = guild.name
+    server_id = guild.id
 
+    activated = load_active_guilds(server_id)
+    if not activated:
+        logging.info(f"Guild {server_name} ({server_id}) is not activated for comp, ignoring")
+        
+        deny_embed = discord.Embed(
+            title="Server Not Activated",
+            description="This server is not activated for comp. Please contact not_so_toothless for help.",
+            color=discord.Color.red()
+        )
+        #await interaction.followup.send(embed=deny_embed)
+        #return
+
+    
     cmd_timestamp = DT.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
     logging.info(f"FIND-COMP used by {user_name} (ID: {user_id}) in server '{server_name}' (ID: {server_id}) for username '{username}'")
 

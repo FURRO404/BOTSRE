@@ -3,7 +3,7 @@ import aiohttp
 import json
 
 async def fetch_clan_leaderboard(page=1):
-    url = f"https://warthunder.com/en/community/getclansleaderboard/dif/_hist/page/{page}/sort/tagl"
+    url = f"https://warthunder.com/en/community/getclansleaderboard/dif/_hist/page/{page}/sort/dr_era5"
 
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
@@ -60,7 +60,7 @@ async def search_for_clan(short_name):
             break
         for clan in clan_data:
             if clan["short_name"] == short_name.lower():
-                print(clan)
+                #print(clan)
                 return clan
         page += 1
     return None
