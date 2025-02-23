@@ -66,6 +66,6 @@ async def search_for_clan(short_name):
     return None
 
 
-test = search_for_clan("avr")
+#test = search_for_clan("imami")
 #asyncio.run(test)
 #asyncio.run(get_top_20())

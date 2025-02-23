@@ -10,12 +10,13 @@ import shutil
 from asyncio import *
 from datetime import datetime, time, timezone
 
+import deepl
+
 # Third-Party Library Imports
 import discord
 from discord import Interaction, SelectOption, app_commands, ui
 from discord.ext import commands, tasks
 from discord.utils import escape_markdown
-from googletrans import Translator
 from replit.object_storage import Client
 from replit.object_storage.errors import ObjectNotFoundError
 
@@ -29,6 +30,7 @@ from SQ_Info import fetch_squadron_info
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("hpack").setLevel(logging.WARNING)
+logging.getLogger("deepl").setLevel(logging.WARNING)
 
 client = Client(bucket_id="replit-objstore-b5261a8a-c768-4543-975e-dfce1cd7077d")
 TOKEN = os.environ.get('DISCORD_KEY')
@@ -575,7 +577,6 @@ async def process_session(bot, session_id, guild_id, squadron_preferences, map_n
         )
         embed.add_field(name=squadron_name, value=player_details or "No players found.", inline=False)
 
-
     channel_id_str = squadron_preferences
     try:
         # Remove Discord formatting and convert to integer.
@@ -656,13 +657,12 @@ async def find_comp(interaction: discord.Interaction, username: str):
         
         deny_embed = discord.Embed(
             title="Server Not Activated",
-            description="This server is not activated for comp. Please contact not_so_toothless for help.",
+            description="This server is not activated. Please contact not_so_toothless for help.",
             color=discord.Color.red()
         )
         #await interaction.followup.send(embed=deny_embed)
         #return
 
-    
     cmd_timestamp = DT.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
     logging.info(f"FIND-COMP used by {user_name} (ID: {user_id}) in server '{server_name}' (ID: {server_id}) for username '{username}'")
 
@@ -1281,34 +1281,38 @@ async def toggle(interaction: discord.Interaction, feature: str):
 
 # Dictionary mapping flag emojis to language codes
 LANGUAGE_MAP = {
-    "🇷🇺": "ru",  # Russian
-    "🇺🇸": "en",  # English (US)
-    "🇬🇧": "en",  # English (UK)
-    "🇪🇸": "es",  # Spanish
-    "🇫🇷": "fr",  # French
-    "🇩🇪": "de",  # German
+    "🇷🇺": "ru",    # Russian
+    "🇺🇸": "en-us",  # English (US)
+    "🇬🇧": "en-gb",  # English (UK)
+    "🇪🇸": "es",    # Spanish
+    "🇫🇷": "fr",    # French
+    "🇩🇪": "de",    # German
     "🇨🇳": "zh-cn",  # Chinese (Simplified)
-    "🇯🇵": "ja",  # Japanese
-    "🇰🇷": "ko",  # Korean
-    "🇮🇹": "it",  # Italian
-    "🇵🇹": "pt",  # Portuguese
-    "🇵🇱": "pl",  # Polish
-    "🇱🇹": "lt",  # Lithuanian
-    "🇱🇻": "lv",  # Latvian
-    "🇪🇪": "et",  # Estonian
-    "🇺🇦": "uk",  # Ukrainian
+    "🇯🇵": "ja",    # Japanese
+    "🇰🇷": "ko",    # Korean
+    "🇮🇹": "it",    # Italian
+    "🇵🇹": "pt-PT",    # Portuguese
+    "🇵🇱": "pl",    # Polish
+    "🇱🇹": "lt",    # Lithuanian
+    "🇱🇻": "lv",    # Latvian
+    "🇪🇪": "et",    # Estonian
+    "🇺🇦": "uk",    # Ukrainian
+    "🇲🇰": "mk",    # Macedonian
+    "🇨🇿": "cs",    # Czech
+    "🇷🇴": "ro",    # Romanian
+    "🇧🇬": "bg",    # Bulgarian
+    "🇬🇷": "el",    # Greek
+    "🇭🇺": "hu",    # Hungarian
+    "🏳️‍🌈": "pl"
 }
 
 
-translator = Translator()
-def perform_translation(text: str, target_language: str) -> str:
-    try:
-        translated = translator.translate(text, dest=target_language)
-        return translated.text
-    except Exception as e:
-        logging.info(f"Translation failed: {e}")
-        return "Translation error"
+DEEPL_API_KEY = os.environ.get("DEEPL_KEY")
+translator = deepl.Translator(DEEPL_API_KEY)
 
+def perform_translation(text: str, target_language: str) -> str:
+    result = translator.translate_text(text, target_lang=target_language.upper())
+    return result.text
 
 @bot.event
 async def on_reaction_add(reaction, user):
@@ -1316,11 +1320,14 @@ async def on_reaction_add(reaction, user):
         return
 
     message = reaction.message  
+    # Ignore reactions on messages from bots
+    if message.author.bot:
+        return
+
     text = message.content
     flag = reaction.emoji
     guild_id = message.guild.id
 
-    
     if flag not in LANGUAGE_MAP:
         return  
 
