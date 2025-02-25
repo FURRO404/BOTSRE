@@ -9,7 +9,7 @@ import re
 import shutil
 from asyncio import *
 from datetime import datetime, time, timezone
-
+import math
 import deepl
 
 # Third-Party Library Imports
@@ -340,6 +340,10 @@ def load_guild_preferences(guild_id):
         #logging.warning(f"No preferences found for guild: {guild_id}")
         return {}
 
+def save_guild_preferences(guild_id, preferences):
+    key = f"{guild_id}-preferences.json"
+    client.upload_from_text(key, json.dumps(preferences))
+
 
 def load_sessions_data():
     try:
@@ -657,10 +661,10 @@ async def find_comp(interaction: discord.Interaction, username: str):
         
         deny_embed = discord.Embed(
             title="Server Not Activated",
-            description="This server is not activated. Please contact not_so_toothless for help.",
+            description="This server is not activated. Please contact not_so_toothless to purchase this feature.",
             color=discord.Color.red()
         )
-        #await interaction.followup.send(embed=deny_embed)
+        await interaction.followup.send(embed=deny_embed)
         #return
 
     cmd_timestamp = DT.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
@@ -1440,7 +1444,289 @@ async def track_squadron(interaction: discord.Interaction, squadron_short_name: 
     embed.add_field(name="KD Ratio", value=f"{kd_ratio:.2f}", inline=True)
     embed.set_footer(text="Meow :3")
     await interaction.followup.send(embed=embed, ephemeral=False)
-        
+
+
+class NotificationTypeSelect(discord.ui.Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label="Logs", description="Manage Logs notifications"),
+            discord.SelectOption(label="Points", description="Manage Points notifications"),
+            discord.SelectOption(label="Leave", description="Manage Leave notifications")
+        ]
+        super().__init__(placeholder="Select notification type", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        notif_type = self.values[0]
+        # Proceed to Step 2: Squadron selection.
+        view = create_squadron_select_view(interaction.guild.id, notif_type)
+        await interaction.response.send_message(
+            f"Selected **{notif_type}**. Now choose the squadron to manage:",
+            view=view,
+            ephemeral=True
+        )
+
+class NotificationManagementView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=180)
+        self.add_item(NotificationTypeSelect())
+
+
+# Basic (non-paginated) squadron dropdown (if 25 or fewer squadrons)
+class SquadronSelect(discord.ui.Select):
+    def __init__(self, guild_id, notif_type, preferences):
+        self.guild_id = guild_id
+        self.notif_type = notif_type
+        options = []
+        # List squadrons that have a setting for the chosen notification type.
+        for squadron, settings in preferences.items():
+            if notif_type in settings:
+                channel_val = settings[notif_type]
+                state = "Disabled" if channel_val.startswith("<#DISABLED-") else "Enabled"
+                options.append(discord.SelectOption(label=squadron, description=f"{state}: {channel_val}"))
+        if not options:
+            options.append(discord.SelectOption(label="None", description="No squadrons configured", value="none"))
+        super().__init__(placeholder="Select a squadron", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        selected_squadron = self.values[0]
+        if selected_squadron == "none":
+            await interaction.response.send_message("No squadron available for this notification type.", ephemeral=True)
+            return
+
+        # Retrieve the current channel value for the selected notification type.
+        preferences = load_guild_preferences(self.guild_id)
+        squadron_settings = preferences.get(selected_squadron, {})
+        channel_value = squadron_settings.get(self.notif_type, "Not configured")
+        if channel_value != "Not configured":
+            # Check if the value is wrapped in <#...>
+            if channel_value.startswith("<#") and channel_value.endswith(">"):
+                channel_id_str = channel_value[2:-1]
+            else:
+                channel_id_str = channel_value
+            # Remove "DISABLED-" if present.
+            if channel_id_str.startswith("DISABLED-"):
+                channel_id_str = channel_id_str[len("DISABLED-"):]
+            try:
+                channel_id = int(channel_id_str)
+                channel = interaction.guild.get_channel(channel_id)
+                channel_name = channel.name if channel else "Unknown"
+            except ValueError:
+                channel_name = "Unknown"
+        else:
+            channel_name = "Not configured"
+
+        # Proceed to Step 3: Display toggle and change channel buttons.
+        view = ToggleView(self.guild_id, self.notif_type, selected_squadron)
+        await interaction.response.send_message(
+            f"Managing **{self.notif_type}** for squadron **{selected_squadron}** in channel **{channel_name}**.",
+            view=view,
+            ephemeral=True
+        )
+
+# New classes for paginated squadron selection (> 25 squadrons, somehow.)
+class PaginatedSquadronSelect(discord.ui.Select):
+    def __init__(self, guild_id, notif_type, squadron_list, page=0):
+        self.guild_id = guild_id
+        self.notif_type = notif_type
+        self.squadron_list = squadron_list  # List of tuples: (squadron, settings)
+        self.page = page
+        options = self.get_options(page)
+        super().__init__(placeholder=f"Select a squadron (Page {page+1})", min_values=1, max_values=1, options=options)
+
+    def get_options(self, page):
+        start = page * 25
+        end = start + 25
+        options = []
+        for squadron, settings in self.squadron_list[start:end]:
+            channel_val = settings[self.notif_type]
+            state = "Disabled" if channel_val.startswith("<#DISABLED-") else "Enabled"
+            options.append(discord.SelectOption(label=squadron, description=f"{state}: {channel_val}"))
+        if not options:
+            options.append(discord.SelectOption(label="None", description="No squadrons configured", value="none"))
+        return options
+
+    async def callback(self, interaction: discord.Interaction):
+        selected_squadron = self.values[0]
+        if selected_squadron == "none":
+            await interaction.response.send_message("No squadron available for this notification type.", ephemeral=True)
+            return
+
+        preferences = load_guild_preferences(self.guild_id)
+        squadron_settings = preferences.get(selected_squadron, {})
+        channel_value = squadron_settings.get(self.notif_type, "Not configured")
+        if channel_value != "Not configured":
+            # Check if the value is wrapped in <#...>
+            if channel_value.startswith("<#") and channel_value.endswith(">"):
+                channel_id_str = channel_value[2:-1]
+            else:
+                channel_id_str = channel_value
+            # Remove "DISABLED-" if present.
+            if channel_id_str.startswith("DISABLED-"):
+                channel_id_str = channel_id_str[len("DISABLED-"):]
+            try:
+                channel_id = int(channel_id_str)
+                channel = interaction.guild.get_channel(channel_id)
+                channel_name = channel.name if channel else "Unknown"
+            except ValueError:
+                channel_name = "Unknown"
+        else:
+            channel_name = "Not configured"
+
+        view = ToggleView(self.guild_id, self.notif_type, selected_squadron)
+        await interaction.response.send_message(
+            f"Managing **{self.notif_type}** for squadron **{selected_squadron}** in channel **{channel_name}**.",
+            view=view,
+            ephemeral=True
+        )
+
+class PrevPageButton(discord.ui.Button):
+    def __init__(self):
+        super().__init__(label="Previous", style=discord.ButtonStyle.secondary)
+    async def callback(self, interaction: discord.Interaction):
+        view: PaginatedSquadronSelectView = self.view
+        if view.page > 0:
+            view.page -= 1
+            view.select.page = view.page
+            view.select.options = view.select.get_options(view.page)
+            view.select.placeholder = f"Select a squadron (Page {view.page+1})"
+        await interaction.response.edit_message(view=view)
+
+class NextPageButton(discord.ui.Button):
+    def __init__(self):
+        super().__init__(label="Next", style=discord.ButtonStyle.secondary)
+    async def callback(self, interaction: discord.Interaction):
+        view: PaginatedSquadronSelectView = self.view
+        if view.page < view.total_pages - 1:
+            view.page += 1
+            view.select.page = view.page
+            view.select.options = view.select.get_options(view.page)
+            view.select.placeholder = f"Select a squadron (Page {view.page+1})"
+        await interaction.response.edit_message(view=view)
+
+class PaginatedSquadronSelectView(discord.ui.View):
+    def __init__(self, guild_id, notif_type, squadron_list, page=0):
+        super().__init__(timeout=180)
+        self.guild_id = guild_id
+        self.notif_type = notif_type
+        self.squadron_list = squadron_list  # List of tuples: (squadron, settings)
+        self.page = page
+        self.total_pages = math.ceil(len(squadron_list) / 25)
+        self.select = PaginatedSquadronSelect(guild_id, notif_type, squadron_list, page)
+        self.add_item(self.select)
+        self.add_item(PrevPageButton())
+        self.add_item(NextPageButton())
+
+def create_squadron_select_view(guild_id, notif_type):
+    """Return a View with either a paginated select or a basic select, based on number of squadrons."""
+    preferences = load_guild_preferences(guild_id)
+    squadron_list = []
+    for squadron, settings in preferences.items():
+        if notif_type in settings:
+            squadron_list.append((squadron, settings))
+    if len(squadron_list) > 25:
+        return PaginatedSquadronSelectView(guild_id, notif_type, squadron_list)
+    else:
+        view = discord.ui.View(timeout=180)
+        view.add_item(SquadronSelect(guild_id, notif_type, preferences))
+        return view
+
+
+class ToggleButton(discord.ui.Button):
+    def __init__(self, guild_id, notif_type, squadron, channel_value):
+        # Label reflects the current state.
+        label = "Enable" if channel_value.startswith("<#DISABLED-") else "Disable"
+        super().__init__(label=label, style=discord.ButtonStyle.primary)
+        self.guild_id = guild_id
+        self.notif_type = notif_type
+        self.squadron = squadron
+
+    async def callback(self, interaction: discord.Interaction):
+        preferences = load_guild_preferences(self.guild_id)
+        squadron_settings = preferences.get(self.squadron, {})
+        current_value = squadron_settings.get(self.notif_type)
+        if not current_value:
+            await interaction.response.send_message("Configuration not found.", ephemeral=True)
+            return
+
+        # Toggle by adding or removing "DISABLED-"
+        if current_value.startswith("<#DISABLED-"):
+            new_value = "<#" + current_value[len("<#DISABLED-"):]
+        else:
+            new_value = current_value.replace("<#", "<#DISABLED-", 1)
+        preferences[self.squadron][self.notif_type] = new_value
+        save_guild_preferences(self.guild_id, preferences)
+
+        self.label = "Enable" if new_value.startswith("<#DISABLED-") else "Disable"
+        await interaction.response.send_message(
+            f"{self.notif_type} for **{self.squadron}** is now " +
+            ("disabled." if new_value.startswith("<#DISABLED-") else "enabled."),
+            ephemeral=True
+        )
+        await interaction.edit_original_response(view=self.view)
+
+class ChangeChannelButton(discord.ui.Button):
+    def __init__(self, guild_id, notif_type, squadron):
+        super().__init__(label="Change Channel", style=discord.ButtonStyle.secondary)
+        self.guild_id = guild_id
+        self.notif_type = notif_type
+        self.squadron = squadron
+
+    async def callback(self, interaction: discord.Interaction):
+        view = ChannelSelectView(interaction.guild, self.notif_type, self.squadron)
+        await interaction.response.send_message("Select a new channel:", view=view, ephemeral=True)
+
+class ChannelSelect(discord.ui.Select):
+    def __init__(self, guild, notif_type, squadron):
+        self.notif_type = notif_type
+        self.squadron = squadron
+        options = []
+        for channel in guild.text_channels:
+            options.append(discord.SelectOption(label=channel.name, value=str(channel.id)))
+        super().__init__(placeholder="Select a channel", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        selected_channel_id = self.values[0]
+        new_value = f"<#{selected_channel_id}>"
+        preferences = load_guild_preferences(interaction.guild.id)
+        if self.squadron in preferences and self.notif_type in preferences[self.squadron]:
+            preferences[self.squadron][self.notif_type] = new_value
+            save_guild_preferences(interaction.guild.id, preferences)
+            await interaction.response.send_message(
+                f"Updated {self.notif_type} for **{self.squadron}** to {new_value}",
+                ephemeral=True
+            )
+        else:
+            await interaction.response.send_message("Configuration not found.", ephemeral=True)
+
+class ChannelSelectView(discord.ui.View):
+    def __init__(self, guild, notif_type, squadron):
+        super().__init__(timeout=180)
+        self.add_item(ChannelSelect(guild, notif_type, squadron))
+
+class ToggleView(discord.ui.View):
+    def __init__(self, guild_id, notif_type, squadron):
+        super().__init__(timeout=180)
+        preferences = load_guild_preferences(guild_id)
+        channel_value = preferences.get(squadron, {}).get(notif_type, "Not configured")
+        self.add_item(ToggleButton(guild_id, notif_type, squadron, channel_value))
+        self.add_item(ChangeChannelButton(guild_id, notif_type, squadron))
+
+
+@bot.tree.command(name="notifications", description="Manage notification settings for the server")
+@commands.has_permissions(administrator=True)
+async def notifications(interaction: discord.Interaction):
+    view = NotificationManagementView()
+    await interaction.response.send_message(
+        "Select the notification type to manage:",
+        view=view,
+        ephemeral=True
+    )
+
+@notifications.error
+async def notifications_error(interaction: discord.Interaction, error):
+    if isinstance(error, app_commands.CheckFailure):
+        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+
 
 @bot.tree.command(name="help", description="Get a guide on how to use the bot")
 async def help(interaction: discord.Interaction):
@@ -1456,7 +1742,8 @@ async def help(interaction: discord.Interaction):
         "8. **/sq-info [squadron] [type]** - View the details of the specified squadron, if a squadron is set (command 6), it will default to that squadron.\n"
         "9. **/track [squadron]** - View the last time a squadron played.\n"
         "10. **/help** - Get a guide on how to use the bot.\n"
-        "11. **Translation** - Put a flag reaction under a message to translate to that language (after using /enable).\n\n"
+        "11. **/notifications** - Manage your alarms for the server.\n"
+        "12. **Translation** - Put a flag reaction under a message to translate to that language (after using /enable).\n\n"
         "*For detailed information on each command, please read the input descriptions of each command, or reach out to not_so_toothless.*"
     )
 
