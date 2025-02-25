@@ -73,7 +73,9 @@ async def on_ready():
     #region = "NA"
     #await execute_points_alarm_task(region)
 
-
+def is_admin(interaction: discord.Interaction) -> bool:
+    return interaction.user.guild_permissions.administrator
+    
 @bot.event
 async def on_guild_join(guild):
     logging.info(f'Joined new guild: {guild.name} (id: {guild.id})')
@@ -768,7 +770,7 @@ async def find_comp(interaction: discord.Interaction, username: str):
     type="The type of alarm (e.g., Leave, Points, Logs)",
     channel_id="The ID of the channel to send alarm messages to",
     squadron_name="The SHORT name of the squadron to monitor")
-@commands.has_permissions(administrator=True)
+@app_commands.check(is_admin)
 async def alarm(interaction: discord.Interaction, type: str, channel_id: str, squadron_name: str):
     await interaction.response.defer()
     
@@ -796,6 +798,11 @@ async def alarm(interaction: discord.Interaction, type: str, channel_id: str, sq
     client.upload_from_text(key, json.dumps(preferences))
 
     await interaction.followup.send(f"Alarm of type '{type}' set for squadron '{squadron_name}' to send messages in channel ID {channel_id}.", ephemeral=True)
+
+@alarm.error
+async def alarm_error(interaction: discord.Interaction, error):
+    if isinstance(error, app_commands.CheckFailure):
+        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
 
 
 @bot.tree.command(name="sq-info", description="Fetch information about a squadron")
@@ -1266,7 +1273,7 @@ async def save_features(guild_id, features):
     
 @bot.tree.command(name="toggle", description="Toggle a feature for the server (Currently supports 'Translate')")
 @app_commands.describe(feature="Feature to toggle (only 'Translate' supported)")
-@commands.has_permissions(administrator=True)
+@app_commands.check(is_admin)
 async def toggle(interaction: discord.Interaction, feature: str):
     await interaction.response.defer()
     
@@ -1283,7 +1290,11 @@ async def toggle(interaction: discord.Interaction, feature: str):
     await save_features(guild_id, features)
     await interaction.followup.send(f"Translate feature set to {features['Translate']}.", ephemeral=True)
 
-
+@toggle.error
+async def toggle_error(interaction: discord.Interaction, error):
+    if isinstance(error, app_commands.CheckFailure):
+        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+        
 # Dictionary mapping flag emojis to language codes
 LANGUAGE_MAP = {
     "🇷🇺": "ru",    # Russian
@@ -1713,7 +1724,7 @@ class ToggleView(discord.ui.View):
 
 
 @bot.tree.command(name="notifications", description="Manage notification settings for the server")
-@commands.has_permissions(administrator=True)
+@app_commands.check(is_admin)
 async def notifications(interaction: discord.Interaction):
     view = NotificationManagementView()
     await interaction.response.send_message(
