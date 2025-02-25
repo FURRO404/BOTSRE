@@ -51,8 +51,8 @@ async def get_top_20():
         return clan_data
 
 async def search_for_clan(short_name):
-    """Search for a squadron by short_name, page by page, up to a maximum of 50 pages."""
-    max_pages = 75
+    """Search for a squadron by short_name, page by page, up to a maximum of 150 pages."""
+    max_pages = 150
     page = 1
     while page <= max_pages:
         clan_data = await fetch_clan_leaderboard(page)
@@ -66,6 +66,6 @@ async def search_for_clan(short_name):
     return None
 
 
-#test = search_for_clan("imami")
+#test = search_for_clan("gym1")
 #asyncio.run(test)
 #asyncio.run(get_top_20())

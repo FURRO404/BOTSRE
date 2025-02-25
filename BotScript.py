@@ -497,7 +497,7 @@ async def auto_logging():
     
     except Exception as e:
         logging.error(f"Error occured in logs: {e}")
-        
+
 
 @auto_logging_task.before_loop
 async def before_auto_logging_task():
@@ -763,10 +763,11 @@ async def find_comp(interaction: discord.Interaction, username: str):
 @app_commands.describe(
     type="The type of alarm (e.g., Leave, Points, Logs)",
     channel_id="The ID of the channel to send alarm messages to",
-    squadron_name="The FULL name of the squadron to monitor")
+    squadron_name="The SHORT name of the squadron to monitor")
 @commands.has_permissions(administrator=True)
-async def alarm(interaction: discord.Interaction, type: str, channel_id: str,
-                squadron_name: str):
+async def alarm(interaction: discord.Interaction, type: str, channel_id: str, squadron_name: str):
+    await interaction.response.defer()
+    
     guild_id = interaction.guild.id
     key = f"{guild_id}-preferences.json"
     type = type.title()
@@ -775,27 +776,28 @@ async def alarm(interaction: discord.Interaction, type: str, channel_id: str,
         preferences = json.loads(data)
     except ObjectNotFoundError:
         preferences = {}
-    except E:
-        preferences = {}
 
+    clan_data = await search_for_clan(squadron_name.lower())
+    if not clan_data:
+        await interaction.followup.send("Squadron not found.", ephemeral=True)
+        return
+
+    squadron_name = clan_data.get("long_name")
+    
     if squadron_name not in preferences:
         preferences[squadron_name] = {}
-
+    
     preferences[squadron_name][type] = channel_id
 
     client.upload_from_text(key, json.dumps(preferences))
 
-    await interaction.response.send_message(
-        f"Alarm of type '{type}' set for squadron '{squadron_name}' to send messages in channel ID {channel_id}.",
-        ephemeral=True)
+    await interaction.followup.send(f"Alarm of type '{type}' set for squadron '{squadron_name}' to send messages in channel ID {channel_id}.", ephemeral=True)
 
 
 @bot.tree.command(name="sq-info", description="Fetch information about a squadron")
 @app_commands.describe(
     squadron="The short name of the squadron to fetch information about",
-    type=
-    "The type of information to display: members, points, or leave empty for full info"
-)
+    type="The type of information to display: members, points, or leave empty for full info")
 async def sq_info(interaction: discord.Interaction, squadron: str = "", type: str = ""):
     await interaction.response.defer(ephemeral=False)
 
@@ -851,15 +853,13 @@ def update_leaderboard(guild_id, user_id, points):
     try:
         leaderboard_json = client.download_as_text(filename)
         leaderboard = json.loads(leaderboard_json)
-    except:
+    except Exception:
         logging.warning(
             f"Leaderboard file for guild {guild_id} not found. Creating a new one."
         )
 
-    # Ensure user_id is a string for consistent handling
     user_id_str = str(user_id)
 
-    # Update the leaderboard
     if user_id_str in leaderboard:
         leaderboard[user_id_str] += points
     else:
@@ -1262,9 +1262,10 @@ async def save_features(guild_id, features):
     
 @bot.tree.command(name="toggle", description="Toggle a feature for the server (Currently supports 'Translate')")
 @app_commands.describe(feature="Feature to toggle (only 'Translate' supported)")
+@commands.has_permissions(administrator=True)
 async def toggle(interaction: discord.Interaction, feature: str):
     await interaction.response.defer()
-
+    
     if feature.lower() != "translate":
         await interaction.followup.send("Invalid feature. Only 'Translate' can be toggled.", ephemeral=True)
         return
@@ -1310,6 +1311,22 @@ LANGUAGE_MAP = {
 DEEPL_API_KEY = os.environ.get("DEEPL_KEY")
 translator = deepl.Translator(DEEPL_API_KEY)
 
+translated_messages = set()
+
+def sanitize_text(text: str, message: discord.Message) -> str:
+    text = text.replace("@everyone", "EVERYONE")
+    text = text.replace("@here", "HERE")
+
+    # Replace user mentions with "USERNAME"
+    for user in message.mentions:
+        text = text.replace(user.mention, user.display_name)
+
+    # Replace role mentions with "ROLENAME"
+    for role in message.role_mentions:
+        text = text.replace(role.mention, role.name)
+
+    return text
+
 def perform_translation(text: str, target_language: str) -> str:
     result = translator.translate_text(text, target_lang=target_language.upper())
     return result.text
@@ -1324,7 +1341,12 @@ async def on_reaction_add(reaction, user):
     if message.author.bot:
         return
 
-    text = message.content
+    # Check if this message has already been translated
+    if message.id in translated_messages:
+        return
+
+    # Sanitize the message content before translation
+    text = sanitize_text(message.content, message)
     flag = reaction.emoji
     guild_id = message.guild.id
 
@@ -1338,8 +1360,6 @@ async def on_reaction_add(reaction, user):
             description="Translations are not enabled for this server.\nUse /toggle 'Translate' to enable.",
             color=discord.Color.red()
         )
-        #error_message = await message.channel.send(embed=embed)
-        #await error_message.delete(delay=5)
         logging.info("Translation disabled!")
         return
 
@@ -1356,8 +1376,16 @@ async def on_reaction_add(reaction, user):
         await message.channel.send(f"Translation failed for: {flag}", delete_after=5)
         return
 
-    sent_message = await message.channel.send(f"**{message.author.display_name} - ({target_language.upper()}):** {translated_text}")
+    username = escape_markdown(message.author.display_name)
+    sent_message = await message.channel.send(f"**{username} - ({target_language.upper()}):** {translated_text}")
     await sent_message.delete(delay=60)
+
+    # Add message ID to the translated list and schedule its removal after 60 seconds
+    translated_messages.add(message.id)
+    async def remove_translated_id():
+        await asyncio.sleep(70)
+        translated_messages.discard(message.id)
+    asyncio.create_task(remove_translated_id())
 
 
 async def return_latest_battle(sq_long_name):
