@@ -4,7 +4,6 @@ import json
 
 async def fetch_clan_leaderboard(page=1):
     url = f"https://warthunder.com/en/community/getclansleaderboard/dif/_hist/page/{page}/sort/dr_era5"
-
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             if response.status == 200:
@@ -45,27 +44,28 @@ def parse_clan_data(data):
     return clans
 
 async def get_top_20():
-    page = 1
-    clan_data = await fetch_clan_leaderboard(page)
+    clan_data = await fetch_clan_leaderboard()
     if clan_data:
         return clan_data
 
 async def search_for_clan(short_name):
-    """Search for a squadron by short_name, page by page, up to a maximum of 150 pages."""
-    max_pages = 150
-    page = 1
-    while page <= max_pages:
-        clan_data = await fetch_clan_leaderboard(page)
-        if not clan_data:
-            break
-        for clan in clan_data:
-            if clan["short_name"] == short_name.lower():
-                #print(clan)
-                return clan
-        page += 1
+    """Search for a clan by short_name across up to 500 pages concurrently."""
+    max_pages = 500
+    
+    tasks = [fetch_clan_leaderboard(page) for page in range(1, max_pages + 1)]
+    results = await asyncio.gather(*tasks)
+
+    for page, clan_data in enumerate(results, start=1):
+        if clan_data:
+            for clan in clan_data:
+                if clan["short_name"] == short_name.lower():
+                    #print(f"Found on page {page}: {clan}")
+                    return clan
     return None
-
-
-#test = search_for_clan("gym1")
-#asyncio.run(test)
-#asyncio.run(get_top_20())
+    
+if __name__ == "__main__":
+    result = asyncio.run(search_for_clan("TKBeS"))
+    if result:
+        print("Clan found:", result)
+    else:
+        print("Clan not found.")

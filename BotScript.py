@@ -3,13 +3,13 @@ import asyncio
 import datetime as DT
 import json
 import logging
+import math
 import os
 import random
 import re
 import shutil
-from asyncio import *
 from datetime import datetime, time, timezone
-import math
+
 import deepl
 
 # Third-Party Library Imports
@@ -66,7 +66,7 @@ async def on_ready():
 
     await cleanup_replays()
     
-    snapshot_task.start()
+    #snapshot_task.start()
     points_alarm_task.start()
     auto_logging_task.start()
     
@@ -109,26 +109,32 @@ async def snapshot_task():
             preferences = {}
 
         for squadron_name, squadron_preferences in preferences.items():
-            channel_id = squadron_preferences.get("Leave", "").strip("<#>")
-            
+            # Get and clean the raw channel string
+            raw_channel = squadron_preferences.get("Leave", "").strip()
+            if raw_channel.startswith("<#") and raw_channel.endswith(">"):
+                channel_id_str = raw_channel[2:-1]
+            else:
+                channel_id_str = raw_channel
+
             old_snapshot = Alarms.load_snapshot(guild_id, squadron_name)
             new_snapshot = await Alarms.take_snapshot(squadron_name)
-
+            
             if old_snapshot:
-                left_members, name_changes = Alarms.compare_snapshots(old_snapshot, new_snapshot)
+                name_changes = ""
+                left_members = Alarms.compare_snapshots(old_snapshot, new_snapshot)
 
                 if left_members:
-                    if channel_id:
+                    if channel_id_str:
                         try:
-                            channel_id = int(channel_id)
-                            channel = bot.get_channel(channel_id)
+                            channel_id_int = int(channel_id_str)
+                            channel = bot.get_channel(channel_id_int)
                             if channel:
                                 for member, points in left_members.items():
                                     safe_member_name = discord.utils.escape_markdown(member)
                                     if points > 0:
-                                        description=f"**{safe_member_name}** left **{squadron_name}** with **{points}** points."
+                                        description = f"**{safe_member_name}** left **{squadron_name}** with **{points}** points."
                                     else:
-                                        description=f"**{safe_member_name}** left **{squadron_name}**."
+                                        description = f"**{safe_member_name}** left **{squadron_name}**."
                                     embed = discord.Embed(
                                         title="Member Left Squadron",
                                         description=description,
@@ -137,37 +143,37 @@ async def snapshot_task():
                                     embed.set_footer(text="This can be caused by name changes!!! Always verify.")
                                     await channel.send(embed=embed)
                             else:
-                                logging.error(f"Channel ID {channel_id} not found")
+                                logging.error(f"Channel ID {channel_id_int} not found")
                         except ValueError:
-                            logging.error(f"(LEAVE) Invalid channel ID format: {channel_id} for squadron {squadron_name} in {guild_name} ({guild_id})")
+                            logging.error(f"(LEAVE) Invalid channel ID format: {channel_id_str} for squadron {squadron_name} in {guild_name} ({guild_id})")
                     else:
                         logging.warning(f"'Leave' not setup for squadron {squadron_name} in {guild_name} ({guild_id}).")
 
-
                 if name_changes:
-                    if channel_id:
+                    if channel_id_str:
                         try:
-                            channel_id = int(channel_id)
-                            channel = bot.get_channel(channel_id)
+                            channel_id_int = int(channel_id_str)
+                            channel = bot.get_channel(channel_id_int)
                             if channel:
                                 for old_name, (new_name, points) in name_changes.items():
-                                    old_name = discord.utils.escape_markdown(old_name)
-                                    new_name = discord.utils.escape_markdown(new_name)
+                                    old_name_clean = discord.utils.escape_markdown(old_name)
+                                    new_name_clean = discord.utils.escape_markdown(new_name)
                                     embed = discord.Embed(
                                         title="Member Left Squadron",
-                                        description=f"**{old_name}** changed their name to {new_name} in **{squadron_name}**.",
+                                        description=f"**{old_name_clean}** changed their name to {new_name_clean} in **{squadron_name}**.",
                                         color=discord.Color.dark_blue(),
                                     )
                                     embed.set_footer(text="Experimental... Might be wrong!")
                                     await channel.send(embed=embed)
                             else:
-                                logging.error(f"Channel ID {channel_id} not found")
+                                logging.error(f"Channel ID {channel_id_int} not found")
                         except ValueError:
-                            logging.error(f"(NAME) Invalid channel ID format: {channel_id} for squadron {squadron_name} in {guild_name} ({guild_id})")
+                            logging.error(f"(NAME) Invalid channel ID format: {channel_id_str} for squadron {squadron_name} in {guild_name} ({guild_id})")
                     else:
                         logging.warning(f"'Leave' not setup for squadron {squadron_name} in {guild_name} ({guild_id}).")
-                        
+
             Alarms.save_snapshot(new_snapshot, guild_id, squadron_name)
+
 
 
 @snapshot_task.before_loop
@@ -190,9 +196,11 @@ async def points_alarm_task():
 async def execute_points_alarm_task(region):
     await cleanup_replays()
     logging.info("Running points-update alarm")
+
     for guild in bot.guilds:
         guild_id = guild.id
-        guild_name = guild.id
+        # The original snippet had `guild_name = guild.id`, but likely you want the name:
+        guild_name = guild.name  
         key = f"{guild_id}-preferences.json"
 
         logging.info(f"Processing guild: {guild_id} for region: {region}")
@@ -200,34 +208,36 @@ async def execute_points_alarm_task(region):
         try:
             data = client.download_as_text(key)
             preferences = json.loads(data)
-            logging.info(
-                f"Successfully loaded preferences for guild: {guild_id}")
+            logging.info(f"Successfully loaded preferences for guild: {guild_id}")
         except (ObjectNotFoundError, FileNotFoundError):
             preferences = {}
 
         for squadron_name, squadron_preferences in preferences.items():
-            logging.info(
-                f"Checking squadron: {squadron_name} for points alarm")
+            logging.info(f"Checking squadron: {squadron_name} for points alarm")
 
-            squadron_info = await fetch_squadron_info(squadron_name,embed_type="points")
+            squadron_info = await fetch_squadron_info(squadron_name, embed_type="points")
             if squadron_info.fields and squadron_info.fields[0].value:
                 sq_total_points = int(squadron_info.fields[0].value.replace(",", ""))
             else:
-                sq_total_points = 0  # Default value if no valid data
-                
+                sq_total_points = 0  # Default if no valid data
+
             logging.info(f"{squadron_name} points at {sq_total_points}.")
 
             if "Points" in squadron_preferences:
+                # Load snapshot from the "opposite" region first
                 opposite_region = "EU" if region == "US" else "US"
                 old_snapshot = Alarms.load_snapshot(guild_id, squadron_name, opposite_region)
+                # Then take the new snapshot for the current region
                 new_snapshot = await Alarms.take_snapshot(squadron_name)
 
                 if old_snapshot:
                     points_changes, old_total_points = Alarms.compare_points(old_snapshot, new_snapshot)
 
                     if points_changes:
+                        # Get channel ID from preferences
                         channel_id = squadron_preferences.get("Points", "")
-                        channel_id = int(channel_id.strip("<#>"))
+                        channel_id = int(channel_id.strip("<#>"))  # Remove any <#...> formatting
+
                         if channel_id > 0:
                             channel = bot.get_channel(channel_id)
                             if channel:
@@ -235,43 +245,52 @@ async def execute_points_alarm_task(region):
                                     f"Sending points update to channel {channel_id} for squadron {squadron_name}"
                                 )
 
-                                changes_lines = []
+                                # Build three columns for the table
+                                col_names = []
+                                col_changes = []
+                                col_points = []
 
                                 for member, (points_change, current_points) in points_changes.items():
                                     arrow = "🌲" if points_change > 0 else "🔻"
+                                    col_names.append(member)
+                                    col_changes.append(f"{arrow} {abs(points_change)}")
+                                    col_points.append(str(current_points))
 
-                                    # Format with fixed widths
-                                    member_str = f"{member:<20}"[:20]  # Limit name to 20 characters
-                                    change_str = f"{arrow} {abs(points_change):<3}"  # Change column width of 5
-                                    current_points_str = f"{current_points:>8}"  # Right-aligned 8 width
-                                    changes_lines.append(f"{member_str}{change_str}  {current_points_str}")
+                                # Helper function to chunk columns
+                                def chunk_columns(names, changes, points, max_lines=25):
+                                    """
+                                    Splits the lists into segments of up to `max_lines` rows each
+                                    so each field stays within Discord's 1024-char limit.
+                                    """
+                                    for i in range(0, len(names), max_lines):
+                                        yield (
+                                            names[i : i + max_lines],
+                                            changes[i : i + max_lines],
+                                            points[i : i + max_lines],
+                                        )
 
-                                # Chunk the lines into sections that fit within the max_field_length limit
-                                max_field_length = 1024
-                                chunks = []
-                                current_chunk = "```\nName                 Change      Now\n"
-                                for line in changes_lines:
-                                    if len(current_chunk) + len(line) + 1 > max_field_length:
-                                        current_chunk += "```"
-                                        chunks.append(current_chunk)
-                                        current_chunk = "```\n" + line + "\n"
-                                    else:
-                                        current_chunk += line + "\n"
-
-                                # Add any remaining text in the last chunk
-                                if current_chunk:
-                                    current_chunk += "```"
-                                    chunks.append(current_chunk)
-
-                                chart = "📈" if old_total_points < int(sq_total_points) else "📉"
+                                # Determine chart arrow for the total change
+                                chart = "📈" if old_total_points < sq_total_points else "📉"
                                 embed = discord.Embed(
                                     title=f"**{squadron_name} {region} Points Update**",
-                                    description=f"# **Point Change:** {old_total_points} -> {sq_total_points} {chart}\n\n**Player Changes:**",
+                                    description=(
+                                        f"# **Point Change:** {old_total_points} -> {sq_total_points} {chart}\n\n"
+                                        f"**Player Changes:**"
+                                    ),
                                     color=discord.Color.blue()
                                 )
 
-                                for chunk in chunks:
-                                    embed.add_field(name="\u200A", value=chunk, inline=False)
+                                # Add each chunk of data as three side-by-side fields
+                                for chunk_names, chunk_changes, chunk_points in chunk_columns(
+                                    col_names, col_changes, col_points
+                                ):
+                                    names_str = "```\n" + "\n".join(chunk_names) + "\n```"
+                                    changes_str = "```\n" + "\n".join(chunk_changes) + "\n```"
+                                    points_str = "```\n" + "\n".join(chunk_points) + "\n```"
+
+                                    embed.add_field(name="Name", value=names_str, inline=True)
+                                    embed.add_field(name="Change", value=changes_str, inline=True)
+                                    embed.add_field(name="Now", value=points_str, inline=True)
 
                                 embed.set_footer(text="Meow :3")
 
@@ -279,26 +298,23 @@ async def execute_points_alarm_task(region):
                                 try:
                                     await channel.send(embed=embed)
                                     logging.info(f"Points update sent successfully for {squadron_name} in {guild_id}")
-                                    
                                 except Exception as e:
                                     logging.error(f"Error sending points update to {guild_id}: {e}")
                                     continue
-
                             else:
                                 logging.error(
                                     f"Channel ID {channel_id} not found for guild {guild_id}"
                                 )
                         else:
                             logging.error(
-                                f"(POINTS) Invalid channel ID format: {channel_id} for squadron {squadron_name} in {guild_name} ({guild_id})"
+                                f"(POINTS) Invalid channel ID format: {channel_id} "
+                                f"for squadron {squadron_name} in {guild_name} ({guild_id})"
                             )
                     else:
-                        logging.info(
-                            f"No new points for {squadron_name}"
-                        )
+                        logging.info(f"No new points for {squadron_name}")
 
-                # Save the new snapshot with the region specified
-                Alarms.save_snapshot(new_snapshot, guild_id, squadron_name,region)
+                # Save the new snapshot (for the current region)
+                Alarms.save_snapshot(new_snapshot, guild_id, squadron_name, region)
                 logging.info(f"New snapshot saved for {squadron_name} in region {region}")
 
 
@@ -369,9 +385,9 @@ async def auto_logging_task():
         now_utc = datetime.now(timezone.utc).time()
 
         US_START = time(0, 55)
-        US_END = time(7, 20)
+        US_END = time(7, 25)
         EU_START = time(13, 55)
-        EU_END = time(22, 20)
+        EU_END = time(22, 25)
 
         if US_START <= now_utc <= US_END or EU_START <= now_utc <= EU_END:
             await auto_logging()
@@ -448,13 +464,13 @@ async def auto_logging():
                         long_clans.append(clan_long_name.lower())
                     else:
                         logging.error(f"Squadron '{squadron_short}' not found for session {session_id}.")
-                        continue
+                        
 
             for guild in bot.guilds:
                 activated = load_active_guilds(guild.id)
                 if not activated:
-                    logging.info(f"Guild {guild.name} ({guild.id}) is not activated for auto-logs, skipping")
-                    #continue
+                    #logging.info(f"Guild {guild.name} ({guild.id}) is not activated for auto-logs, skipping")
+                    continue
                 
                 preferences = load_guild_preferences(guild.id)
                 
@@ -646,7 +662,7 @@ async def update_billing(server_id, server_name, user_name, user_id, cmd_timesta
 @bot.tree.command(name='comp', description='Find the last known comp for a given team')
 @app_commands.describe(username='The username of an enemy player')
 async def find_comp(interaction: discord.Interaction, username: str):
-    await interaction.response.defer()  # Defer response to handle potential long-running operations
+    await interaction.response.defer()
 
     # Get command invocation details
     user = interaction.user
@@ -663,11 +679,11 @@ async def find_comp(interaction: discord.Interaction, username: str):
         
         deny_embed = discord.Embed(
             title="Server Not Activated",
-            description="This server is not activated. Please contact not_so_toothless to purchase this feature.",
+            description="This server is not activated.\nPlease contact not_so_toothless to purchase this feature.",
             color=discord.Color.red()
         )
         await interaction.followup.send(embed=deny_embed)
-        #return
+        return
 
     cmd_timestamp = DT.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
     logging.info(f"FIND-COMP used by {user_name} (ID: {user_id}) in server '{server_name}' (ID: {server_id}) for username '{username}'")

@@ -170,7 +170,7 @@ def compare_snapshot_dict(old_snapshot: dict, new_snapshot: dict):
                 new_name = points_to_name[points]  # Get the new name based on matching points
                 name_changes[member] = (new_name, points)  # Store old name -> new name with points
 
-    return left_members, name_changes
+    return left_members
 
 
 
