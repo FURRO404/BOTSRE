@@ -196,11 +196,9 @@ async def points_alarm_task():
 async def execute_points_alarm_task(region):
     await cleanup_replays()
     logging.info("Running points-update alarm")
-
     for guild in bot.guilds:
         guild_id = guild.id
-        # The original snippet had `guild_name = guild.id`, but likely you want the name:
-        guild_name = guild.name  
+        guild_name = guild.id
         key = f"{guild_id}-preferences.json"
 
         logging.info(f"Processing guild: {guild_id} for region: {region}")
@@ -208,36 +206,34 @@ async def execute_points_alarm_task(region):
         try:
             data = client.download_as_text(key)
             preferences = json.loads(data)
-            logging.info(f"Successfully loaded preferences for guild: {guild_id}")
+            logging.info(
+                f"Successfully loaded preferences for guild: {guild_id}")
         except (ObjectNotFoundError, FileNotFoundError):
             preferences = {}
 
         for squadron_name, squadron_preferences in preferences.items():
-            logging.info(f"Checking squadron: {squadron_name} for points alarm")
+            logging.info(
+                f"Checking squadron: {squadron_name} for points alarm")
 
-            squadron_info = await fetch_squadron_info(squadron_name, embed_type="points")
+            squadron_info = await fetch_squadron_info(squadron_name,embed_type="points")
             if squadron_info.fields and squadron_info.fields[0].value:
                 sq_total_points = int(squadron_info.fields[0].value.replace(",", ""))
             else:
-                sq_total_points = 0  # Default if no valid data
+                sq_total_points = 0  # Default value if no valid data
 
             logging.info(f"{squadron_name} points at {sq_total_points}.")
 
             if "Points" in squadron_preferences:
-                # Load snapshot from the "opposite" region first
                 opposite_region = "EU" if region == "US" else "US"
                 old_snapshot = Alarms.load_snapshot(guild_id, squadron_name, opposite_region)
-                # Then take the new snapshot for the current region
                 new_snapshot = await Alarms.take_snapshot(squadron_name)
 
                 if old_snapshot:
                     points_changes, old_total_points = Alarms.compare_points(old_snapshot, new_snapshot)
 
                     if points_changes:
-                        # Get channel ID from preferences
                         channel_id = squadron_preferences.get("Points", "")
-                        channel_id = int(channel_id.strip("<#>"))  # Remove any <#...> formatting
-
+                        channel_id = int(channel_id.strip("<#>"))
                         if channel_id > 0:
                             channel = bot.get_channel(channel_id)
                             if channel:
@@ -245,52 +241,43 @@ async def execute_points_alarm_task(region):
                                     f"Sending points update to channel {channel_id} for squadron {squadron_name}"
                                 )
 
-                                # Build three columns for the table
-                                col_names = []
-                                col_changes = []
-                                col_points = []
+                                changes_lines = []
 
                                 for member, (points_change, current_points) in points_changes.items():
                                     arrow = "🌲" if points_change > 0 else "🔻"
-                                    col_names.append(member)
-                                    col_changes.append(f"{arrow} {abs(points_change)}")
-                                    col_points.append(str(current_points))
 
-                                # Helper function to chunk columns
-                                def chunk_columns(names, changes, points, max_lines=25):
-                                    """
-                                    Splits the lists into segments of up to `max_lines` rows each
-                                    so each field stays within Discord's 1024-char limit.
-                                    """
-                                    for i in range(0, len(names), max_lines):
-                                        yield (
-                                            names[i : i + max_lines],
-                                            changes[i : i + max_lines],
-                                            points[i : i + max_lines],
-                                        )
+                                    # Format with fixed widths
+                                    member_str = f"{member:<20}"[:20]  # Limit name to 20 characters
+                                    change_str = f"{arrow} {abs(points_change):<3}"  # Change column width of 5
+                                    current_points_str = f"{current_points:>8}"  # Right-aligned 8 width
+                                    changes_lines.append(f"{member_str}{change_str}  {current_points_str}")
 
-                                # Determine chart arrow for the total change
-                                chart = "📈" if old_total_points < sq_total_points else "📉"
+                                # Chunk the lines into sections that fit within the max_field_length limit
+                                max_field_length = 1024
+                                chunks = []
+                                current_chunk = "```\nName                 Change      Now\n"
+                                for line in changes_lines:
+                                    if len(current_chunk) + len(line) + 1 > max_field_length:
+                                        current_chunk += "```"
+                                        chunks.append(current_chunk)
+                                        current_chunk = "```\n" + line + "\n"
+                                    else:
+                                        current_chunk += line + "\n"
+
+                                # Add any remaining text in the last chunk
+                                if current_chunk:
+                                    current_chunk += "```"
+                                    chunks.append(current_chunk)
+
+                                chart = "📈" if old_total_points < int(sq_total_points) else "📉"
                                 embed = discord.Embed(
                                     title=f"**{squadron_name} {region} Points Update**",
-                                    description=(
-                                        f"# **Point Change:** {old_total_points} -> {sq_total_points} {chart}\n\n"
-                                        f"**Player Changes:**"
-                                    ),
+                                    description=f"# **Point Change:** {old_total_points} -> {sq_total_points} {chart}\n\n**Player Changes:**",
                                     color=discord.Color.blue()
                                 )
 
-                                # Add each chunk of data as three side-by-side fields
-                                for chunk_names, chunk_changes, chunk_points in chunk_columns(
-                                    col_names, col_changes, col_points
-                                ):
-                                    names_str = "```\n" + "\n".join(chunk_names) + "\n```"
-                                    changes_str = "```\n" + "\n".join(chunk_changes) + "\n```"
-                                    points_str = "```\n" + "\n".join(chunk_points) + "\n```"
-
-                                    embed.add_field(name="Name", value=names_str, inline=True)
-                                    embed.add_field(name="Change", value=changes_str, inline=True)
-                                    embed.add_field(name="Now", value=points_str, inline=True)
+                                for chunk in chunks:
+                                    embed.add_field(name="\u200A", value=chunk, inline=False)
 
                                 embed.set_footer(text="Meow :3")
 
@@ -298,23 +285,26 @@ async def execute_points_alarm_task(region):
                                 try:
                                     await channel.send(embed=embed)
                                     logging.info(f"Points update sent successfully for {squadron_name} in {guild_id}")
+
                                 except Exception as e:
                                     logging.error(f"Error sending points update to {guild_id}: {e}")
                                     continue
+
                             else:
                                 logging.error(
                                     f"Channel ID {channel_id} not found for guild {guild_id}"
                                 )
                         else:
                             logging.error(
-                                f"(POINTS) Invalid channel ID format: {channel_id} "
-                                f"for squadron {squadron_name} in {guild_name} ({guild_id})"
+                                f"(POINTS) Invalid channel ID format: {channel_id} for squadron {squadron_name} in {guild_name} ({guild_id})"
                             )
                     else:
-                        logging.info(f"No new points for {squadron_name}")
+                        logging.info(
+                            f"No new points for {squadron_name}"
+                        )
 
-                # Save the new snapshot (for the current region)
-                Alarms.save_snapshot(new_snapshot, guild_id, squadron_name, region)
+                # Save the new snapshot with the region specified
+                Alarms.save_snapshot(new_snapshot, guild_id, squadron_name,region)
                 logging.info(f"New snapshot saved for {squadron_name} in region {region}")
 
 
@@ -1767,7 +1757,7 @@ async def help(interaction: discord.Interaction):
         "6. **/set-squadron [short name]** - Store squadron name for the discord server (used for logging).\n"
         "7. **/toggle** - Enable features like Translate (more to come soon).\n"
         "8. **/sq-info [squadron] [type]** - View the details of the specified squadron, if a squadron is set (command 6), it will default to that squadron.\n"
-        "9. **/track [squadron]** - View the last time a squadron played.\n"
+        "9. **/track [squadron]** - View some information about a squadron.\n"
         "10. **/help** - Get a guide on how to use the bot.\n"
         "11. **/notifications** - Manage your alarms for the server.\n"
         "12. **Translation** - Put a flag reaction under a message to translate to that language (after using /enable).\n\n"
