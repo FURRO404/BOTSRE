@@ -70,12 +70,14 @@ async def on_ready():
     points_alarm_task.start()
     auto_logging_task.start()
     
-    #region = "NA"
+    #region = "US"
     #await execute_points_alarm_task(region)
+
 
 def is_admin(interaction: discord.Interaction) -> bool:
     return interaction.user.guild_permissions.administrator
-    
+
+
 @bot.event
 async def on_guild_join(guild):
     logging.info(f'Joined new guild: {guild.name} (id: {guild.id})')
@@ -175,7 +177,6 @@ async def snapshot_task():
             Alarms.save_snapshot(new_snapshot, guild_id, squadron_name)
 
 
-
 @snapshot_task.before_loop
 async def before_snapshot_task():
     await bot.wait_until_ready()
@@ -255,7 +256,7 @@ async def execute_points_alarm_task(region):
                                 # Chunk the lines into sections that fit within the max_field_length limit
                                 max_field_length = 1024
                                 chunks = []
-                                current_chunk = "```\nName                 Change      Now\n"
+                                current_chunk = "```\nName                Change      Now\n"
                                 for line in changes_lines:
                                     if len(current_chunk) + len(line) + 1 > max_field_length:
                                         current_chunk += "```"
@@ -1236,6 +1237,11 @@ async def top(interaction: discord.Interaction):
         deaths = squadron.get("deaths", 1)  # Avoid division by zero
         kd_ratio = round(total_kills / deaths, 2) if deaths else "N/A"
 
+        # Calculate win rate (ensure battles is not zero to avoid division errors)
+        wins = squadron.get("wins", 0)
+        battles = squadron.get("battles", 0)
+        win_rate = round((wins / battles) * 100, 2) if battles else "N/A"
+
         playtime_minutes = squadron.get("playtime", 0)
         days = playtime_minutes // 1440
         hours = (playtime_minutes % 1440) // 60
@@ -1250,6 +1256,7 @@ async def top(interaction: discord.Interaction):
                 f"**Ground Kills:** {ground_kills}\n"
                 f"**Deaths:** {deaths}\n"
                 f"**K/D:** {kd_ratio}\n"
+                f"**Win Rate:** {win_rate if win_rate == 'N/A' else str(win_rate) + '%'}\n"
                 f"**Playtime:** {formatted_playtime}\n"
                 "\u200b"  # Adds spacing
             ),
@@ -1432,7 +1439,6 @@ async def track_squadron(interaction: discord.Interaction, squadron_short_name: 
         await interaction.followup.send("Squadron not found.", ephemeral=True)
         return
 
-    #clan_name_long = clan_data.get("long_name")
     clan_tag = clan_data.get("tag")
     points = int(clan_data.get("clanrating"))
     ground_kills = int(clan_data.get("g_kills"))
@@ -1441,11 +1447,12 @@ async def track_squadron(interaction: discord.Interaction, squadron_short_name: 
     battles = int(clan_data.get("battles"))
     wins = int(clan_data.get("wins"))
     members = clan_data.get("members")
-    #latest_stamp = await return_latest_battle(clan_name_long)
 
     total_kills = ground_kills + air_kills
     kd_ratio = total_kills / deaths if deaths > 0 else total_kills
+    kd_ratio_percentage = f"{kd_ratio:.2f}"
 
+    losses = battles - wins
     win_rate = (wins / battles) * 100 if battles > 0 else 0
     win_rate_percentage = f"{win_rate:.2f}%"
 
@@ -1453,12 +1460,22 @@ async def track_squadron(interaction: discord.Interaction, squadron_short_name: 
         title=f"**{clan_tag}**",
         color=discord.Color.green()
     )
-    
+
     embed.add_field(name="Points", value=points, inline=True)
-    embed.add_field(name="Wins", value=wins, inline=True)
-    embed.add_field(name="Win Rate", value=win_rate_percentage, inline=True)
     embed.add_field(name="Members", value=members, inline=True)
-    embed.add_field(name="KD Ratio", value=f"{kd_ratio:.2f}", inline=True)
+    embed.add_field(name="Win Rate", value=win_rate_percentage, inline=True)
+    
+    embed.add_field(name="Battles", value=battles, inline=True)
+    embed.add_field(name="Wins", value=wins, inline=True)
+    embed.add_field(name="Losses", value=losses, inline=True)
+
+    embed.add_field(name="Total Kills", value=total_kills, inline=True)
+    embed.add_field(name="Ground Kills", value=ground_kills, inline=True)
+    embed.add_field(name="Air Kills", value=air_kills, inline=True)
+    
+    embed.add_field(name="Deaths", value=deaths, inline=True)
+    embed.add_field(name="KD Ratio", value=kd_ratio_percentage, inline=True)
+
     embed.set_footer(text="Meow :3")
     await interaction.followup.send(embed=embed, ephemeral=False)
 
