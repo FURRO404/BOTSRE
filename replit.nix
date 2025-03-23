@@ -1,5 +1,6 @@
 { pkgs }: {
   deps = [
+    pkgs.pkg-config
     pkgs.geckodriver
     pkgs.python310                           # Python 3.10
     pkgs.chromium                            # Chromium browser

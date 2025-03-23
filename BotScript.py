@@ -8,6 +8,7 @@ import os
 import random
 import re
 import shutil
+import traceback
 from datetime import datetime, time, timezone
 
 import deepl
@@ -24,7 +25,7 @@ from replit.object_storage.errors import ObjectNotFoundError
 import Alarms
 from AutoLog import fetch_games_for_user
 from Leaderboard_Parser import get_top_20, search_for_clan
-from Parse_Replay import save_replay_data
+from Parse_Replay import save_replay_data, get_basic_replay_info
 from SQ_Info import fetch_squadron_info
 
 logging.basicConfig(level=logging.INFO)
@@ -246,17 +247,15 @@ async def execute_points_alarm_task(region):
 
                                 for member, (points_change, current_points) in points_changes.items():
                                     arrow = "🌲" if points_change > 0 else "🔻"
-
-                                    # Format with fixed widths
                                     member_str = f"{member:<20}"[:20]  # Limit name to 20 characters
-                                    change_str = f"{arrow} {abs(points_change):<3}"  # Change column width of 5
-                                    current_points_str = f"{current_points:>8}"  # Right-aligned 8 width
-                                    changes_lines.append(f"{member_str}{change_str}  {current_points_str}")
+                                    change_str = f"{arrow} {abs(points_change):<5}"  # Change column width of 5
+                                    current_points_str = f"{current_points:>8}"    # Right-aligned 8 width
+                                    changes_lines.append(f"{member_str}{change_str}{current_points_str}")
 
                                 # Chunk the lines into sections that fit within the max_field_length limit
                                 max_field_length = 1024
                                 chunks = []
-                                current_chunk = "```\nName                Change      Now\n"
+                                current_chunk = "```\nName                Change       Now\n"
                                 for line in changes_lines:
                                     if len(current_chunk) + len(line) + 1 > max_field_length:
                                         current_chunk += "```"
@@ -404,18 +403,28 @@ async def auto_logging():
         for game in games:
             session_id = game.get("sessionIdHex")
             mission_name = game.get("missionName")
-    
+            parts_count = game.get("partsCount")
+            
             if session_id in scanned_sessions:
                 logging.info(f"Session {session_id} already scanned, skipping.")
                 continue
             else:
                 logging.info(f"Session {session_id} not scanned, downloading.")
     
-            replay_file_path = f"replays/0{session_id}/replay_data.json"
-    
+            replay_basic_path = f"replays/0{session_id}/basic_data.json"
+            #replay_file_path = f"replays/0{session_id}/replay_data.json"
+            
             try:
-                await save_replay_data(session_id)
+                await get_basic_replay_info(session_id)
                 logging.info(f"Replay data saved for session {session_id}")
+
+                # Remove WRPL files and only leave JSON to save space
+                # replay_folder_path = f"replays/0{session_id}"
+                # if os.path.exists(replay_folder_path):
+                #     for file_name in os.listdir(replay_folder_path):
+                #         file_path = os.path.join(replay_folder_path, file_name)
+                #         if os.path.isfile(file_path) and file_name.endswith(".wrpl"):
+                #             os.remove(file_path)
     
             except Exception as e:
                 logging.error(f"Failed to save replay data for session {session_id}: {e}")
@@ -423,13 +432,14 @@ async def auto_logging():
                 continue
     
             try:
-                with open(replay_file_path, "r") as replay_file:
-                    replay_data = json.load(replay_file)
+                with open(replay_basic_path, "r") as replay_file:
+                    basic_data = json.load(replay_file)
+                    
             except Exception as e:
                 logging.error(f"Error reading replay data for session {session_id}: {e}")
                 continue
             
-            replay_squadrons = replay_data.get("squadrons", [])
+            replay_squadrons = basic_data.get("squadrons", [])
             logging.info(f"Replay squadrons for session {session_id}: {replay_squadrons}")
             if not replay_squadrons:
                 logging.warning(f"No squadrons found in replay data for session {session_id}, skipping this session.")
@@ -455,8 +465,8 @@ async def auto_logging():
                         long_clans.append(clan_long_name.lower())
                     else:
                         logging.error(f"Squadron '{squadron_short}' not found for session {session_id}.")
-                        
 
+            
             for guild in bot.guilds:
                 activated = load_active_guilds(guild.id)
                 if not activated:
@@ -482,9 +492,12 @@ async def auto_logging():
                         if not processed:
                             logging.info(f"Processing session {session_id} for guild {guild.name} ({guild.id}) with teams {replay_squadrons}")
                             try:
+                                await save_replay_data(session_id, part_count=parts_count)
                                 await process_session(bot, session_id, guild.id, squadron_prefs, mission_name, guild.name)
                             except Exception as e:
                                 logging.error(f"Error processing session {session_id} for guild {guild.name} ({guild.id}): {e}")
+                                logging.error(f"{traceback.format_exc()}")
+                
                             processed = True
                         else:
                             logging.info(f"Already processed session {session_id} for guild {guild.name} ({guild.id}), skipping duplicate.")
@@ -496,15 +509,10 @@ async def auto_logging():
         logging.info("Global sessions data updated.")
     
         for session_id in scanned_sessions:
-            # Construct the folder path for each session.
             folder_path = f"replays/0{session_id}"
-    
-            # Check if the folder exists.
             if os.path.exists(folder_path) and os.path.isdir(folder_path):
-                # Iterate over all items in the folder.
                 for file_name in os.listdir(folder_path):
                     file_path = os.path.join(folder_path, file_name)
-                    # Remove the file if it's a .wrpl file.
                     if os.path.isfile(file_path) and file_name.endswith(".wrpl"):
                         os.remove(file_path)
     
@@ -606,8 +614,8 @@ async def process_session(bot, session_id, guild_id, squadron_preferences, map_n
             logging.info(f"Embed sent for session {session_id} in {guild_name} ({guild_id})")
 
         else:
-            logging.warning(f"Channel ID {channel_id} not found in {guild_name} ({guild_id})")
-
+            logging.warning(f"Channel ID {channel_id} not found in {guild_name} ({guild_id})")        
+    
     except Exception as e:
         logging.error(f"Failed to send embed for session {session_id} in {guild_name} ({guild_id}): {e}")
 
@@ -650,7 +658,7 @@ async def update_billing(server_id, server_name, user_name, user_id, cmd_timesta
     logging.info(f"Logged billing entry for {server_name} ({server_id}) - User: {user_name} ({user_id}) at {cmd_timestamp}")
 
 
-@bot.tree.command(name='comp', description='Find the last known comp for a given team')
+@bot.tree.command(name='find-comp', description='Find the last known comp for a given team')
 @app_commands.describe(username='The username of an enemy player')
 async def find_comp(interaction: discord.Interaction, username: str):
     await interaction.response.defer()
@@ -700,7 +708,8 @@ async def find_comp(interaction: discord.Interaction, username: str):
                 replay_file_path = f"replays/0{session_id}/replay_data.json"
 
                 if not os.path.exists(replay_file_path):
-                    await save_replay_data(session_id)
+                    comp = True
+                    await save_replay_data(session_id, comp)
                     logging.info("Replay didn't exist, downloading now...")
 
                 try:
@@ -740,14 +749,6 @@ async def find_comp(interaction: discord.Interaction, username: str):
 
                 try:
                     await interaction.followup.send(embed=embed)
-
-                    # Clean up replay files
-                    replay_file_path = f"replays/0{session_id}"
-                    if os.path.exists(replay_file_path):
-                        for file_name in os.listdir(replay_file_path):
-                            file_path = os.path.join(replay_file_path, file_name)
-                            if os.path.isfile(file_path) and file_name.endswith(".wrpl"):
-                                os.remove(file_path)
 
                     try:
                         await update_billing(server_id, server_name, user_name, user_id, cmd_timestamp)
@@ -852,16 +853,15 @@ async def sq_info(interaction: discord.Interaction, squadron: str = "", type: st
         await interaction.followup.send("Failed to fetch squadron info.", ephemeral=True)
         
 
-@bot.tree.command(name='stat',
-                  description='Get the ThunderSkill stats URL for a user')
+@bot.tree.command(name='stat', description='Get the ThunderSkill stats URL for a user')
 @app_commands.describe(username='The username to get stats for')
 async def stat(interaction: discord.Interaction, username: str):
     url = f"https://thunderskill.com/en/stat/{username}"
     await interaction.response.send_message(url, ephemeral=False)
+    #TODO: convert to statshark
 
 
 active_guessing_games = {}  # Dictionary to keep track of active guessing games by channel ID
-
 
 def update_leaderboard(guild_id, user_id, points):
     filename = f"{guild_id}-game-rank.json"
@@ -1706,9 +1706,16 @@ class ChangeChannelButton(discord.ui.Button):
         self.squadron = squadron
 
     async def callback(self, interaction: discord.Interaction):
-        view = ChannelSelectView(interaction.guild, self.notif_type, self.squadron)
+        guild = interaction.guild
+        # If there are more than 25 channels, use the paginated view.
+        if len(guild.text_channels) > 25:
+            view = PaginatedChannelSelectView(guild, self.squadron, self.notif_type)
+        else:
+            view = ChannelSelectView(guild, self.notif_type, self.squadron)
         await interaction.response.send_message("Select a new channel:", view=view, ephemeral=True)
 
+
+# The existing ChannelSelect view (for servers with 25 or fewer text channels)
 class ChannelSelect(discord.ui.Select):
     def __init__(self, guild, notif_type, squadron):
         self.notif_type = notif_type
@@ -1732,6 +1739,7 @@ class ChannelSelect(discord.ui.Select):
         else:
             await interaction.response.send_message("Configuration not found.", ephemeral=True)
 
+
 class ChannelSelectView(discord.ui.View):
     def __init__(self, guild, notif_type, squadron):
         super().__init__(timeout=180)
@@ -1744,6 +1752,99 @@ class ToggleView(discord.ui.View):
         channel_value = preferences.get(squadron, {}).get(notif_type, "Not configured")
         self.add_item(ToggleButton(guild_id, notif_type, squadron, channel_value))
         self.add_item(ChangeChannelButton(guild_id, notif_type, squadron))
+
+
+# Paginated select menu for channels.
+class PaginatedChannelSelect(discord.ui.Select):
+    def __init__(self, guild, squadron, notif_type, page=0):
+        self.guild = guild
+        self.squadron = squadron
+        self.notif_type = notif_type
+        self.page = page
+        self.channels = list(guild.text_channels)
+        options = self.get_options(page)
+        super().__init__(
+            placeholder=f"Select a channel (Page {page+1})",
+            min_values=1,
+            max_values=1,
+            options=options
+        )
+
+    def get_options(self, page):
+        start = page * 25
+        end = start + 25
+        options = []
+        for channel in self.channels[start:end]:
+            options.append(discord.SelectOption(label=channel.name, value=str(channel.id)))
+        # If there are no channels for this page, provide a fallback option.
+        if not options:
+            options.append(discord.SelectOption(label="None", description="No channels available", value="none"))
+        return options
+
+    async def callback(self, interaction: discord.Interaction):
+        selected_channel_id = self.values[0]
+        if selected_channel_id == "none":
+            await interaction.response.send_message("No channel selected.", ephemeral=True)
+            return
+
+        new_value = f"<#{selected_channel_id}>"
+        preferences = load_guild_preferences(interaction.guild.id)
+        if self.squadron in preferences and self.notif_type in preferences[self.squadron]:
+            preferences[self.squadron][self.notif_type] = new_value
+            save_guild_preferences(interaction.guild.id, preferences)
+            await interaction.response.send_message(
+                f"Updated {self.notif_type} for **{self.squadron}** to {new_value}",
+                ephemeral=True
+            )
+        else:
+            await interaction.response.send_message("Configuration not found.", ephemeral=True)
+
+
+# Button to go to the previous page.
+class PrevChannelPageButton(discord.ui.Button):
+    def __init__(self):
+        super().__init__(label="Previous", style=discord.ButtonStyle.secondary)
+
+    async def callback(self, interaction: discord.Interaction):
+        view: PaginatedChannelSelectView = self.view
+        if view.page > 0:
+            view.page -= 1
+            view.select.page = view.page
+            view.select.options = view.select.get_options(view.page)
+            view.select.placeholder = f"Select a channel (Page {view.page+1})"
+        await interaction.response.edit_message(view=view)
+
+
+# Button to go to the next page.
+class NextChannelPageButton(discord.ui.Button):
+    def __init__(self):
+        super().__init__(label="Next", style=discord.ButtonStyle.secondary)
+
+    async def callback(self, interaction: discord.Interaction):
+        view: PaginatedChannelSelectView = self.view
+        if view.page < view.total_pages - 1:
+            view.page += 1
+            view.select.page = view.page
+            view.select.options = view.select.get_options(view.page)
+            view.select.placeholder = f"Select a channel (Page {view.page+1})"
+        await interaction.response.edit_message(view=view)
+
+
+# View that contains the paginated channel select and navigation buttons.
+class PaginatedChannelSelectView(discord.ui.View):
+    def __init__(self, guild, squadron, notif_type, page=0):
+        super().__init__(timeout=180)
+        self.guild = guild
+        self.squadron = squadron
+        self.notif_type = notif_type
+        self.channels = list(guild.text_channels)
+        self.page = page
+        self.total_pages = math.ceil(len(self.channels) / 25)
+        self.select = PaginatedChannelSelect(guild, squadron, notif_type, page)
+        self.add_item(self.select)
+        self.add_item(PrevChannelPageButton())
+        self.add_item(NextChannelPageButton())
+
 
 
 @bot.tree.command(name="notifications", description="Manage notification settings for the server")
@@ -1767,7 +1868,7 @@ async def help(interaction: discord.Interaction):
     guide_text = (
         "**Commands Overview**\n"
         "1. **/alarm [type] [channel_id] [squadron_name]** - Set an alarm to monitor squadron changes.\n"
-        "2. **/comp [username]** - Given a username, will attempt to detail the last found SQB game.\n"
+        "2. **/find-comp [username]** - Given a username, will attempt to detail the last found SQB game.\n"
         "3. **/stat [username]** - Get the ThunderSkill stats URL for a user.\n"
         "4. **/top** - Display the top 20 squadrons and their current stats.\n"
         "5. **/time-now** - Get the current UTC time and your local time.\n"
