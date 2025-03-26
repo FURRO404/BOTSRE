@@ -1,23 +1,23 @@
 import asyncio
-import aiohttp
 import json
+
+import aiohttp
+
 
 async def fetch_clan_leaderboard(page=1):
     url = f"https://warthunder.com/en/community/getclansleaderboard/dif/_hist/page/{page}/sort/dr_era5"
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            if response.status == 200:
-                text = await response.text()  # Get response as text
-                try:
-                    data = json.loads(text)  # Manually parse JSON
-                    return parse_clan_data(data)
-                except json.JSONDecodeError as e:
-                    print(f"JSON parsing error: {e}")
-                    print("Response text:", text[:500])  # Print first 500 chars for debugging
-                    return None
-            else:
-                print(f"Failed to fetch page {page}: HTTP {response.status}")
+    async with aiohttp.ClientSession() as session, session.get(url) as response:
+        if response.status == 200:
+            text = await response.text()  
+            try:
+                data = json.loads(text)  
+                return parse_clan_data(data)
+            except json.JSONDecodeError as e:
+                print(f"JSON parsing error: {e}")
                 return None
+        else:
+            print(f"Failed to fetch page {page}: HTTP {response.status}")
+            return None
 
 def parse_clan_data(data):
     if data.get("status") != "ok":
@@ -48,20 +48,28 @@ async def get_top_20():
     if clan_data:
         return clan_data
 
-async def search_for_clan(short_name):
-    """Search for a clan by short_name across up to 500 pages concurrently."""
-    max_pages = 500
-    
-    tasks = [fetch_clan_leaderboard(page) for page in range(1, max_pages + 1)]
-    results = await asyncio.gather(*tasks)
+async def search_for_clan(short_name, data=None):
+    """Search for a clan by short_name across up to 1000 pages concurrently."""
+    results = data
+    if data is None:
+        results = await get_all_clans()
 
-    for page, clan_data in enumerate(results, start=1):
+    for _page, clan_data in enumerate(results, start=1):
         if clan_data:
             for clan in clan_data:
                 if clan["short_name"] == short_name.lower():
                     #print(f"Found on page {page}: {clan}")
                     return clan
     return None
+
+async def get_all_clans():
+    """Get all clans from all pages concurrently."""
+    max_pages = 1000
+
+    tasks = [fetch_clan_leaderboard(page) for page in range(1, max_pages + 1)]
+    results = await asyncio.gather(*tasks)
+
+    return results
     
 if __name__ == "__main__":
     result = asyncio.run(search_for_clan("TKBeS"))
@@ -69,3 +77,4 @@ if __name__ == "__main__":
         print("Clan found:", result)
     else:
         print("Clan not found.")
+        

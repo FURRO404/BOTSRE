@@ -5,3 +5,6 @@ replit-object-storage>=1.0.0,<2.0.0
 beautifulsoup4>=4.12.3,<5.0.0
 zstandard==0.23.0
 lz4==4.3.3
+aiofiles
+aiohttp
+deepl

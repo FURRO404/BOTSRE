@@ -8,6 +8,7 @@ import os
 import random
 import re
 import shutil
+import time as T
 import traceback
 from datetime import datetime, time, timezone
 
@@ -24,8 +25,8 @@ from replit.object_storage.errors import ObjectNotFoundError
 # Local Module Imports
 import Alarms
 from AutoLog import fetch_games_for_user
-from Leaderboard_Parser import get_top_20, search_for_clan
-from Parse_Replay import save_replay_data, get_basic_replay_info
+from Leaderboard_Parser import get_all_clans, get_top_20, search_for_clan
+from Parse_Replay import get_basic_replay_info, save_replay_data
 from SQ_Info import fetch_squadron_info
 
 logging.basicConfig(level=logging.INFO)
@@ -183,7 +184,7 @@ async def before_snapshot_task():
     await bot.wait_until_ready()
 
 
-@tasks.loop(minutes=1)
+@tasks.loop(minutes=1, seconds=30)
 async def points_alarm_task():
     now_utc = datetime.now(timezone.utc).time()
     
@@ -287,7 +288,7 @@ async def execute_points_alarm_task(region):
                                     logging.info(f"Points update sent successfully for {squadron_name} in {guild_id}")
 
                                 except Exception as e:
-                                    logging.error(f"Error sending points update to {guild_id}: {e}")
+                                    logging.error(f"Error sending points update to {guild_name} ({guild_id}): {e}")
                                     continue
 
                             else:
@@ -362,6 +363,7 @@ def load_sessions_data():
         logging.info("SESSIONS.json not found, creating a new one.")
         return {}
 
+
 async def cleanup_replays():
     replay_file_path = "replays/"
     if os.path.exists(replay_file_path):
@@ -375,11 +377,12 @@ async def auto_logging_task():
         now_utc = datetime.now(timezone.utc).time()
 
         US_START = time(0, 55)
-        US_END = time(7, 25)
+        US_END = time(7, 10)
         EU_START = time(13, 55)
-        EU_END = time(22, 25)
+        EU_END = time(22, 10)
 
         if US_START <= now_utc <= US_END or EU_START <= now_utc <= EU_END:
+            # if True:
             await auto_logging()
         else:
             logging.info("Logs not ran, not a scheduled time.")
@@ -390,55 +393,54 @@ async def auto_logging_task():
 async def auto_logging():
     try:
         logging.info("Running autologs")
+        start_time = T.time()
         games = await fetch_games_for_user("")
         if not games:
             logging.error("No games returned from fetch_games_for_user('')")
             return
-        
+            
+        logging.info(f"Matches being checked: {[x.get('sessionIdHex') for x in games]}")
         squadrons_json = client.download_as_text("SQUADRONS.json")
         squadrons_data = json.loads(squadrons_json)
         sessions_data = load_sessions_data()
         scanned_sessions = set(sessions_data.get("global", []))
+        # scanned_sessions = set()
         
-        for game in games:
+        games_to_get_basic_data = []
+        for game in games: # gets all the matchs to run basic data on
             session_id = game.get("sessionIdHex")
-            mission_name = game.get("missionName")
-            parts_count = game.get("partsCount")
-            
+            logging.info(f"Session {session_id} is now being reviewed.")
+
+            # mission_name = game.get("missionName")
+            # parts_count = game.get("partsCount")
+
             if session_id in scanned_sessions:
                 logging.info(f"Session {session_id} already scanned, skipping.")
                 continue
             else:
-                logging.info(f"Session {session_id} not scanned, downloading.")
-    
-            replay_basic_path = f"replays/0{session_id}/basic_data.json"
-            #replay_file_path = f"replays/0{session_id}/replay_data.json"
-            
-            try:
-                await get_basic_replay_info(session_id)
-                logging.info(f"Replay data saved for session {session_id}")
-
-                # Remove WRPL files and only leave JSON to save space
-                # replay_folder_path = f"replays/0{session_id}"
-                # if os.path.exists(replay_folder_path):
-                #     for file_name in os.listdir(replay_folder_path):
-                #         file_path = os.path.join(replay_folder_path, file_name)
-                #         if os.path.isfile(file_path) and file_name.endswith(".wrpl"):
-                #             os.remove(file_path)
-    
-            except Exception as e:
-                logging.error(f"Failed to save replay data for session {session_id}: {e}")
                 scanned_sessions.add(session_id)
-                continue
-    
+                logging.info(f"Session {session_id} needs to be downloaded.")
+                games_to_get_basic_data.append(game)        
+        
+        out = await asyncio.gather(*[get_basic_replay_info(game.get("sessionIdHex")) for game in games_to_get_basic_data])
+        logging.info(f"Finished getting basic data for {len(games_to_get_basic_data)} games.")
+        all_clans = None
+        if len(games_to_get_basic_data) > 0:
+            all_clans = await get_all_clans()
+        
+        hex_plus_guild = {}
+        for game in games_to_get_basic_data:
+            session_id = game.get("sessionIdHex")
+            # mission_name = game.get("missionName")
+            # parts_count = game.get("partsCount")
+            replay_basic_path = f"replays/0{session_id}/basic_data.json"
             try:
                 with open(replay_basic_path, "r") as replay_file:
                     basic_data = json.load(replay_file)
-                    
+    
             except Exception as e:
-                logging.error(f"Error reading replay data for session {session_id}: {e}")
+                logging.error(f"Error reading basic replay data json for session {session_id}: {e}")
                 continue
-            
             replay_squadrons = basic_data.get("squadrons", [])
             logging.info(f"Replay squadrons for session {session_id}: {replay_squadrons}")
             if not replay_squadrons:
@@ -457,24 +459,23 @@ async def auto_logging():
 
                 if long_sq_name:
                     long_clans.append(long_sq_name.lower())
-                    
+
                 else:
-                    clan_data = await search_for_clan(squadron_short.lower())
+                    clan_data = await search_for_clan(squadron_short.lower(), data=all_clans)
                     if clan_data:
                         clan_long_name = clan_data.get("long_name", squadron_short)
                         long_clans.append(clan_long_name.lower())
                     else:
                         logging.error(f"Squadron '{squadron_short}' not found for session {session_id}.")
 
-            
             for guild in bot.guilds:
                 activated = load_active_guilds(guild.id)
                 if not activated:
                     #logging.info(f"Guild {guild.name} ({guild.id}) is not activated for auto-logs, skipping")
                     continue
-                
+
                 preferences = load_guild_preferences(guild.id)
-                
+
                 if not preferences:
                     continue
 
@@ -483,30 +484,47 @@ async def auto_logging():
                     for squadron_name, squadron_prefs in preferences.items()
                     if "Logs" in squadron_prefs
                 }
-                
+
                 #logging.info(f"Logs setup for {guild.name} ({guild.id}): {squadrons_with_logs}")
-                
+
                 processed = False
                 for squadron_name, squadron_prefs in squadrons_with_logs.items():
                     if squadron_name.lower() in long_clans:
                         if not processed:
                             logging.info(f"Processing session {session_id} for guild {guild.name} ({guild.id}) with teams {replay_squadrons}")
-                            try:
-                                await save_replay_data(session_id, part_count=parts_count)
-                                await process_session(bot, session_id, guild.id, squadron_prefs, mission_name, guild.name)
-                            except Exception as e:
-                                logging.error(f"Error processing session {session_id} for guild {guild.name} ({guild.id}): {e}")
-                                logging.error(f"{traceback.format_exc()}")
-                
+                            # try:
+                            if session_id in hex_plus_guild:
+                                hex_plus_guild[session_id][1].append((guild, squadron_prefs))
+                            else:
+                                hex_plus_guild[session_id] = [game, [(guild, squadron_prefs)]]
+                            #     await save_replay_data(session_id, part_count=parts_count)
+                            #     await process_session(bot, session_id, guild.id, squadron_prefs, mission_name, guild.name)
+                            # except Exception as e:
+                            #     logging.error(f"Error processing session {session_id} for guild {guild.name} ({guild.id}): {e}")
+                            #     logging.error(f"{traceback.format_exc()}")
+
                             processed = True
                         else:
                             logging.info(f"Already processed session {session_id} for guild {guild.name} ({guild.id}), skipping duplicate.")
-                        
-            scanned_sessions.add(session_id)
+            
+        # this has a try except block in it, so even if one fails it wont crash the entire logging process
+        logging.info(f"logging replays {[game.get('sessionIdHex') for game, guilds in hex_plus_guild.values()]}")
+        out = await asyncio.gather(*[save_replay_data(game.get("sessionIdHex"), part_count=game.get("partsCount")) for game, guilds in hex_plus_guild.values()]) 
+        logging.info(f"FINISHED PROCESSING ALL REPLAYS: {out}")
+        
+        for game, guilds in hex_plus_guild.values():
+            for guild, squadron_prefs in guilds:
+                try:
+                    await process_session(bot, game.get("sessionIdHex"), guild.id, squadron_prefs, game.get("missionName"), guild.name)
+                except Exception as e:
+                     logging.error(f"Error processing session {game.get('sessionIdHex')} for guild {guild.name} ({guild.id}): {e}")
+                     logging.error(f"{traceback.format_exc()}")
+        
         
         sessions_data["global"] = list(scanned_sessions)
         client.upload_from_text("SESSIONS.json", json.dumps(sessions_data, indent=4))
         logging.info("Global sessions data updated.")
+        logging.info(f"Finished autologs in {T.time() - start_time} seconds.")
     
         for session_id in scanned_sessions:
             folder_path = f"replays/0{session_id}"
@@ -518,6 +536,7 @@ async def auto_logging():
     
     except Exception as e:
         logging.error(f"Error occured in logs: {e}")
+        logging.error(f"{traceback.format_exc()}")
 
 
 @auto_logging_task.before_loop
@@ -541,7 +560,7 @@ async def process_session(bot, session_id, guild_id, squadron_preferences, map_n
         return
 
     # Extract the winning squadron.
-    winner = replay_data.get("winning_team_squadron", "Error")
+    winner = replay_data.get("winning_team_squadron")
     if winner is None:
         logging.warning(f"Session {session_id} has a null 'winning_team_squadron'.")
         # return
@@ -581,9 +600,12 @@ async def process_session(bot, session_id, guild_id, squadron_preferences, map_n
     else:
         embed_color = discord.Color.purple() # Not directly involved.
 
+    w1 = winner
+    if winner == "UNKNOWN": # if the winner is unknown, then set it to the other squadron that is not the 'loser'
+        w1 = squadrons[0] if squadrons[1] == loser else squadrons[1]
     # Build the Discord embed.
     embed = discord.Embed(
-        title=f"**{winner} vs {loser}**",
+        title=f"**{w1} vs {loser}**",
         description=f"**👑 • {winner}**\n{mission}\n[Replay Link]({replay_url})",
         color=embed_color,
     )
@@ -593,9 +615,14 @@ async def process_session(bot, session_id, guild_id, squadron_preferences, map_n
         squadron_name = team.get("squadron", "Unknown")
         players = team.get("players", [])
         player_details = "\n".join(
-            f"{escape_markdown(player['nick'])} • **{player['vehicle']}**"
+            f"{escape_markdown(player['nick'])} • **{player['vehicle'] if player['vehicle'] else 'DISCONNECTED'}**"
             for player in players
         )
+
+        for player in players:
+            if not player['vehicle']:
+                logging.warning(f"{player['nick']} did not have a vehicle, most likely a disconnect. REPLAY HEX 0{session_id}")
+                
         embed.add_field(name=squadron_name, value=player_details or "No players found.", inline=False)
 
     channel_id_str = squadron_preferences
@@ -674,7 +701,7 @@ async def find_comp(interaction: discord.Interaction, username: str):
 
     activated = load_active_guilds(server_id)
     if not activated:
-        logging.info(f"Guild {server_name} ({server_id}) is not activated for comp, ignoring")
+        logging.info(f"(COMP) Guild {server_name} ({server_id}) is not activated for comp, ignoring")
         
         deny_embed = discord.Embed(
             title="Server Not Activated",
@@ -694,13 +721,43 @@ async def find_comp(interaction: discord.Interaction, username: str):
             await interaction.followup.send(f"No games found for user `{username}`.")
             return
 
-        # Try processing up to 3 games deep
-        for game in games[:3]:
-            session_id = None
+        
+        game1 = games[0]
+        game2 = games[1]
+        current_unix_time = int(T.time())
+        end_time_second = game2.get("endTime")
+        time_diff = current_unix_time - end_time_second
+
+        """
+        If the 2nd game is older than half an hour, then choose the first game (A)
+        If its younger than 30 minutes, check if its fully parsed or not (B)
+        If it is not fully parsed, we might as well download and parse the first game anyways (C)
+        """
+        
+        if time_diff > 1800: # (A)
+            selected_game = game1
+            logging.info("(COMP) selected the first game for download.")
+            
+        else:
+            logging.info("(COMP) checking if second game is fully parsed.")
+            session_id = game2.get('sessionIdHex', "Error")
+            replay_file_path = f"replays/0{session_id}/replay_data.json"
+            
+            if os.path.exists(replay_file_path): # (B)
+                logging.info("(COMP) second game is fully parsed, sending now.")
+                selected_game = game2
+                
+            else: # (C)
+                logging.info("(COMP) second game isnt fully parsed, using first game.")
+                selected_game = game1
+                
+            
+        for game in [selected_game]:
             try:
-                session_id = game.get('sessionIdHex', "Error")
+                session_id = game.get('sessionIdHex', "Error")                
                 mission = game.get("missionName", "Error")
-                timestamp = game.get("startTime", "Error")
+                timestamp = game.get("endTime", "Error")
+                parts_count = game.get("partsCount")
 
                 if timestamp != "Error":
                     timestamp = f"<t:{timestamp}:R>"
@@ -709,17 +766,17 @@ async def find_comp(interaction: discord.Interaction, username: str):
 
                 if not os.path.exists(replay_file_path):
                     comp = True
-                    await save_replay_data(session_id, comp)
-                    logging.info("Replay didn't exist, downloading now...")
+                    logging.info("(COMP) Replay didn't exist, downloading now...")
+                    await save_replay_data(session_id, comp, part_count=parts_count)
 
                 try:
                     with open(replay_file_path, "r") as replay_file:
                         replay_data = json.load(replay_file)
+                        
                 except FileNotFoundError:
-                    logging.error(f"Replay file not found for session ID {session_id}")
+                    logging.error(f"(COMP) Replay file not found for session ID {session_id}")
                     continue  # Try the next game
 
-                # Extract relevant data from the replay JSON
                 squadrons = replay_data.get("squadrons", [])
                 #weather = replay_data.get("weather", "Unknown")
                 #time_of_day = replay_data.get("time_of_day", "Unknown")
@@ -732,7 +789,7 @@ async def find_comp(interaction: discord.Interaction, username: str):
                 # Create the embed
                 embed = discord.Embed(
                     title=f"**{squadrons[0]} vs {squadrons[1]}**",
-                    description=f"**👑 • {winner}**\n{mission}\nTime: {timestamp}\n[Replay Link]({replay_url})",
+                    description=f"**👑 • {winner}**\n{mission}\nBattle Ended: {timestamp}\n[Replay Link]({replay_url})",
                     color=discord.Color.gold(),
                 )
 
@@ -755,21 +812,21 @@ async def find_comp(interaction: discord.Interaction, username: str):
                         return  # Exit after a successful match
                         
                     except Exception as e:
-                        logging.error(f"Failed to bill {server_name} ({server_id}) for session {session_id}: {e}")
+                        logging.error(f"(COMP) Failed to bill {server_name} ({server_id}) for session {session_id}: {e}")
 
                 except Exception as e:
-                    logging.error(f"Failed to send embed for session {session_id}: {e}")
+                    logging.error(f"(COMP) Failed to send embed for session {session_id}: {e}")
                     continue  # Try the next game
 
             except Exception as e:
-                logging.error(f"An error occurred while processing session ID {session_id}: {e}")
+                logging.error(f"(COMP) An error occurred while processing session ID {session_id}: {e}")
                 continue  # Try the next game
 
         # If none of the three games worked, send an error message
         await interaction.followup.send("No valid game data could be retrieved. Please try again later.")
 
     except Exception as e:
-        logging.error(f"An error occurred in the find-comp command: {e}")
+        logging.error(f"(COMP) An error occurred in the find-comp command: {e}")
         await interaction.followup.send("An error occurred while processing the command. Please try again.")
 
 
@@ -805,7 +862,7 @@ async def alarm(interaction: discord.Interaction, type: str, channel_id: str, sq
 
     client.upload_from_text(key, json.dumps(preferences))
 
-    await interaction.followup.send(f"Alarm of type '{type}' set for squadron '{squadron_name}' to send messages in channel ID {channel_id}.", ephemeral=True)
+    await interaction.followup.send(f"'{type}' alarm for '{squadron_name}' set to channel {channel_id}.", ephemeral=True)
 
 @alarm.error
 async def alarm_error(interaction: discord.Interaction, error):
