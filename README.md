@@ -22,5 +22,5 @@ You can start the bot by running `BotScript.py` once you put your discord bot to
 ### Translation
  - Useful for international squadrons, be sure to toggle the feature!
 
-### General Squadron Information
- - SQ-Info and Stat should be useful for that.
+### General Squadron / Player Information
+ - SQ-Info, Top, Track, and Stat should be useful for that.
