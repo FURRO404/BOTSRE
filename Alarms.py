@@ -1,9 +1,10 @@
 #Alarms.py
 import json
+
 import discord
 from replit.object_storage import Client
-from SQ_Info import fetch_squadron_info
 
+from SQ_Info import fetch_squadron_info
 
 client = Client()
 # Function to take a snapshot of the members and their scores
@@ -14,9 +15,9 @@ async def take_snapshot(squadron_name):
 # Function to save the snapshot using Replit object storage
 def save_snapshot(snapshot, guild_id, squadron_name, region=None):
     if region:
-        key = f"{guild_id}-{squadron_name}-{region}-snapshot"
+        key = f"SNAPSHOTS/{guild_id}-{squadron_name}-{region}-snapshot"
     else:
-        key = f"{guild_id}-{squadron_name}-snapshot"
+        key = f"SNAPSHOTS/{guild_id}-{squadron_name}-snapshot"
     client.upload_from_text(key, json.dumps(snapshot.to_dict()))
     print(f"Snapshot saved for {squadron_name} in guild {guild_id} under {region or 'default'} region")
 
@@ -24,9 +25,9 @@ def save_snapshot(snapshot, guild_id, squadron_name, region=None):
 # Function to load the snapshot using Replit object storage
 def load_snapshot(guild_id, squadron_name, region=None):
     if region:
-        key = f"{guild_id}-{squadron_name}-{region}-snapshot"
+        key = f"SNAPSHOTS/{guild_id}-{squadron_name}-{region}-snapshot"
     else:
-        key = f"{guild_id}-{squadron_name}-snapshot"
+        key = f"SNAPSHOTS/{guild_id}-{squadron_name}-snapshot"
     try:
         snapshot_dict = json.loads(client.download_as_text(key))
         return discord.Embed.from_dict(snapshot_dict)

@@ -1,5 +1,7 @@
 { pkgs }: {
   deps = [
+    pkgs.unzip
+    pkgs.zip
     pkgs.pkg-config
     pkgs.geckodriver
     pkgs.python310                           # Python 3.10
