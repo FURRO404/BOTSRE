@@ -632,7 +632,7 @@ async def process_session(bot, session_id, guild_id, squadron_preferences, map_n
     for team in teams:
         for player in team.get("players", []):
             if player.get("vehicle"):
-                player["vehicle"] = translate.get_translate(player["vehicle"] + "_shop")
+                player["vehicle_new"] = translate.get_translate(player["vehicle"] + "_shop")
             else:
                 logging.warning(
                     f"{player.get('nick')} did not have a vehicle, most likely a disconnect. REPLAY HEX 0{session_id}"
@@ -860,7 +860,7 @@ async def find_comp(interaction: discord.Interaction, username: str):
                 for team in teams:
                     for player in team.get("players", []):
                         if player.get("vehicle"):
-                            player["vehicle"] = translate.get_translate(player["vehicle"] + "_shop")
+                            player["vehicle_new"] = translate.get_translate(player["vehicle"] + "_shop")
                         else:
                             logging.warning(
                                 f"{player.get('nick')} did not have a vehicle, most likely a disconnect. REPLAY HEX 0{session_id}"
