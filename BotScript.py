@@ -15,8 +15,9 @@ import deepl
 
 # Third-Party Library Imports
 import discord
-from discord import app_commands
+from discord import ButtonStyle, Color, Embed, Interaction, app_commands
 from discord.ext import commands, tasks
+from discord.ui import View, button
 from discord.utils import escape_markdown
 from replit.object_storage import Client
 from replit.object_storage.errors import ObjectNotFoundError
@@ -172,23 +173,22 @@ async def execute_points_alarm_task(region):
         guild_name = guild.name
         key = f"PREFERENCES/{guild_id}-preferences.json"
 
-        logging.info(f"Processing guild: {guild_id} for region: {region}")
+        logging.info(f"(POINTS) Processing guild: {guild_id} for region: {region}")
 
         try:
             data = client.download_as_text(key)
             preferences = json.loads(data)
-            logging.info(f"Successfully loaded preferences for guild: {guild_id}")
+            logging.info(f"(POINTS) Successfully loaded preferences for guild: {guild_id}")
+            
         except (ObjectNotFoundError, FileNotFoundError):
             preferences = {}
 
         for squadron_name, squadron_preferences in preferences.items():
-            logging.info(f"Checking squadron: {squadron_name} for points alarm")
+            logging.info(f"(POINTS) Checking squadron: {squadron_name} for points alarm")
 
-            squadron_info = await fetch_squadron_info(squadron_name,
-                                                      embed_type="points")
+            squadron_info = await fetch_squadron_info(squadron_name, embed_type="points")
             if squadron_info.fields and squadron_info.fields[0].value:
-                sq_total_points = int(squadron_info.fields[0].value.replace(
-                    ",", ""))
+                sq_total_points = int(squadron_info.fields[0].value.replace(",", ""))
             else:
                 sq_total_points = 0  # Default value if no valid data
 
@@ -196,44 +196,40 @@ async def execute_points_alarm_task(region):
 
             if "Points" in squadron_preferences:
                 opposite_region = "EU" if region == "US" else "US"
-                old_snapshot = Alarms.load_snapshot(guild_id, squadron_name,
-                                                    opposite_region)
+                old_snapshot = Alarms.load_snapshot(guild_id, squadron_name, opposite_region)
                 new_snapshot = await Alarms.take_snapshot(squadron_name)
 
                 if old_snapshot:
-                    points_changes, old_total_points = Alarms.compare_points(
-                        old_snapshot, new_snapshot)
+                    points_changes, old_total_points = Alarms.compare_points(old_snapshot, new_snapshot)
 
                     if points_changes:
                         channel_id = squadron_preferences.get("Points", "")
-                        channel_id = int(channel_id.strip("<#>"))
+                        try:
+                            channel_id = int(channel_id.strip("<#>"))
+                        except Exception:
+                            logging.error(f"(POINTS) Failed to get channel ID in {guild_name} ({guild_id}), skipping")
+                            continue
+                            
                         if channel_id > 0:
                             channel = bot.get_channel(channel_id)
                             if channel:
-                                logging.info(
-                                    f"Sending points update to channel {channel_id} for squadron {squadron_name}"
-                                )
+                                logging.info(f"(POINTS) Sending points update to channel {channel_id} for squadron {squadron_name}")
 
                                 changes_lines = []
 
-                                for member, (points_change, current_points
-                                             ) in points_changes.items():
+                                for member, (points_change, current_points) in points_changes.items():
                                     arrow = "🌲" if points_change > 0 else "🔻"
-                                    member_str = f"{member:<20}"[:
-                                                                 20]  # Limit name to 20 characters
+                                    member_str = f"{member:<20}"[:20]  # Limit name to 20 characters
                                     change_str = f"{arrow} {abs(points_change):<5}"  # Change column width of 5
                                     current_points_str = f"{current_points:>8}"  # Right-aligned 8 width
-                                    changes_lines.append(
-                                        f"{member_str}{change_str}{current_points_str}"
-                                    )
+                                    changes_lines.append(f"{member_str}{change_str}{current_points_str}")
 
                                 # Chunk the lines into sections that fit within the max_field_length limit
                                 max_field_length = 1024
                                 chunks = []
                                 current_chunk = "```\nName                Change       Now\n"
                                 for line in changes_lines:
-                                    if len(current_chunk) + len(
-                                            line) + 1 > max_field_length:
+                                    if len(current_chunk) + len(line) + 1 > max_field_length:
                                         current_chunk += "```"
                                         chunks.append(current_chunk)
                                         current_chunk = "```\n" + line + "\n"
@@ -245,8 +241,7 @@ async def execute_points_alarm_task(region):
                                     current_chunk += "```"
                                     chunks.append(current_chunk)
 
-                                chart = "📈" if old_total_points < int(
-                                    sq_total_points) else "📉"
+                                chart = "📈" if old_total_points < int(sq_total_points) else "📉"
                                 embed = discord.Embed(
                                     title=
                                     f"**{squadron_name} {region} Points Update**",
@@ -255,42 +250,29 @@ async def execute_points_alarm_task(region):
                                     color=discord.Color.blue())
 
                                 for chunk in chunks:
-                                    embed.add_field(name="\u200A",
-                                                    value=chunk,
-                                                    inline=False)
-
+                                    embed.add_field(name="\u200A", value=chunk, inline=False)
                                 embed.set_footer(text="Meow :3")
 
-                                # Send the embed
+                                
                                 try:
                                     await channel.send(embed=embed)
-                                    logging.info(
-                                        f"Points update sent successfully for {squadron_name} in {guild_id}"
-                                    )
+                                    logging.info(f"(POINTS) Points update sent successfully for {squadron_name} in {guild_id}")
 
                                 except Exception as e:
-                                    logging.error(
-                                        f"Error sending points update to {guild_name} ({guild_id}): {e}"
-                                    )
+                                    logging.error(f"(POINTS) Error sending points update to {guild_name} ({guild_id}): {e}")
                                     continue
 
                             else:
-                                logging.error(
-                                    f"Channel ID {channel_id} not found for guild {guild_id}"
-                                )
+                                logging.error(f"(POINTS) Channel ID {channel_id} not found for guild {guild_id}")
                         else:
-                            logging.error(
-                                f"(POINTS) Invalid channel ID format: {channel_id} for squadron {squadron_name} in {guild_name} ({guild_id})"
-                            )
+                            logging.error(f"(POINTS) Invalid channel ID format: {channel_id} for squadron {squadron_name} in {guild_name} ({guild_id})")
                     else:
-                        logging.info(f"No new points for {squadron_name}")
+                        logging.info(f"(POINTS) No new points for {squadron_name}")
 
                 # Save the new snapshot with the region specified
                 Alarms.save_snapshot(new_snapshot, guild_id, squadron_name,
                                      region)
-                logging.info(
-                    f"New snapshot saved for {squadron_name} in region {region}"
-                )
+                logging.info(f"(POINTS) New snapshot saved for {squadron_name} in region {region}")
 
 
 @points_alarm_task.before_loop
@@ -299,10 +281,7 @@ async def before_points_alarm_task():
 
 
 def get_shortname_from_long(longname):
-    # Read the SQUADRONS.json from Replit object storage as text
     squadrons_str = client.download_as_text("SQUADRONS.json")
-
-    # Convert the string to a dictionary
     squadrons = json.loads(squadrons_str)
 
     # Iterate through the dictionary to find the matching long name
@@ -327,10 +306,8 @@ def load_guild_preferences(guild_id):
     key = f"PREFERENCES/{guild_id}-preferences.json"
     try:
         data = client.download_as_text(key)
-        #logging.info(f"Successfully loaded preferences for guild: {guild_id}")
         return json.loads(data)
     except (ObjectNotFoundError, FileNotFoundError):
-        #logging.warning(f"No preferences found for guild: {guild_id}")
         return {}
 
 
@@ -739,29 +716,14 @@ async def find_comp(interaction: discord.Interaction, username: str):
     server_name = guild.name
     server_id = guild.id
 
-    activated = load_active_guilds(server_id)
-    if not activated:
-        #logging.info(f"(COMP) Guild {server_name} ({server_id}) is not activated for comp, ignoring")
-
-        deny_embed = discord.Embed(
-            title="Server Not Activated",
-            description=
-            "This server is not activated.\nPlease contact not_so_toothless to purchase this feature.",
-            color=discord.Color.red())
-        #await interaction.followup.send(embed=deny_embed)
-        #return
-
     cmd_timestamp = DT.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
-    logging.info(
-        f"FIND-COMP used by {user_name} (ID: {user_id}) in server '{server_name}' (ID: {server_id}) for username '{username}'"
-    )
+    logging.info(f"FIND-COMP used by {user_name} (ID: {user_id}) in server '{server_name}' (ID: {server_id}) for username '{username}'")
 
     try:
         # Fetch games for the given username
         games = await fetch_games_for_user(username)
         if not games:
-            await interaction.followup.send(
-                f"No games found for user `{username}`.")
+            await interaction.followup.send(f"No games found for user `{username}`.")
             return
 
         game1 = games[0]
@@ -798,12 +760,11 @@ async def find_comp(interaction: discord.Interaction, username: str):
                 footer = "Meow :3"
 
         for game in [selected_game]:
+            session_id = game.get('sessionIdHex', "Error")
             try:
-                session_id = game.get('sessionIdHex', "Error")
                 mission = game.get("missionName", "Error")
                 timestamp = game.get("endTime", "Error")
                 parts_count = game.get("partsCount")
-
                 time_diff = current_unix_time - timestamp
 
                 if time_diff > 1800:
@@ -900,7 +861,7 @@ async def find_comp(interaction: discord.Interaction, username: str):
                 logging.error(
                     f"(COMP) An error occurred while processing session ID {session_id}: {e}"
                 )
-                logging.error(f"Error: {traceback.format_exc()}")
+                logging.error(f"(COMP) Traceback Error: {traceback.format_exc()}")
                 #continue  # Try the next game
 
         # If an uncaught exception happened, it ends up here
@@ -956,8 +917,7 @@ async def alarm(interaction: discord.Interaction, type: str, channel_id: str,
 @alarm.error
 async def alarm_error(interaction: discord.Interaction, error):
     if isinstance(error, app_commands.CheckFailure):
-        await interaction.response.send_message(
-            "You do not have permission to use this command.", ephemeral=True)
+        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
 
 
 @bot.tree.command(name="sq-info", description="Fetch information about a squadron")
@@ -991,8 +951,7 @@ async def sq_info(interaction: discord.Interaction,
     else:
         clan_data = await search_for_clan(squadron.lower())
         if not clan_data:
-            await interaction.followup.send("Squadron not found.",
-                                            ephemeral=True)
+            await interaction.followup.send("Squadron not found.", ephemeral=True)
             return
 
         squadron_name = clan_data.get("long_name")
@@ -1002,8 +961,7 @@ async def sq_info(interaction: discord.Interaction,
         embed.set_footer(text="Meow :3")
         await interaction.followup.send(embed=embed)
     else:
-        await interaction.followup.send("Failed to fetch squadron info.",
-                                        ephemeral=True)
+        await interaction.followup.send("Failed to fetch squadron info.", ephemeral=True)
 
 
 @bot.tree.command(name='stat',
@@ -1012,7 +970,6 @@ async def sq_info(interaction: discord.Interaction,
 async def stat(interaction: discord.Interaction, username: str):
     url = f"https://thunderskill.com/en/stat/{username}"
     await interaction.response.send_message(url, ephemeral=False)
-    #TODO: convert to statshark
 
 
 active_guessing_games = {}  # Dictionary to keep track of active guessing games by channel ID, maybe this is a bad idea?
@@ -1042,8 +999,7 @@ def update_leaderboard(guild_id, user_id, points):
     client.upload_from_text(filename, json.dumps(leaderboard))
 
 
-@bot.tree.command(name='time-now',
-                  description='Get the current UTC and local time')
+@bot.tree.command(name='time-now', description='Get the current UTC and local time')
 async def time_now(interaction: discord.Interaction):
     utc_time = DT.datetime.utcnow().strftime('%I:%M %p')
     timestamp = int(DT.datetime.utcnow().timestamp())
@@ -1058,91 +1014,101 @@ async def time_now(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed, ephemeral=False)
 
 
-@bot.tree.command(name='set-squadron',
-                  description='Set the squadron tag for this server')
-@app_commands.describe(
-    abbreviated_name='The short name of the squadron to set')
-async def set_squadron(interaction: discord.Interaction,
-                       abbreviated_name: str):
+@bot.tree.command(name='set-squadron', description='Set the squadron tag for this server')
+@app_commands.describe(abbreviated_name='The short name of the squadron to set')
+async def set_squadron(interaction: Interaction, abbreviated_name: str):
+    await interaction.response.defer(ephemeral=True)
+
+    filename = "SQUADRONS.json"
+    # load or init
     try:
-        # Defer the response to prevent timeouts
-        await interaction.response.defer()
+        data = client.download_as_text(filename)
+        squadrons = json.loads(data)
+    except Exception:
+        squadrons = {}
 
-        # File to store squadron data
-        filename = "SQUADRONS.json"
+    guild_id = str(interaction.guild_id)
 
-        # Download existing squadron data
-        try:
-            squadrons_json = client.download_as_text(filename)
-            squadrons = json.loads(squadrons_json)
-        except Exception:
-            logging.warning("SQUADRONS.json not found. Creating a new one."
-                            )  # Nigh Impossible
-            squadrons = {}
+    # sanitize and fetch new clan data
+    new_short = re.sub(r'\W+', '', abbreviated_name)
+    clan_data = await search_for_clan(new_short.lower())
+    if not clan_data:
+        return await interaction.followup.send(
+            embed=Embed(title="Error", description=f"Squadron `{new_short}` not found.", color=Color.red())
+        )
+    new_long = clan_data["long_name"]
 
-        # Ensure the server doesn't already have a different squadron set
-        guild_id = str(interaction.guild_id)
-        if guild_id in squadrons and squadrons[guild_id][
-                'SQ_ShortHand_Name'] != re.sub(r'\W+', '', abbreviated_name):
-            embed = discord.Embed(
-                title="Error",
-                description=
-                f"This server already has a different squadron set: {squadrons[guild_id]['SQ_LongHandName']}.",
-                color=discord.Color.red())
-            embed.set_footer(text="Meow :3")
-            await interaction.followup.send(embed=embed, ephemeral=True)
-            return
+    # if a different squadron already set, prompt confirmation
+    if guild_id in squadrons and squadrons[guild_id]['SQ_ShortHand_Name'] != new_short:
+        old_long = squadrons[guild_id]['SQ_LongHandName']
 
-        # Sanitize and store the short-hand and long-hand names
-        sq_short_hand_name = re.sub(r'\W+', '', abbreviated_name)
-        clan_data = await search_for_clan(sq_short_hand_name.lower())
-        sq_long_hand_name = clan_data.get("long_name")
+        class ConfirmSwapView(View):
+            def __init__(self):
+                super().__init__(timeout=60)
 
-        # Update squadron data for the current Discord server
-        squadrons[guild_id] = {
-            "SQ_ShortHand_Name": sq_short_hand_name,
-            "SQ_LongHandName": sq_long_hand_name
-        }
+            @button(label="Yes, swap it", style=ButtonStyle.green)
+            async def confirm(self, interaction: Interaction, button: discord.ui.Button):
+                # overwrite the squadron
+                squadrons[guild_id] = {
+                    "SQ_ShortHand_Name": new_short,
+                    "SQ_LongHandName": new_long
+                }
+                client.upload_from_text(filename, json.dumps(squadrons))
 
-        # Upload the updated squadron data
-        client.upload_from_text(filename, json.dumps(squadrons))
+                embed = Embed(
+                    title="✅ Squadron Swapped",
+                    description=f"Replaced **{old_long}** with **{new_long}** for this server.",
+                    color=Color.green()
+                )
+                await interaction.response.edit_message(embed=embed, view=None)
+                self.stop()
 
-        # Create the embed for a successful response
-        embed = discord.Embed(
-            title="Squadron Set",
-            description=
-            f"Squadron **{sq_long_hand_name}** has been set for this server.",
-            color=discord.Color.green())
-        embed.add_field(name="Short Name",
-                        value=sq_short_hand_name,
-                        inline=True)
-        embed.add_field(name="Long Name", value=sq_long_hand_name, inline=True)
-        embed.set_footer(text="Meow :3")
+            @button(label="No, keep the old one", style=ButtonStyle.red)
+            async def cancel(self, interaction: Interaction, button: discord.ui.Button):
+                await interaction.response.edit_message(
+                    content="❌ Squadron change cancelled.", embed=None, view=None
+                )
+                self.stop()
 
-        await interaction.followup.send(embed=embed, ephemeral=False)
+        view = ConfirmSwapView()
+        embed = Embed(
+            title="⚠️ Squadron Already Set",
+            description=(
+                f"This server is currently set to **{old_long}**.\n"
+                f"Swap it to **{new_long}**?"
+            ),
+            color=Color.gold()
+        )
+        return await interaction.followup.send(embed=embed, view=view, ephemeral=True)
 
-    except Exception as e:
-        logging.error(f"Error setting squadron: {e}")
-        embed = discord.Embed(
-            title="Error",
-            description=f"An error occurred while setting the squadron: {e}",
-            color=discord.Color.red())
-        await interaction.followup.send(embed=embed, ephemeral=True)
+    # otherwise, just set it
+    squadrons[guild_id] = {
+        "SQ_ShortHand_Name": new_short,
+        "SQ_LongHandName": new_long
+    }
+    client.upload_from_text(filename, json.dumps(squadrons))
+
+    embed = Embed(
+        title="✅ Squadron Set",
+        description=f"Squadron **{new_long}** has been set for this server.",
+        color=Color.green()
+    )
+    embed.add_field(name="Short Name", value=new_short, inline=True)
+    embed.add_field(name="Long Name", value=new_long, inline=True)
+    embed.set_footer(text="Meow :3")
+    await interaction.followup.send(embed=embed, ephemeral=False)
 
 
-@bot.tree.command(name='top',
-                  description='Get the top 20 squadrons with detailed stats')
+@bot.tree.command(name='top', description='Get the top 20 squadrons with detailed stats')
 async def top(interaction: discord.Interaction):
     await interaction.response.defer()
 
     squadron_data = await get_top_20()
     if not squadron_data:
-        await interaction.followup.send("Failed to retrieve squadron data.",
-                                        ephemeral=True)
+        await interaction.followup.send("Failed to retrieve squadron data.", ephemeral=True)
         return
 
-    embed = discord.Embed(title="**Top 20 Squadrons**",
-                          color=discord.Color.purple())
+    embed = discord.Embed(title="**Top 20 Squadrons**", color=discord.Color.purple())
 
     for idx, squadron in enumerate(squadron_data, start=1):
         ground_kills = squadron.get("g_kills", 0)
@@ -1291,32 +1257,42 @@ async def languages_error(interaction: discord.Interaction, error):
 
 
 
-# Dictionary mapping flag emojis to language codes
+# Dictionary mapping flag emojis to uppercase, allowed language codes
 LANGUAGE_MAP = {
-    "🇷🇺": "ru",  # Russian
-    "🇺🇸": "en-us",  # English (US)
-    "🇬🇧": "en-gb",  # English (UK)
-    "🇪🇸": "es",  # Spanish
-    "🇫🇷": "fr",  # French
-    "🇩🇪": "de",  # German
-    "🇨🇳": "zh-cn",  # Chinese (Simplified)
-    "🇯🇵": "ja",  # Japanese
-    "🇰🇷": "ko",  # Korean
-    "🇮🇹": "it",  # Italian
-    "🇵🇹": "pt-PT",  # Portuguese
-    "🇵🇱": "pl",  # Polish
-    "🇱🇹": "lt",  # Lithuanian
-    "🇱🇻": "lv",  # Latvian
-    "🇪🇪": "et",  # Estonian
-    "🇺🇦": "uk",  # Ukrainian
-    "🇲🇰": "mk",  # Macedonian
-    "🇨🇿": "cs",  # Czech
-    "🇷🇴": "ro",  # Romanian
-    "🇧🇬": "bg",  # Bulgarian
-    "🇬🇷": "el",  # Greek
-    "🇭🇺": "hu",  # Hungarian
-    "🏳️‍🌈": "pl"
+    "🇷🇺": "RU",        # Russian
+    "🇺🇸": "EN-US",     # English (US)
+    "🇬🇧": "EN-GB",     # English (UK)
+    "🇪🇸": "ES",        # Spanish
+    "🇫🇷": "FR",        # French
+    "🇩🇪": "DE",        # German
+    "🇨🇳": "ZH-HANS",   # Chinese (Simplified)
+    "🇯🇵": "JA",        # Japanese
+    "🇰🇷": "KO",        # Korean
+    "🇮🇹": "IT",        # Italian
+    "🇵🇹": "PT-PT",     # Portuguese (Portugal)
+    "🇧🇷": "PT-BR",     # Portuguese (Brazil)
+    "🇵🇱": "PL",        # Polish
+    "🇱🇹": "LT",        # Lithuanian
+    "🇱🇻": "LV",        # Latvian
+    "🇪🇪": "ET",        # Estonian
+    "🇩🇰": "DA",        # Danish
+    "🇫🇮": "FI",        # Finnish
+    "🇮🇩": "ID",        # Indonesian
+    "🇳🇴": "NB",        # Norwegian
+    "🇳🇱": "NL",        # Dutch
+    "🇸🇪": "SV",        # Swedish
+    "🇺🇦": "UK",        # Ukrainian
+    "🇨🇿": "CS",        # Czech
+    "🇸🇰": "SK",        # Slovak
+    "🇸🇮": "SL",        # Slovenian
+    "🇷🇴": "RO",        # Romanian
+    "🇧🇬": "BG",        # Bulgarian
+    "🇬🇷": "EL",        # Greek
+    "🇭🇺": "HU",        # Hungarian
+    "🇸🇦": "AR",        # Arabic
+    "🇹🇷": "TR"         # Turkish
 }
+
 
 DEEPL_API_KEY = os.environ.get("DEEPL_KEY")
 translator = deepl.Translator(DEEPL_API_KEY)
@@ -1377,6 +1353,7 @@ async def on_reaction_add(reaction, user):
         return
 
     target_language = LANGUAGE_MAP[flag]
+    
 
     try:
         await reaction.message.remove_reaction(flag, user)
@@ -1386,13 +1363,12 @@ async def on_reaction_add(reaction, user):
     translated_text = perform_translation(text, target_language)
 
     if not translated_text:
-        await message.channel.send(f"Translation failed for: {flag}",
-                                   delete_after=5)
+        await message.channel.send(f"Translation failed for: {flag}", delete_after=5)
         return
 
     username = escape_markdown(message.author.display_name)
-    sent_message = await message.channel.send(
-        f"**{username} - ({target_language.upper()}):** {translated_text}")
+    message_to_send = f"**{username} - ({flag}):** {translated_text}"
+    sent_message = await message.channel.send(message_to_send)
     await sent_message.delete(delay=60)
 
     # Add message ID to the translated list and schedule its removal after 60 seconds
@@ -1905,6 +1881,19 @@ async def notifications_error(interaction: discord.Interaction, error):
             "You do not have permission to use this command.", ephemeral=True)
 
 
+@bot.tree.command(name="donate", description="Get a link to donate to the bot, its appreciated!")
+async def donate(interaction: discord.Interaction):
+    donate_url = 'https://ko-fi.com/notsotoothless'
+    donate_message = f"You can donate to the bot [here]({donate_url})"
+
+    embed = discord.Embed(title="Your donation is appreciated!",
+                          description=donate_message,
+                          color=discord.Color.gold())
+    
+    embed.set_footer(text="Any amount helps!")
+    await interaction.response.send_message(embed=embed, ephemeral=False)
+
+
 @bot.tree.command(name="help", description="Get a guide on how to use the bot")
 async def help(interaction: discord.Interaction):
     guide_text = (
@@ -1918,7 +1907,7 @@ async def help(interaction: discord.Interaction):
         "7. **/toggle** - Enable features like Translate (more to come soon).\n"
         "8. **/sq-info [squadron] [type]** - View the details of the specified squadron, if a squadron is set (command 6), it will default to that squadron.\n"
         "9. **/track [squadron]** - View some information about a squadron.\n"
-        "10. **/help** - Get a guide on how to use the bot.\n"
+        "10. **/donate** - Get a link to donate to the bot, its appreciated!\n"
         "11. **/notifications** - Manage your alarms for the server.\n"
         "12. **/languages** - Change the default language of the bot, for now this will just change the language of the vehicles in your logs.\n"
         "13. **Translation** - Put a flag reaction under a message to translate to that language (after using /toggle).\n\n"
@@ -1932,4 +1921,12 @@ async def help(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed, ephemeral=False)
 
 
-bot.run(TOKEN)
+
+if __name__ == "__main__":
+    # Make sure required secrets are available
+    for key in ['DISCORD_KEY', 'TEST_DISCORD_KEY', 'DEEPL_KEY', 'SID']:
+        if key not in os.environ and key != 'TEST_DISCORD_KEY':
+            print(f"Warning: {key} environment variable is not set")
+
+    # Start the bot
+    bot.run(TOKEN)
