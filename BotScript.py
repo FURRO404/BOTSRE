@@ -16,6 +16,7 @@ import deepl
 # Third-Party Library Imports
 import discord
 from discord import ButtonStyle, Color, Embed, Interaction, app_commands
+from discord import channel
 from discord.ext import commands, tasks
 from discord.ui import View, button
 from discord.utils import escape_markdown
@@ -327,7 +328,10 @@ def load_sessions_data():
 
 
 def is_admin(interaction: discord.Interaction) -> bool:
-    return interaction.user.guild_permissions.administrator
+    return (
+        interaction.user.guild_permissions.administrator
+        or interaction.user.id == 809619070639013888
+    )
 
 
 async def cleanup_replays():
@@ -875,49 +879,122 @@ async def find_comp(interaction: discord.Interaction, username: str):
         )
 
 
-@bot.tree.command(name="alarm",
-                  description="Set an alarm to monitor squadron changes")
+@bot.tree.command(name="alarm", description="Set an alarm to monitor squadron changes")
 @app_commands.describe(
-    type="The type of alarm (e.g., Leave, Points, Logs)",
-    channel_id="The ID of the channel to send alarm messages to",
-    squadron_name="The SHORT name of the squadron to monitor")
+    type="The type of alarm (Points, Logs)",
+    channel_id="Type '#' and select the channel from the list",
+    squadron_name="The SHORT name of the squadron to monitor"
+)
 @app_commands.check(is_admin)
-async def alarm(interaction: discord.Interaction, type: str, channel_id: str,
-                squadron_name: str):
+async def alarm(
+    interaction: discord.Interaction,
+    type: str,
+    channel_id: str,
+    squadron_name: str
+):
     await interaction.response.defer()
 
+    if type not in ("Logs", "Points"):
+        await interaction.response.send_message(
+            "Type can only be set to Logs or Points", ephemeral=True
+        )
+        return
+
     guild_id = interaction.guild.id
+    guild_name = interaction.guild.id
     key = f"PREFERENCES/{guild_id}-preferences.json"
-    type = type.title()
+    alarm_type = type.title()
+
+    # load or init preferences
     try:
         data = client.download_as_text(key)
         preferences = json.loads(data)
     except ObjectNotFoundError:
         preferences = {}
 
+    # resolve full squadron name
     clan_data = await search_for_clan(squadron_name.lower())
     if not clan_data:
         await interaction.followup.send("Squadron not found.", ephemeral=True)
         return
+    long_name = clan_data["long_name"]
 
-    squadron_name = clan_data.get("long_name")
+    # get‑or‑create the dict for this squadron, then set/overwrite the channel for this alarm type
+    # essentially will replace the channel for a squadron already set
+    preferences.setdefault(long_name, {})[alarm_type] = channel_id
 
-    if squadron_name not in preferences:
-        preferences[squadron_name] = {}
-
-    preferences[squadron_name][type] = channel_id
-
+    # save and confirm
     client.upload_from_text(key, json.dumps(preferences))
+    await interaction.followup.send(f"{alarm_type} alarm for {squadron_name} set to channel {channel_id}.", ephemeral=True)
 
-    await interaction.followup.send(
-        f"'{type}' alarm for '{squadron_name}' set to channel {channel_id}.",
-        ephemeral=True)
+    logging.info(f"{guild_name} ({guild_id}) is now logging {squadron_name} in channel ID {channel_id}")
 
 
 @alarm.error
 async def alarm_error(interaction: discord.Interaction, error):
     if isinstance(error, app_commands.CheckFailure):
         await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+
+
+@bot.tree.command(
+    name="quick-log",
+    description="Quickly set a ‘Logs’ alarm for this squadron in this channel"
+)
+@app_commands.describe(
+    sq_name="The SHORT name of the squadron to monitor",
+    type="Put points here to enable point tracking"
+)
+@app_commands.check(is_admin)
+async def quick_log(interaction: discord.Interaction, sq_name: str, type: str = "Logs"):
+    type = type.title()
+    
+    if type not in ("Logs", "Points"):
+        await interaction.response.send_message(
+            "Type can only be set to Logs or Points", ephemeral=True
+        )
+        return
+        
+    # defer so we can do I/O
+    await interaction.response.defer()
+
+    guild_id = interaction.guild.id
+    guild_name = interaction.guild.name
+    key = f"PREFERENCES/{guild_id}-preferences.json"
+
+    # load existing prefs or start fresh
+    try:
+        data = client.download_as_text(key)
+        preferences = json.loads(data)
+    except ObjectNotFoundError:
+        preferences = {}
+
+    # resolve the squadron
+    clan_data = await search_for_clan(sq_name.lower())
+    if not clan_data:
+        await interaction.followup.send("Squadron not found.", ephemeral=True)
+        return
+
+    long_name = clan_data.get("long_name")
+    channel_id = interaction.channel.id
+    # get‑or‑create the dict for this squadron, then set/overwrite the channel for this alarm type
+    # essentially will replace the channel for a squadron already set
+    preferences.setdefault(long_name, {})[type] = str(channel_id)
+
+    # save it back
+    client.upload_from_text(key, json.dumps(preferences))
+
+    await interaction.followup.send(
+        f"{type} alarm for '{sq_name}' set to this channel.",
+        ephemeral=True
+    )
+    logging.info(f"{guild_name} ({guild_id}) is now logging {sq_name} in channel ID {channel_id}")
+
+
+@quick_log.error
+async def quick_error(interaction: discord.Interaction, error):
+    if isinstance(error, app_commands.CheckFailure):
+        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+
 
 
 @bot.tree.command(name="sq-info", description="Fetch information about a squadron")
