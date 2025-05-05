@@ -16,7 +16,6 @@ import deepl
 # Third-Party Library Imports
 import discord
 from discord import ButtonStyle, Color, Embed, Interaction, app_commands
-from discord import channel
 from discord.ext import commands, tasks
 from discord.ui import View, button
 from discord.utils import escape_markdown
@@ -597,10 +596,10 @@ async def process_session(bot, session_id, guild_id, squadron_preferences, map_n
         embed_color = discord.Color.purple()
 
     # Build the Discord embed.
-    timestamp = f"<t:{timestamp}:R>"
+    text_timestamp = f"<t:{timestamp}:R>"
     embed = discord.Embed(
         title=f"**{w1} vs {loser}**",
-        description=f"Battle Ended: {timestamp}\n[Replay Link]({replay_url})",
+        description=f"Battle Ended: {text_timestamp}\n[Replay Link]({replay_url})",
         color=embed_color,
     )
     embed.set_footer(text="Meow :3")
@@ -622,7 +621,11 @@ async def process_session(bot, session_id, guild_id, squadron_preferences, map_n
 
     # Generate the scoreboard screenshot
     output_path = f"replays/0{session_id}/game_result.png"
-    await create_scoreboard(winner, teams[0], teams[1], mission, output_path)
+    match_details = {
+        "utc_timestamp": str(timestamp),
+        "session_id": str(session_id)
+    }
+    await create_scoreboard(match_details, winner, teams[0], teams[1], mission, output_path)
 
     
     # embed.set_image(url="attachment://game_result.png")
@@ -768,6 +771,7 @@ async def find_comp(interaction: discord.Interaction, username: str):
             try:
                 mission = game.get("missionName", "Error")
                 timestamp = game.get("endTime", "Error")
+                utc_timestamp = timestamp
                 parts_count = game.get("partsCount")
                 time_diff = current_unix_time - timestamp
 
@@ -834,7 +838,13 @@ async def find_comp(interaction: discord.Interaction, username: str):
 
                 # Generate the scoreboard screenshot
                 output_path = f"replays/0{session_id}/game_result.png"
-                await create_scoreboard(winner, teams[0], teams[1], mission, output_path)
+
+                match_details = {
+                    "utc_timestamp": str(utc_timestamp),
+                    "session_id": str(session_id)
+                }
+                
+                await create_scoreboard(match_details, winner, teams[0], teams[1], mission, output_path)
 
                 # Attach the screenshot to the embed by setting it as the embed image.
                 # The filename ("game_result.png") must match the one in the file attachment.
@@ -984,7 +994,7 @@ async def quick_log(interaction: discord.Interaction, sq_name: str, type: str = 
     client.upload_from_text(key, json.dumps(preferences))
 
     await interaction.followup.send(
-        f"{type} alarm for '{sq_name}' set to this channel.",
+        f"{type} alarm for {sq_name} set to this channel.",
         ephemeral=True
     )
     logging.info(f"{guild_name} ({guild_id}) is now logging {sq_name} in channel ID {channel_id}")
@@ -1001,7 +1011,7 @@ async def quick_error(interaction: discord.Interaction, error):
 @app_commands.describe(
     squadron="The short name of the squadron to fetch information about",
     type=
-    "The type of information to display: members, points, or leave empty for full info"
+    "The type of information to display: members, or points"
 )
 async def sq_info(interaction: discord.Interaction,
                   squadron: str = "",
@@ -1519,12 +1529,8 @@ async def track_squadron(interaction: discord.Interaction,
 class NotificationTypeSelect(discord.ui.Select):
     def __init__(self):
         options = [
-            discord.SelectOption(label="Logs",
-                                 description="Manage Logs notifications"),
-            discord.SelectOption(label="Points",
-                                 description="Manage Points notifications"),
-            discord.SelectOption(label="Leave",
-                                 description="Manage Leave notifications")
+            discord.SelectOption(label="Logs",description="Manage Logs notifications"),
+            discord.SelectOption(label="Points",description="Manage Points notifications")
         ]
         super().__init__(placeholder="Select notification type",
                          min_values=1,
@@ -1976,18 +1982,19 @@ async def help(interaction: discord.Interaction):
     guide_text = (
         "**Commands Overview**\n"
         "1. **/alarm [type] [channel_id] [squadron_name]** - Set an alarm to monitor squadron changes.\n"
-        "2. **/find-comp [username]** - Given a username, will attempt to detail the last found SQB game.\n"
-        "3. **/stat [username]** - Get the ThunderSkill stats URL for a user.\n"
-        "4. **/top** - Display the top 20 squadrons and their current stats.\n"
-        "5. **/time-now** - Get the current UTC time and your local time.\n"
-        "6. **/set-squadron [short name]** - Store squadron name for the discord server (used for logging).\n"
-        "7. **/toggle** - Enable features like Translate (more to come soon).\n"
-        "8. **/sq-info [squadron] [type]** - View the details of the specified squadron, if a squadron is set (command 6), it will default to that squadron.\n"
-        "9. **/track [squadron]** - View some information about a squadron.\n"
-        "10. **/donate** - Get a link to donate to the bot, its appreciated!\n"
-        "11. **/notifications** - Manage your alarms for the server.\n"
-        "12. **/languages** - Change the default language of the bot, for now this will just change the language of the vehicles in your logs.\n"
-        "13. **Translation** - Put a flag reaction under a message to translate to that language (after using /toggle).\n\n"
+        "2. **/quick-log [squadron_name] [type]** - Use this in the channel you want to log in, defaults to game logs.\n"
+        "3. **/find-comp [username]** - Given a username, will attempt to detail the last found SQB game.\n"
+        "4. **/stat [username]** - Get the ThunderSkill stats URL for a user.\n"
+        "5. **/top** - Display the top 20 squadrons and their current stats.\n"
+        "6. **/time-now** - Get the current UTC time and your local time.\n"
+        "7. **/set-squadron [short name]** - Store squadron name for the discord server (used for logging).\n"
+        "8. **/toggle** - Enable features like Translate (more to come soon).\n"
+        "9. **/sq-info [squadron] [type]** - View the details of the specified squadron, if a squadron is set (command 6), it will default to that squadron.\n"
+        "10. **/track [squadron]** - View some information about a squadron.\n"
+        "11. **/donate** - Get a link to donate to the bot, its appreciated!\n"
+        "12. **/notifications** - Manage your alarms for the server.\n"
+        "13. **/languages** - Change the default language of the bot, for now this will just change the language of the vehicles in your logs.\n"
+        "14. **Translation** - Put a flag reaction under a message to translate to that language (after using /toggle).\n\n"
         "*For detailed information on each command, please read the input descriptions of each command, or reach out to not_so_toothless.*"
     )
 

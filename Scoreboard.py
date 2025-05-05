@@ -1,21 +1,16 @@
 import asyncio
 import re
+from datetime import datetime
 
 from PIL import Image, ImageDraw, ImageFont
 
 
-async def create_scoreboard(winning_team, team1_details, team2_details, map_file, output_path):
+async def create_scoreboard(match_details, winning_team, team1_details, team2_details, map_file, output_path):
     """
     Creates a full-screen scoreboard with very large text, covering the entire image.
     Column headers for the stat columns are replaced by icons based on a custom mapping.
     The team name now appears only in the table header (first column), drawn with a larger
     font, and if that team is the winner, it is rendered in a golden color.
-
-    :param winning_team: Name of the winning team's squadron
-    :param team1_details: Dict with "squadron" and "players" (list of dicts)
-    :param team2_details: Dict with "squadron" and "players" (list of dicts)
-    :param map_file: Map name (used to load background "MAPS/<map_file>.jpg", spaces replaced with underscores)
-    :param output_path: Where to save the generated image
     """
 
     # --- Load Background ---
@@ -35,7 +30,7 @@ async def create_scoreboard(winning_team, team1_details, team2_details, map_file
 
     # Font sizes and paths
     TITLE_FONT_SIZE = int(bg_width * 0.03)
-    TEAM_FONT_SIZE  = int(bg_width * 0.03)  # Larger font for team names
+    TEAM_FONT_SIZE  = int(bg_width * 0.03)
     BODY_FONT_SIZE  = int(bg_width * 0.019)
     STAT_FONT_SIZE  = int(bg_width * 0.022)
 
@@ -47,29 +42,58 @@ async def create_scoreboard(winning_team, team1_details, team2_details, map_file
 
     resample_filter = Image.Resampling.LANCZOS
 
-    # --- Draw Top Titles ---
+    # --- Draw match_details (human-readable) in small text, top-right ---
+    INFO_FONT_SIZE = int(bg_width * 0.015)
+    info_font      = ImageFont.truetype(font_path, INFO_FONT_SIZE)
+    padding        = 15
+
+    # convert epoch to human-readable UTC
+    ts_epoch = int(match_details['utc_timestamp'])
+    dt_utc   = datetime.utcfromtimestamp(ts_epoch)
+    ts_text  = dt_utc.strftime("%H:%M:%S - %Y-%m-%d UTC")
+    sid_text = f"{match_details['session_id']}"
+
+    # position timestamp
+    ts_bbox = draw.textbbox((0,0), ts_text, font=info_font)
+    x_ts    = bg_width - margin - (ts_bbox[2]-ts_bbox[0]) - padding
+    y_ts    = margin + padding
+    draw.text((x_ts, y_ts), ts_text, font=info_font, fill=(200,200,200,255))
+
+    # position session ID below it
+    sid_bbox = draw.textbbox((0,0), sid_text, font=info_font)
+    x_sid    = bg_width - margin - (sid_bbox[2]-sid_bbox[0]) - padding
+    line_spacing = 15   # ← play with this number
+    y_sid = y_ts + (ts_bbox[3] - ts_bbox[1]) + line_spacing
+    draw.text((x_sid, y_sid), sid_text, font=info_font, fill=(200,200,200,255))
+
+    
+    # --- Draw Top Titles (centered) ---
     title_text = f"{map_name}"
     win_text   = f"Winner - {winning_team}"
 
-    # Start near the top-left corner
-    x_start = 90
-    y_start = 75
+    # Starting vertical position
+    y = 50
 
-    draw.text((x_start, y_start), title_text, font=font_title, fill=(255, 255, 255, 255))
-    title_bbox = draw.textbbox((0, 0), title_text, font=font_title)
+    # Draw centered map name
+    title_bbox  = draw.textbbox((0, 0), title_text, font=font_title)
+    title_width = title_bbox[2] - title_bbox[0]
+    x_center    = (bg_width - title_width) // 2
+    draw.text((x_center, y), title_text, font=font_title, fill=(255, 255, 255, 255))
     title_height = title_bbox[3] - title_bbox[1]
+    y += title_height + 40
 
-    y_start += title_height + 40
-    draw.text((x_start, y_start), win_text, font=font_title, fill=(255, 215, 0, 255))
-    win_bbox = draw.textbbox((0, 0), win_text, font=font_title)
+    # Draw centered winner text
+    win_bbox   = draw.textbbox((0, 0), win_text, font=font_title)
+    win_width  = win_bbox[2] - win_bbox[0]
+    x_center   = (bg_width - win_width) // 2
+    draw.text((x_center, y), win_text, font=font_title, fill=(255, 215, 0, 255))
     win_height = win_bbox[3] - win_bbox[1]
+    y_start    = y + win_height + 60
 
-    # Teams start below the two titles
-    y_start += win_height + 40
-
-    # Split screen into two columns for two teams
+    # Calculate layout for the two team columns
+    x_start     = margin * 3
     gap_between = 40
-    col_width = (bg_width - (x_start * 2) - gap_between) // 2
+    col_width   = (bg_width - (x_start * 2) - gap_between) // 2
 
 
     def draw_team(team_data, start_x, start_y, section_width):
@@ -127,9 +151,9 @@ async def create_scoreboard(winning_team, team1_details, team2_details, map_file
         # --- Sort players by score in descending order ---
         players_sorted = sorted(team_data.get("players", []), key=lambda player: int(player.get("score", 0)), reverse=True)
     
-        Username_fill = (185, 185, 185, 255)
+        Username_fill = (250, 227, 200, 255)
         Living_vehicle_fill = (255, 255, 255, 255)
-        Dead_vehicle_fill = Living_vehicle_fill  # (200, 200, 200, 255)
+        Dead_vehicle_fill = (200, 200, 200, 255)
     
         # Draw each player's row, adding the vehicle icon to the left of their text.
         for player in players_sorted:
@@ -143,13 +167,13 @@ async def create_scoreboard(winning_team, team1_details, team2_details, map_file
 
             
             vehicle_img_name = player.get("vehicle", "")
-            vehicle_icon_img = None  # Default to None if no image is available.
+            vehicle_icon_img = None
+            vehicle_icon_size = int(BODY_FONT_SIZE * 2.35)
             
             if vehicle_img_name:
                 vehicle_icon_path = f"ICONS/{vehicle_img_name.lower()}.png"
                 try:
                     vehicle_icon_img = Image.open(vehicle_icon_path).convert("RGBA")
-                    vehicle_icon_size = int(BODY_FONT_SIZE * 2.35)
                     vehicle_icon_img = vehicle_icon_img.resize((vehicle_icon_size, vehicle_icon_size), resample_filter)
                 except FileNotFoundError:
                     # Leave vehicle_icon_img as None if the file isn't found.
@@ -187,20 +211,38 @@ async def create_scoreboard(winning_team, team1_details, team2_details, map_file
             else:
                 draw.text((text_x, text_y + name_height + 10), player_vehicle, font=font_body, fill=Living_vehicle_fill)
     
-            # Other stat columns remain unchanged.
+            # Stat values for columns: Air, Ground, Assists, Deaths, Caps
             stat_values = [
-                str(player.get("air_kills", 0)),
-                str(player.get("ground_kills", 0)),
-                str(player.get("assists", 0)),
-                str(player.get("deaths", 0)),
-                str(player.get("captures", 0))
+                int(player.get("air_kills", 0)),
+                int(player.get("ground_kills", 0)),
+                int(player.get("assists", 0)),
+                int(player.get("deaths", 0)),
+                int(player.get("captures", 0)),
             ]
-            stat_bbox = draw.textbbox((0, 0), "0", font=stat_font)
+            stat_bbox   = draw.textbbox((0, 0), "0", font=stat_font)
             stat_height = stat_bbox[3] - stat_bbox[1]
-            # For stat columns, center the text vertically within the row
-            for i, val in enumerate(stat_values, start=1):
-                draw.text((col_positions[i], y_offset + (row_height - stat_height) // 2),
-                          val, font=stat_font, fill=(255, 255, 255, 255))
+
+            # Column names in the same order as stat_values
+            stat_names = ["Air", "Ground", "Assists", "Deaths", "Caps"]
+
+            for name, num, x in zip(stat_names, stat_values, col_positions[1:]):
+                if name in ("Air", "Ground") and num > 0:
+                    fill = (0, 255, 0, 255)          # green
+                elif name == "Deaths" and num > 0:
+                    fill = (255, 0, 0, 255)          # red
+                elif name == "Caps" and num > 0:
+                    fill = (255, 255, 0, 255)        # gold
+                elif name == "Assists" and num > 0:
+                    fill = (80, 120, 245, 255)
+                else:
+                    fill = (255, 255, 255, 255)      # white
+
+                draw.text(
+                    (x, y_offset + (row_height - stat_height) // 2),
+                    str(num),
+                    font=stat_font,
+                    fill=fill
+                )
             y_offset += row_height + 10
     
     # Draw Team 1 (left column)
@@ -238,10 +280,10 @@ async def test():
                 "nick": "\u044f\u0434\u0435\u0440\u043d\u044b\u0439 \u043f\u0438\u0432\u0430\u0441",
                 "index": 7,
                 "vehicle": "jp_m4a3e8_76w_sherman",
-                "vehicle_new": "skippy",
+                "vehicle_new": "meow",
                 "air_kills": 0,
                 "ground_kills": 0,
-                "assists": 0,
+                "assists": 1,
                 "deaths": 1,
                 "captures": 0,
                 "score": 100
@@ -251,7 +293,7 @@ async def test():
                 "nick": "doodleZzz",
                 "index": 9,
                 "vehicle": "spitfire_ix_usa",
-                "vehicle_new": "",
+                "vehicle_new": "meow",
                 "air_kills": 0,
                 "ground_kills": 0,
                 "assists": 0,
@@ -264,7 +306,7 @@ async def test():
                 "nick": "skyline\u5730\u5e73",
                 "index": 10,
                 "vehicle": "jp_m4a3e8_76w_sherman",
-                "vehicle_new": "",
+                "vehicle_new": "meow",
                 "air_kills": 0,
                 "ground_kills": 0,
                 "assists": 0,
@@ -277,7 +319,7 @@ async def test():
                 "nick": "Diablo_Kraike",
                 "index": 11,
                 "vehicle": "jp_m4a3e8_76w_sherman",
-                "vehicle_new": "",
+                "vehicle_new": "meow",
                 "air_kills": 1,
                 "ground_kills": 0,
                 "assists": 0,
@@ -290,7 +332,7 @@ async def test():
                 "nick": "SchweinHotep",
                 "index": 12,
                 "vehicle": "tu-2_postwar_late",
-                "vehicle_new": "",
+                "vehicle_new": "meow",
                 "air_kills": 0,
                 "ground_kills": 0,
                 "assists": 0,
@@ -303,7 +345,7 @@ async def test():
                 "nick": "\u0413\u0420\u0415\u0428\u041d\u0418\u041a",
                 "index": 13,
                 "vehicle": "cn_type_58",
-                "vehicle_new": "",
+                "vehicle_new": "meow",
                 "air_kills": 0,
                 "ground_kills": 0,
                 "assists": 0,
@@ -316,7 +358,7 @@ async def test():
                 "nick": "_vavord_",
                 "index": 15,
                 "vehicle": "spitfire_mk18e",
-                "vehicle_new": "",
+                "vehicle_new": "meow",
                 "air_kills": 0,
                 "ground_kills": 0,
                 "assists": 0,
@@ -334,7 +376,7 @@ async def test():
                 "nick": "who_is_Red_Eagle",
                 "index": 1,
                 "vehicle": "spitfire_lf_mk9e_weisman",
-                "vehicle_new": "",
+                "vehicle_new": "meow",
                 "air_kills": 2,
                 "ground_kills": 0,
                 "assists": 0,
@@ -347,7 +389,7 @@ async def test():
                 "nick": "\u0413\u0430\u043c\u0431\u0438\u0442\u0412\u043e\u0440\u0411\u043e\u043b\u0442\u043e\u0432",
                 "index": 2,
                 "vehicle": "germ_pzkpfw_VI_ausf_h1_tiger",
-                "vehicle_new": "",
+                "vehicle_new": "meow",
                 "air_kills": 0,
                 "ground_kills": 0,
                 "assists": 0,
@@ -360,7 +402,7 @@ async def test():
                 "nick": "Red__Eagle",
                 "index": 3,
                 "vehicle": "spitfire_lf_mk9e_weisman",
-                "vehicle_new": "",
+                "vehicle_new": "meow",
                 "air_kills": 1,
                 "ground_kills": 1,
                 "assists": 0,
@@ -373,7 +415,7 @@ async def test():
                 "nick": "\u0413\u043b\u0443\u043f\u044b\u0439 \u0417\u0435\u043d\u0438\u0442\u0447\u0438\u043a",
                 "index": 4,
                 "vehicle": "fr_tpk_641_vpc",
-                "vehicle_new": "",
+                "vehicle_new": "meow",
                 "air_kills": 0,
                 "ground_kills": 0,
                 "assists": 0,
@@ -386,7 +428,7 @@ async def test():
                 "nick": "\u0412\u0441\u043e\u0441\u0430\u043b",
                 "index": 5,
                 "vehicle": "spitfire_ix",
-                "vehicle_new": "",
+                "vehicle_new": "meow",
                 "air_kills": 1,
                 "ground_kills": 0,
                 "assists": 0,
@@ -399,7 +441,7 @@ async def test():
                 "nick": "34531",
                 "index": 6,
                 "vehicle": "tu-2",
-                "vehicle_new": "",
+                "vehicle_new": "meow",
                 "air_kills": 0,
                 "ground_kills": 3,
                 "assists": 0,
@@ -412,7 +454,7 @@ async def test():
                 "nick": "Mistress BUBA",
                 "index": 8,
                 "vehicle": "ussr_is_1",
-                "vehicle_new": "",
+                "vehicle_new": "meow",
                 "air_kills": 0,
                 "ground_kills": 0,
                 "assists": 0,
@@ -425,7 +467,7 @@ async def test():
                 "nick": "Glochamba",
                 "index": 14,
                 "vehicle": "germ_pzkpfw_VI_ausf_h1_tiger",
-                "vehicle_new": "",
+                "vehicle_new": "meow",
                 "air_kills": 0,
                 "ground_kills": 0,
                 "assists": 0,
@@ -436,6 +478,10 @@ async def test():
         ]
     }
     await create_scoreboard(
+        match_details={
+            "utc_timestamp": '1746424038',
+            "session_id": '4acb2a60017e0f6'
+        },
         winning_team="9615",
         team1_details=team1,
         team2_details=team2,
