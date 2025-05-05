@@ -25,7 +25,7 @@ class LangTableReader:
     def __init__(self, language):
         self.index = 0 # defaults to english
         self.update_langauge(language)
-        logging.info(f"Language set to {self.index} with value {language}")
+        #logging.info(f"Language set to {self.index} with value {language}")
 
 
     def update_langauge(self, lang):
