@@ -618,14 +618,21 @@ async def process_session(bot, session_id, guild_id, squadron_preferences, map_n
                     f"{player.get('nick')} did not have a vehicle, most likely a disconnect. REPLAY HEX 0{session_id}"
                 )
                 player["vehicle"] = "DISCONNECTED"
-
-    # Generate the scoreboard screenshot
-    output_path = f"replays/0{session_id}/game_result.png"
+    
     match_details = {
         "utc_timestamp": str(timestamp),
         "session_id": str(session_id)
     }
-    await create_scoreboard(match_details, winner, teams[0], teams[1], mission, output_path)
+
+    language = language.replace("<","")
+    language = language.replace(">","")
+    
+    output_path = f"replays/0{session_id}/game_result-{language}.png"
+
+    if not os.path.exists(output_path):
+        await create_scoreboard(match_details, winner, teams[0], teams[1], mission, output_path)
+    else:
+        logging.info(f"Skipping {session_id} scoreboard creation.")
 
     
     # embed.set_image(url="attachment://game_result.png")
@@ -635,7 +642,7 @@ async def process_session(bot, session_id, guild_id, squadron_preferences, map_n
         # Remove Discord formatting and convert to integer.
         channel_id = int(channel_id_str.strip("<#>"))
     except ValueError:
-        logging.error(f"Invalid channel ID format in preferences: {channel_id_str}")
+        logging.error(f"Invalid channel ID format: {channel_id_str} in guild ({guild_id})")
         return
 
     # Send the embed to the designated channel.
@@ -843,8 +850,16 @@ async def find_comp(interaction: discord.Interaction, username: str):
                     "utc_timestamp": str(utc_timestamp),
                     "session_id": str(session_id)
                 }
-                
-                await create_scoreboard(match_details, winner, teams[0], teams[1], mission, output_path)
+
+                language = language.replace("<","")
+                language = language.replace(">","")
+
+                output_path = f"replays/0{session_id}/game_result-{language}.png"
+
+                if not os.path.exists(output_path):
+                    await create_scoreboard(match_details, winner, teams[0], teams[1], mission, output_path)
+                else:
+                    logging.info(f"Skipping {session_id} scoreboard creation.")
 
                 # Attach the screenshot to the embed by setting it as the embed image.
                 # The filename ("game_result.png") must match the one in the file attachment.
@@ -1377,7 +1392,8 @@ LANGUAGE_MAP = {
     "🇬🇷": "EL",        # Greek
     "🇭🇺": "HU",        # Hungarian
     "🇸🇦": "AR",        # Arabic
-    "🇹🇷": "TR"         # Turkish
+    "🇹🇷": "TR",        # Turkish
+    "🏳️‍🌈": "PL"        # Polish (gay)
 }
 
 
