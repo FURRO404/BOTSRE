@@ -4,6 +4,8 @@ from datetime import datetime
 
 from PIL import Image, ImageDraw, ImageFont
 
+from Data_Parser import get_dict_from_list
+
 
 async def create_scoreboard(match_details, winning_team, team1_details, team2_details, map_file, output_path):
     """
@@ -33,12 +35,15 @@ async def create_scoreboard(match_details, winning_team, team1_details, team2_de
     TEAM_FONT_SIZE  = int(bg_width * 0.03)
     BODY_FONT_SIZE  = int(bg_width * 0.019)
     STAT_FONT_SIZE  = int(bg_width * 0.022)
+    COMP_FONT_SIZE = int(bg_width * 0.018)
+    
 
     font_path = "fonts/arial_unicode_ms.otf"
     font_title = ImageFont.truetype(font_path, TITLE_FONT_SIZE)
     font_team  = ImageFont.truetype(font_path, TEAM_FONT_SIZE)
     font_body  = ImageFont.truetype(font_path, BODY_FONT_SIZE)
     stat_font  = ImageFont.truetype(font_path, STAT_FONT_SIZE)
+    comp_font  = ImageFont.truetype(font_path, COMP_FONT_SIZE)
 
     resample_filter = Image.Resampling.LANCZOS
 
@@ -100,7 +105,35 @@ async def create_scoreboard(match_details, winning_team, team1_details, team2_de
         # Get team name (squadron) and set starting y_offset.
         squadron = team_data.get("squadron", "Unknown")
         y_offset = start_y
-    
+
+        # Convert vehicles to comp notation
+        vehicle_list = [player["vehicle"] for player in team_data["players"]]
+        notation_list = get_dict_from_list(vehicle_list)
+        #Notation example: {'F': 3, 'T': 3, 'AA': 1, 'B': 1}
+
+        # In this order: Fighters, Bombers, Helicopters, Tanks, AA
+        # --- Draw comp notation next to squadron header ---
+        comp_order = [("F", "Fighters"), ("B", "Bombers"), ("H", "Helicopters"), ("T", "Tanks"), ("AA", "AA")]
+        # measure the width of the squadron text so we know where to start
+        squad_bbox   = draw.textbbox((0, 0), squadron, font=font_team)
+        squad_width  = squad_bbox[2] - squad_bbox[0]
+        # x,y to drop our little comp tags
+        comp_x       = start_x + squad_width + 20
+        
+        COMP_Y_SHIFT   = 8
+        comp_y = y_offset + (font_team.size - COMP_FONT_SIZE) // 2
+        comp_y += COMP_Y_SHIFT
+
+        for code, _ in comp_order:
+            cnt = notation_list.get(code, 0)
+            if cnt > 0:
+                txt = f"{code}{cnt}"
+                draw.text((comp_x, comp_y), txt, font=comp_font, fill=(255,255,255,255))
+                width = draw.textbbox((0,0), txt, font=comp_font)[2]
+                comp_x += width + 15
+
+        
+        
         # Define columns with the first column showing the team name.
         columns = [squadron, "Air", "Ground", "Assists", "Deaths", "Caps"]
         num_cols = len(columns)

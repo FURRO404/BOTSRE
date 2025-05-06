@@ -9,11 +9,12 @@ import re
 import shutil
 import time as T
 import traceback
+
+# Third-Party Library Imports
+from contextlib import suppress
 from datetime import datetime, time, timezone
 
 import deepl
-
-# Third-Party Library Imports
 import discord
 from discord import ButtonStyle, Color, Embed, Interaction, app_commands
 from discord.ext import commands, tasks
@@ -25,7 +26,7 @@ from replit.object_storage.errors import ObjectNotFoundError
 # Local Module Imports
 import Alarms
 from AutoLog import fetch_games_for_user
-from Data_Parser import LangTableReader
+from Data_Parser import LangTableReader, get_dict_from_list
 from Leaderboard_Parser import get_top_20, search_for_clan
 from Parse_Replay import get_basic_replay_info, save_replay_data
 from Scoreboard import create_scoreboard
@@ -631,8 +632,6 @@ async def process_session(bot, session_id, guild_id, squadron_preferences, map_n
 
     if not os.path.exists(output_path):
         await create_scoreboard(match_details, winner, teams[0], teams[1], mission, output_path)
-    else:
-        logging.info(f"Skipping {session_id} scoreboard creation.")
 
     
     # embed.set_image(url="attachment://game_result.png")
@@ -858,8 +857,6 @@ async def find_comp(interaction: discord.Interaction, username: str):
 
                 if not os.path.exists(output_path):
                     await create_scoreboard(match_details, winner, teams[0], teams[1], mission, output_path)
-                else:
-                    logging.info(f"Skipping {session_id} scoreboard creation.")
 
                 # Attach the screenshot to the embed by setting it as the embed image.
                 # The filename ("game_result.png") must match the one in the file attachment.
@@ -1400,9 +1397,6 @@ LANGUAGE_MAP = {
 DEEPL_API_KEY = os.environ.get("DEEPL_KEY")
 translator = deepl.Translator(DEEPL_API_KEY)
 
-translated_messages = set()
-
-
 def sanitize_text(text: str, message: discord.Message) -> str:
     text = text.replace("@everyone", "EVERYONE")
     text = text.replace("@here", "HERE")
@@ -1423,65 +1417,56 @@ def perform_translation(text: str, target_language: str) -> str:
     return result.text
 
 
+translated_messages: set[int] = set()
+
 @bot.event
-async def on_reaction_add(reaction, user):
-    if user.bot:
+async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
+    # ignore bot reactions
+    if payload.user_id == bot.user.id:
         return
 
-    message = reaction.message
-    # Ignore reactions on messages from bots
-    if message.author.bot:
+    # dedupe: skip if we’ve just translated this message
+    if payload.message_id in translated_messages:
         return
 
-    # Check if this message has already been translated
-    if message.id in translated_messages:
+    emoji = str(payload.emoji)
+    if emoji not in LANGUAGE_MAP:
         return
 
-    # Sanitize the message content before translation
-    text = sanitize_text(message.content, message)
-    flag = reaction.emoji
-    guild_id = message.guild.id
-
-    if flag not in LANGUAGE_MAP:
-        return
-
-    features = await load_features(guild_id)
+    features = await load_features(payload.guild_id)
     if not features or features.get("Translate") != "True":
-        embed = discord.Embed(
-            title="Translation Disabled",
-            description=
-            "Translations are not enabled for this server.\nUse /toggle 'Translate' to enable.",
-            color=discord.Color.red())
-        logging.info("Translation disabled!")
         return
 
-    target_language = LANGUAGE_MAP[flag]
-    
+    # fetch the channel & message
+    channel = bot.get_channel(payload.channel_id) or await bot.fetch_channel(payload.channel_id)
+    message = await channel.fetch_message(payload.message_id)
 
-    try:
-        await reaction.message.remove_reaction(flag, user)
-    except discord.Forbidden:
-        pass  # Bot lacks permissions to remove reactions
-
-    translated_text = perform_translation(text, target_language)
-
+    # sanitize & translate
+    text = sanitize_text(message.content, message)
+    translated_text = perform_translation(text, LANGUAGE_MAP[emoji])
     if not translated_text:
-        await message.channel.send(f"Translation failed for: {flag}", delete_after=5)
+        await channel.send(f"Translation failed for: {emoji}", delete_after=5)
         return
 
+    # remove the user’s reaction
+    user = bot.get_user(payload.user_id) or await bot.fetch_user(payload.user_id)
+    with suppress(discord.Forbidden):
+        await message.remove_reaction(payload.emoji, user)
+
+    # send translation & schedule its deletion
     username = escape_markdown(message.author.display_name)
-    message_to_send = f"**{username} - ({flag}):** {translated_text}"
-    sent_message = await message.channel.send(message_to_send)
-    await sent_message.delete(delay=60)
+    sent = await channel.send(f"**{username} - ({emoji}):** {translated_text}")
+    await sent.delete(delay=60)
 
-    # Add message ID to the translated list and schedule its removal after 60 seconds
-    translated_messages.add(message.id)
+    # record that we’ve translated this message
+    translated_messages.add(payload.message_id)
 
-    async def remove_translated_id():
-        await asyncio.sleep(70)
-        translated_messages.discard(message.id)
+    # schedule ID removal after 60s
+    async def _clear_id(msg_id: int):
+        await asyncio.sleep(60)
+        translated_messages.discard(msg_id)
 
-    asyncio.create_task(remove_translated_id())
+    asyncio.create_task(_clear_id(payload.message_id))
 
 
 async def return_latest_battle():

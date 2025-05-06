@@ -12,6 +12,66 @@ from src_send.WtFileUtils.vromfs.VROMFs import VROMFs
 
 # lang_dir.dump_files("lang")
 
+import os
+
+
+v = VROMFs("char.vromfs.bin").get_directory()
+f1 = v["config"]["unittags.blk"].get_data()["root"]
+def get_unit_info(internal_name):
+    internal_data = f1[internal_name]
+    tags = list(internal_data["tags"].keys())
+    if internal_data.get("type", None) == "helicopter":
+        tags += ["type_helicopter"]
+    for key in tags:
+        match key:
+            case "type_spaa":
+                return "SPAA"
+            case "type_light_tank":
+                return "Light Tank"
+            case "type_heavy_tank":
+                return "Tank"
+            case "type_medium_tank":
+                return "Tank"
+            case "type_fighter":
+                return "Fighter"
+            case "type_bomber":
+                return "Bomber"
+            case "type_helicopter":
+                return "Helicopter"
+    print(f"ERROR DETERMING VEHICLE TYPE FOR UNIT: {internal_name} WITH TAGS: {tags}")
+
+def get_unit_info_abrev(internal_name):
+    internal_data = f1[internal_name]
+    tags = list(internal_data["tags"].keys())
+    if internal_data.get("type", None) == "helicopter":
+        tags += ["type_helicopter"]
+    for key in tags:
+        match key:
+            case "type_spaa":
+                return "AA"
+            case "type_light_tank":
+                return "L"
+            case "type_heavy_tank":
+                return "T"
+            case "type_medium_tank":
+                return "T"
+            case "type_fighter":
+                return "F"
+            case "type_bomber":
+                return "B"
+            case "type_helicopter":
+                return "H"
+    print(f"ERROR DETERMING VEHICLE TYPE FOR UNIT: {internal_name} WITH TAGS: {tags}")
+
+def get_dict_from_list(internal_name_list):
+    payload = {}
+    for name in internal_name_list:
+        t = get_unit_info_abrev(name)
+        if t in payload:
+            payload[t] += 1
+        else:
+            payload[t] = 1
+    return payload
 
 class LangTableReader:
     lang_dir = VROMFs("lang.vromfs.bin").get_directory() 
