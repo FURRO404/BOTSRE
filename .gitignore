@@ -1,3 +1,21 @@
-*
+MAPS/
+ICONS/
+fonts/
+src_send/
+replays/
+Alarms.py
+AutoLog.py
+BotScript.py
+chars.vromfs.bin
+Data_Parser.py
+generated-icon.png
+lang.vromfs.bin
+Leaderboard_Parser.py
+*.png
+Parse_Replay.py
+Scoreboard.py
+SQ_Info.py
+TEST*
 
-!.gitignore
+
+
